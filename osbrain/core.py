@@ -37,11 +37,12 @@ from .message import Types as mType
 #     type of sockets could be added to it.
 #   - Perhaps the init_agent() method makes no sense (could be embedded in
 #     __init__().
+#   - __getitem__ could select sockets by name (i.e. Agent()['rep0'])
 
 
-class AgentSock(object):
+class AgentAddress(object):
     """
-    Agent socket information consisting on the host and port.
+    Agent address information consisting on the host, port, kind and role.
 
     Parameters
     ----------
@@ -49,6 +50,10 @@ class AgentSock(object):
         Agent host.
     port : int
         Agent port.
+    kind : str
+        Agent kind.
+    role : str
+        Agent role.
 
     Attributes
     ----------
@@ -56,32 +61,41 @@ class AgentSock(object):
         Agent host.
     port : int
         Agent port.
+    kind : str (TODO: create AgentAddressKind class)
+        Agent kind.
+    role : str (TODO: create AgentAddressRole class)
+        Agent role.
     """
-    def __init__(self, host, port):
+    # TODO: `kind` and `role` should be mandatory (fix old objects)
+    def __init__(self, host, port, kind=None, role=None):
         assert isinstance(host, str), \
-            'Incorrect parameter host on AgentSock; expecting type str.'
+            'Incorrect parameter host on AgentAddress; expecting type str.'
         assert isinstance(port, int), \
-            'Incorrect parameter port on AgentSock; expecting type int.'
+            'Incorrect parameter port on AgentAddress; expecting type int.'
         self.host = host
         self.port = port
+        self.kind = kind
+        self.role = role
 
     def __repr__(self):
         """
-        Return the string representation of the AgentSock.
+        Return the string representation of the AgentAddress.
 
         Returns
         -------
         representation : str
         """
-        return '%s:%s' % (self.host, self.port)
+        return '%s:%s (%s %s)' % (self.host, self.port, self.kind, self.role)
 
     def __hash__(self):
-        return hash(self.host) ^ hash(self.port)
+        return hash(self.host) ^ hash(self.port) ^ \
+                hash(self.role) ^ hash(self.kind)
 
     def __eq__(self, other):
-        if not isinstance(other, AgentSock):
+        if not isinstance(other, AgentAddress):
             return False
-        return self.host == other.host and self.port == other.port
+        return self.host == other.host and self.port == other.port and \
+                self.role == other.role and self.kind == other.kind
 
 
 class AgentRPP(object):
@@ -127,17 +141,17 @@ class AgentRPP(object):
                      'pull': ports['pull']}
 
     def rep(self):
-        return AgentSock(self.host, self.port['rep'])
+        return AgentAddress(self.host, self.port['rep'])
 
     def pub(self):
-        return AgentSock(self.host, self.port['pub'])
+        return AgentAddress(self.host, self.port['pub'])
 
     def pull(self):
-        return AgentSock(self.host, self.port['pull'])
+        return AgentAddress(self.host, self.port['pull'])
 
     def __repr__(self):
         """
-        Return the string representation of the AgentSock.
+        Return the string representation of the AgentAddress.
 
         Returns
         -------
@@ -152,7 +166,7 @@ class AgentRPP(object):
                hash(self.port['pull'])
 
     def __eq__(self, other):
-        if not isinstance(other, AgentSock):
+        if not isinstance(other, AgentAddress):
             return False
         return self.host == other.host and self.port == other.port
 
@@ -182,7 +196,7 @@ class TryREP(object):
                 self.sck.bind('tcp://%s:%s' % (self.host, self.port))
         except zmq.ZMQError as e:
             raise
-        self.sock = AgentSock(self.host, self.port)
+        self.sock = AgentAddress(self.host, self.port)
 
     def recv(self):
         return self.sck.recv_pyobj()
@@ -204,8 +218,8 @@ class TryREQ(object):
         Agent's socket port.
     """
     def __init__(self, sock):
-        assert isinstance(sock, AgentSock), \
-            'Wrong type for sock; expecting AgentSock.'
+        assert isinstance(sock, AgentAddress), \
+            'Wrong type for sock; expecting AgentAddress.'
         self.sock = sock
         self.host = sock.host
         self.port = sock.port
@@ -230,8 +244,8 @@ class TryREQ(object):
 
 class TryAutoRequest(multiprocessing.Process):
     def __init__(self, sock, request):
-        assert isinstance(sock, AgentSock), \
-            'Wrong type for sock; expecting AgentSock.'
+        assert isinstance(sock, AgentAddress), \
+            'Wrong type for sock; expecting AgentAddress.'
         self.sock = sock
         self.host = sock.host
         self.port = sock.port
@@ -248,6 +262,173 @@ class TryAutoRequest(multiprocessing.Process):
         self.sck.send_pyobj(request)
         self.sck.recv_pyobj()
         self.sck.close()
+
+
+class BaseAgent(multiprocessing.Process):
+    def __init__(self):
+        super().__init__()
+        try:
+            self.context = zmq.Context()
+            self.poller = zmq.Poller()
+        except zmq.ZMQError as error:
+            self.log_error('Initialization failed: %s' % error)
+            raise
+        # The `socket` key is the address
+        self.socket = {}
+
+        # The `handle` key is the socket
+        self.handle = {}
+
+        # Polling timeout
+        self.poll_timeout = 1000
+
+    def log_error(self, message):
+        # TODO: implement actual logging methods
+        print('ERROR' + message)
+
+    def log_info(self, message):
+        # TODO: implement actual logging methods
+        print('INFO' + message)
+
+    def register(self, socket, address, alias=None):
+        assert address not in self.socket
+        self.socket[address] = socket
+        if alias:
+            assert alias not in self.socket
+            self.socket[alias] = socket
+
+    def bind_push(self, host='127.0.0.1', port=None, alias=None):
+        try:
+            socket = self.context.socket(zmq.PUSH)
+            if not port:
+                uri = 'tcp://%s' % host
+                port = socket.bind_to_random_port(uri)
+            else:
+                socket.bind('tcp://%s:%s' % (host, port))
+        except zmq.ZMQError as e:
+            self.log_error('Socket creation failed: %s' % e)
+            raise
+        address = AgentAddress(host, port, 'PUSH', 'SERVER')
+        self.register(socket, address)
+        return address
+
+    def connect_pull(self, address, handle):
+        # TODO: check `address` role and kind compatibility
+        try:
+            socket = self.context.socket(zmq.PULL)
+            socket.connect('tcp://%s:%s' % (address.host, address.port))
+        except zmq.ZMQError as error:
+            self.log_error('Could not connect: %s' % error)
+            raise
+        try:
+            self.poller.register(socket, zmq.POLLIN)
+        except:
+            self.error('Error registering socket: %s' % e)
+            raise
+        address = AgentAddress(address.host, address.port, 'PULL', 'SERVER')
+        self.register(socket, address)
+        self.handle[socket] = handle
+        return address
+
+    def terminate(self):
+        self.log_info('Closing sockets...')
+        for address in self.socket:
+            self.socket[address].close()
+        self.log_info('Terminated!')
+
+    def iddle(self):
+        """
+        This function is to be executed when the agent is iddle.
+
+        After a timeout occurs when the agent's poller receives no data in
+        any of its sockets, the agent may execute this function.
+
+        Note
+        ----
+        The timeout is set by the agent's `poll_timeout` attribute.
+        """
+        pass
+
+    def loop(self):
+        """
+        Agent's main loop.
+
+        This loop is executed until the `keep_alive` attribute is False
+        or until an error occurs.
+        """
+        while self.keep_alive:
+            if self.iterate():
+                break
+
+    def iterate(self):
+        """
+        Agent's main iteration.
+
+        This iteration is normally executed inside the main loop.
+
+        The agent is polling all its sockets for input data. It will wait
+        for `poll_timeout`; after this period, the method `iddle` will be
+        executed before polling again.
+
+        Returns
+        -------
+        int
+            1 if an error occurred during the iteration (we would expect this
+            to happen if an interruption occurs during polling).
+
+            0 otherwise.
+        """
+        try:
+            events = dict(self.poller.poll(self.poll_timeout))
+        except zmq.ZMQError as error:
+            # Raise the exception in case it is not due to SIGINT
+            if error.errno != errno.EINTR:
+                raise
+            else:
+                return 1
+
+        if not events:
+            # Agent is iddle
+            self.iddle()
+            return 0
+
+        for socket in events:
+            if events[socket] != zmq.POLLIN:
+                continue
+            # TODO: handle all patterns (i.e.: REQ-REP must reply!)
+            message = socket.recv_pyobj()
+            self.handle[socket](message)
+
+        return 0
+
+    def send(address, message):
+        self.socket[address].send_pyobj(message)
+
+    def run(self):
+        """
+        Run the agent.
+        """
+        if __debug__:
+            self.log_info('Initializing the agent...')
+        self.init_agent()
+
+        # Capture SIGINT
+        signal.signal(signal.SIGINT, self.sigint_handler)
+
+        self.pre()
+        self.loop()
+        self.post()
+
+        # Terminate agent
+        self.terminate()
+
+    def sigint_handler(self, signal, frame):
+        """
+        Handle interruption signals.
+        """
+        self.keep_alive = False
+        if __debug__:
+            self.info('SIGINT captured!')
 
 
 class Agent(multiprocessing.Process):
@@ -300,7 +481,7 @@ class Agent(multiprocessing.Process):
 
         # TODO: self.sock and self.port should not exist anymore
         self.port = self.rpp.port['rep']
-        self.sock = AgentSock(self.rpp.host, self.port)
+        self.sock = AgentAddress(self.rpp.host, self.port)
 
         # Subscriptions
         self.sub_sockets = []
@@ -371,7 +552,7 @@ class Agent(multiprocessing.Process):
 
         # TODO: self.sock and self.port should not exist anymore
         self.port = self.rpp.port['rep']
-        self.sock = AgentSock(self.rpp.host, self.port)
+        self.sock = AgentAddress(self.rpp.host, self.port)
 
         # Put RPP information on the queue, if present
         if self.queue:
@@ -389,7 +570,7 @@ class Agent(multiprocessing.Process):
 
         Parameters
         ----------
-        publisher : AgentSock
+        publisher : AgentAddress
             Publisher socket.
         handlers: dict {str: function}
             Message handler functions. This functions take a parameter which
@@ -401,8 +582,8 @@ class Agent(multiprocessing.Process):
         zmq.sugar.socket.Socket
             The new SUB socket created.
         """
-        assert isinstance(publisher, AgentSock), \
-            'Wrong type for publisher; expecting AgentSock.'
+        assert isinstance(publisher, AgentAddress), \
+            'Wrong type for publisher; expecting AgentAddress.'
         assert isinstance(handlers, dict), \
             'Wrong type for handlers; expecting dict.'
 
@@ -441,7 +622,7 @@ class Agent(multiprocessing.Process):
 
         Parameters
         ----------
-        publisher : AgentSock
+        publisher : AgentAddress
             Publisher socket.
         topic : str
             Data topic, for filtering.
@@ -451,8 +632,8 @@ class Agent(multiprocessing.Process):
         """
         # TODO: deprecate this function in favor of `multi_subscribe`, which
         #       should then be renamed to `subscribe`.
-        assert isinstance(publisher, AgentSock), \
-            'Wrong type for publisher; expecting AgentSock.'
+        assert isinstance(publisher, AgentAddress), \
+            'Wrong type for publisher; expecting AgentAddress.'
         assert isinstance(topic, str), \
             'Wrong type for topic; expecting str.'
 
@@ -493,7 +674,7 @@ class Agent(multiprocessing.Process):
 
         Parameters
         ----------
-        rep : AgentSock
+        rep : AgentAddress
             Agent's REP socket.
 
         Returns
@@ -567,7 +748,7 @@ class Agent(multiprocessing.Process):
             # Re-throw the exception
             raise
 
-        self.send_reply(Message(mType.AGENTSOCK, AgentSock(host, port)))
+        self.send_reply(Message(mType.AGENTSOCK, AgentAddress(host, port)))
 
         keep_waiting = True
 
@@ -649,7 +830,7 @@ class Agent(multiprocessing.Process):
 
         Returns
         -------
-        new : AgentSock
+        new : AgentAddress
             Agent's new REP socket where the agent is listening.
         """
         request = Message(mType.REQATT)

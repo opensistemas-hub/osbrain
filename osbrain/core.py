@@ -177,7 +177,7 @@ class BaseAgent():
         # Set name
         self.name = name
 
-        # The `socket` key is the address
+        # The `socket` key is the address or the alias
         self.socket = {}
         # The `handler` key is the socket
         self.handler = {}
@@ -217,8 +217,11 @@ class BaseAgent():
         # TODO: implement actual logging methods
         print('INFO: ' + message)
 
-    def register(self, socket, address, handler=None):
+    def register(self, socket, address, alias=None, handler=None):
         assert address not in self.socket
+        if not alias:
+            alias = str(address)
+        self.socket[alias] = socket
         self.socket[address] = socket
         if handler is not None:
             try:
@@ -228,7 +231,7 @@ class BaseAgent():
                 raise
             self.handler[socket] = handler
 
-    def bind(self, kind, handler=None, host=None, port=None):
+    def bind(self, kind, alias=None, handler=None, host=None, port=None):
         assert kind in ZMQ_KIND, \
             'Wrong socket kind!'
         assert not ZMQ_HANDLE[kind] or handler is not None, \
@@ -248,10 +251,10 @@ class BaseAgent():
             self.log_error('Socket creation failed: %s' % error)
             raise
         server_address = AgentAddress(host, port, kind, 'server')
-        self.register(socket, server_address, handler)
+        self.register(socket, server_address, alias, handler)
         return server_address
 
-    def connect(self, server_address, handler=None):
+    def connect(self, server_address, alias=None, handler=None):
         assert server_address.role == 'server', \
             'Incorrect address! A server address must be provided!'
         client_address = server_address.twin()
@@ -268,7 +271,7 @@ class BaseAgent():
         except zmq.ZMQError as error:
             self.log_error('Could not connect: %s' % error)
             raise
-        self.register(socket, client_address, handler)
+        self.register(socket, client_address, alias, handler)
         return client_address
 
     def terminate(self):

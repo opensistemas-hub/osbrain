@@ -75,32 +75,32 @@ Pyro4.config.SERIALIZER = 'pickle'
 
 
 ZMQ_KIND = {
-    'req': zmq.REQ,
-    'rep': zmq.REP,
-    'push': zmq.PUSH,
-    'pull': zmq.PULL,
-    'pub': zmq.PUB,
-    'sub': zmq.SUB
+    'REQ': zmq.REQ,
+    'REP': zmq.REP,
+    'PUSH': zmq.PUSH,
+    'PULL': zmq.PULL,
+    'PUB': zmq.PUB,
+    'SUB': zmq.SUB
 }
 
 # TODO: once a class is created to store ZMQ_KIND, a method is to be
 #       implemented: .requires_handler(), which returns either True or False
 ZMQ_HANDLE = {
-    'req': False,
-    'rep': True,
-    'push': False,
-    'pull': True,
-    'pub': False,
-    'sub': True
+    'REQ': False,
+    'REP': True,
+    'PUSH': False,
+    'PULL': True,
+    'PUB': False,
+    'SUB': True
 }
 
 ZMQ_TWIN = {
-    'req': 'rep',
-    'rep': 'req',
-    'push': 'pull',
-    'pull': 'push',
-    'pub': 'sub',
-    'sub': 'pub'
+    'REQ': 'REP',
+    'REP': 'REQ',
+    'PUSH': 'PULL',
+    'PULL': 'PUSH',
+    'PUB': 'SUB',
+    'SUB': 'PUB'
 }
 
 

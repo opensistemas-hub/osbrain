@@ -5,8 +5,8 @@ from osbrain.core import Proxy
 pusher = Proxy('Pusher')
 puller = Proxy('Puller')
 
-addr = pusher.bind('push')
-puller.connect(addr, print_message)
+addr = pusher.bind('PUSH', alias='push')
+puller.connect(addr, handler=print_message)
 
 puller.run()
-pusher.send(addr, 'Hello world!')
+pusher.send('push', 'Hello, world!')

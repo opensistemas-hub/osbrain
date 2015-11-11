@@ -17,6 +17,10 @@ from .message import Message
 from .message import Types as mType
 
 
+Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
+Pyro4.config.SERIALIZER = 'pickle'
+
+
 # TODO:
 #   - Consider removing message types?
 #       - Perhaps it is fine as long as they are all hidden from the user.
@@ -169,8 +173,10 @@ class AgentAddress(object):
 
 
 class BaseAgent():
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name=None):
+        # Set name
+        self.name = name
+
         # The `socket` key is the address
         self.socket = {}
         # The `handler` key is the socket
@@ -252,7 +258,11 @@ class BaseAgent():
         assert not ZMQ_HANDLE[client_address.kind] or handler is not None, \
             'This socket requires a handler!'
         try:
-            socket = self.context.socket(client_address.kind)
+            # TODO: when using `socket(client_address.kind)` and running
+            #       (for example) examples/push_pull/, we get a TypeError
+            #       (integer is required). However, the line is not displayed.
+            #       Perhaps we could improve the traceback display?
+            socket = self.context.socket(ZMQ_KIND[client_address.kind])
             socket.connect('tcp://%s:%s' % (client_address.host,
                                             client_address.port))
         except zmq.ZMQError as error:
@@ -311,7 +321,6 @@ class BaseAgent():
             0 otherwise.
         """
         try:
-            print('Polling...')
             events = dict(self.poller.poll(self.poll_timeout))
         except zmq.ZMQError as error:
             # Raise the exception in case it is not due to SIGINT
@@ -321,22 +330,20 @@ class BaseAgent():
                 return 1
 
         if not events:
-            print('Not events!')
             # Agent is iddle
             self.iddle()
             return 0
 
-        print('Events!')
         for socket in events:
             if events[socket] != zmq.POLLIN:
                 continue
             # TODO: handle all patterns (i.e.: REQ-REP must reply!)
             message = socket.recv_pyobj()
-            self.handle[socket](self, message)
+            self.handler[socket](self, message)
 
         return 0
 
-    def send(address, message):
+    def send(self, address, message):
         self.socket[address].send_pyobj(message)
 
     @Pyro4.oneway
@@ -344,49 +351,40 @@ class BaseAgent():
         """
         Run the agent.
         """
-        # Capture SIGINT
-        signal.signal(signal.SIGINT, self.sigint_handler)
-
-        self.pre()
         self.loop()
-        self.post()
 
         # Terminate agent
         self.terminate()
-
-    def sigint_handler(self, signal, frame):
-        """
-        Handle interruption signals.
-        """
-        self.keep_alive = False
-        if __debug__:
-            self.log_info('SIGINT captured!')
-
-    def pre(self):
-        pass
-
-    def post(self):
-        pass
 
 
 class Agent(multiprocessing.Process):
     def __init__(self, name):
         super().__init__()
         self.name = name
+        self.daemon = None
 
     def run(self):
-        daemon = Pyro4.Daemon()
+        # Capture SIGINT
+        signal.signal(signal.SIGINT, self.sigint_handler)
+
+        self.daemon = Pyro4.Daemon()
         try:
             ns = Pyro4.locateNS()
         except PyroError as error:
             print(error)
             print('Agent %s is being killed' % self.name)
             return
-        uri = daemon.register(BaseAgent)
+        uri = self.daemon.register(BaseAgent(name=self.name))
         ns.register(self.name, uri)
 
         print('%s ready!' % self.name)
-        daemon.requestLoop()
+        self.daemon.requestLoop()
+
+    def sigint_handler(self, signal, frame):
+        """
+        Handle interruption signals.
+        """
+        self.daemon.close()
 
 
 class NameServer(multiprocessing.Process):

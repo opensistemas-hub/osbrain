@@ -1,14 +1,12 @@
+from functions import print_message
 from osbrain.core import Proxy
 
 
-def handler(agent, message):
-    print(message)
+pusher = Proxy('Pusher')
+puller = Proxy('Puller')
 
+addr = pusher.bind('push')
+puller.connect(addr, print_message)
 
-p0 = Proxy('agent0')
-p1 = Proxy('agent1')
-
-addr = p0.bind('push')
-p1.connect(addr, handler)
-
-p0.send(addr, 'Hello!')
+puller.run()
+pusher.send(addr, 'Hello world!')

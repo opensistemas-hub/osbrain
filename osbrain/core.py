@@ -2,6 +2,7 @@
 Core agent classes.
 """
 import Pyro4
+import types
 import zmq
 import signal
 import sys
@@ -293,7 +294,9 @@ class BaseAgent():
         """
         pass
 
-    @Pyro4.oneway
+    def set_loop(self, loop):
+        self.loop = types.MethodType(loop, self)
+
     def loop(self):
         """
         Agent's main loop.

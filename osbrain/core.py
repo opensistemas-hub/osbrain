@@ -294,6 +294,10 @@ class BaseAgent():
         """
         pass
 
+    def new_method(self, method):
+        method = types.MethodType(method, self)
+        setattr(self, method.__name__, method)
+
     def set_loop(self, loop):
         self.loop = types.MethodType(loop, self)
 
@@ -404,3 +408,7 @@ class Proxy(Pyro4.core.Proxy):
         #       a name is accepted.
         name = uri
         super().__init__('PYRONAME:%s' % name)
+
+    def add_method(self, method):
+        self.new_method(method)
+        self._pyroMethods.add(method.__name__)

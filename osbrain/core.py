@@ -212,11 +212,11 @@ class BaseAgent():
 
     def log_error(self, message):
         # TODO: implement actual logging methods
-        print('ERROR: ' + message)
+        print('ERROR (%s): %s' % (self.name, message))
 
     def log_info(self, message):
         # TODO: implement actual logging methods
-        print('INFO: ' + message)
+        print('INFO (%s): %s' % (self.name, message))
 
     def register(self, socket, address, alias=None, handler=None):
         assert address not in self.socket

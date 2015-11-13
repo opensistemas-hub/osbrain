@@ -294,6 +294,9 @@ class BaseAgent():
         """
         pass
 
+    def set_attr(self, name, value):
+        setattr(self, name, value)
+
     def new_method(self, method):
         method = types.MethodType(method, self)
         setattr(self, method.__name__, method)

@@ -304,6 +304,9 @@ class BaseAgent():
     def set_loop(self, loop):
         self.loop = types.MethodType(loop, self)
 
+    def execute(self, function, *args, **kwargs):
+        return function(args, kwargs)
+
     def loop(self):
         """
         Agent's main loop.

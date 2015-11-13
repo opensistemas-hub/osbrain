@@ -359,6 +359,9 @@ class BaseAgent():
     def send(self, address, message):
         self.socket[address].send_pyobj(message)
 
+    def recv(self, address):
+        return self.socket[address].recv_pyobj()
+
     @Pyro4.oneway
     def run(self):
         """

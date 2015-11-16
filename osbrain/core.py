@@ -377,16 +377,18 @@ class BaseAgent():
 
 
 class Agent(multiprocessing.Process):
-    def __init__(self, name):
+    def __init__(self, name, host=None, port=0):
         super().__init__()
         self.name = name
         self.daemon = None
+        self.host = host
+        self.port = port
 
     def run(self):
         # Capture SIGINT
         signal.signal(signal.SIGINT, self.sigint_handler)
 
-        self.daemon = Pyro4.Daemon()
+        self.daemon = Pyro4.Daemon(self.host, self.port)
         try:
             ns = Pyro4.locateNS()
         except PyroError as error:

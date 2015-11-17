@@ -13,10 +13,14 @@ osBrain is a general-purpose, distributed, scalable multiagent system.
 Managing Python virtual environments is easier with `virtualenvwrapper`:
 
     sudo dnf install python-virtualenvwrapper
+    (for ubuntu) sudo apt-get install virtualenvwrapper
+
+If you just installed virtualenvwrapper, you might need to execute "source ~/.bashrc"
+to execute the following steps.
 
 In order to create a virtual environment to work with osBrain:
 
-    mkvirtualenv -p python3 osbrain
+    mkvirtualenv -p /usr/bin/python3 osbrain
 
 Note that the Python interpreter version used is 3. In your system, `python`
 may be already python 3; make sure you set the proper Python 3 system

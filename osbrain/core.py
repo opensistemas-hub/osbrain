@@ -106,11 +106,13 @@ ZMQ_TWIN = {
 
 
 def address_to_host_port(addr):
+    # TODO: should we return 0 or None when port is not given?
     if not addr:
         return (None, None)
     # TODO: for now we assume `addr` is a string, but it could be other types
     aux = addr.split(':')
     if len(aux) == 1:
+        # TODO: should we return 0 or None when port is not given?
         port = None
     else:
         port = int(aux[-1])
@@ -399,6 +401,9 @@ class Agent(multiprocessing.Process):
         self.name = name
         self.daemon = None
         self.host, self.port = address_to_host_port(addr)
+        # TODO: pull request?
+        if self.port is None:
+            self.port = 0
         self.nshost, self.nsport = address_to_host_port(nsaddr)
 
     def run(self):
@@ -436,6 +441,9 @@ class NameServer(multiprocessing.Process):
         self.host, self.port = address_to_host_port(addr)
 
     def run(self):
+        # FIXME: for now if `port` is None, it will default to 9090. Perhaps
+        #        we could always get a random port (pass 0 as parameter). For
+        #        now it does not work (problems with automatic discovering).
         Pyro4.naming.startNSloop(self.host, self.port)
 
 

@@ -105,7 +105,7 @@ ZMQ_TWIN = {
 }
 
 
-def address_str_to_host_port(addr):
+def address_to_host_port(addr):
     if not addr:
         return (None, None)
     # TODO: for now we assume `addr` is a string, but it could be other types

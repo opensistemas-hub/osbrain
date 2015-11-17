@@ -433,6 +433,8 @@ class Proxy(Pyro4.core.Proxy):
     def __init__(self, name, nshost=None, nsport=None):
         if nshost is None and nsport is None:
             super().__init__('PYRONAME:%s' % name)
+        elif nsport is None:
+            super().__init__('PYRONAME:%s@%s' % (name, nshost))
         else:
             super().__init__('PYRONAME:%s@%s:%s' % (name, nshost, nsport))
 

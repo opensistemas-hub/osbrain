@@ -430,11 +430,11 @@ class NameServer(multiprocessing.Process):
 
 
 class Proxy(Pyro4.core.Proxy):
-    def __init__(self, uri):
-        # TODO: perhaps we should accept different URI formats. For now only
-        #       a name is accepted.
-        name = uri
-        super().__init__('PYRONAME:%s' % name)
+    def __init__(self, name, nshost=None, nsport=None):
+        if nshost is None and nsport is None:
+            super().__init__('PYRONAME:%s' % name)
+        else:
+            super().__init__('PYRONAME:%s@%s:%s' % (name, nshost, nsport))
 
     def add_method(self, method):
         self.new_method(method)

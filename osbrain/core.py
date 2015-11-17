@@ -377,24 +377,31 @@ class BaseAgent():
 
 
 class Agent(multiprocessing.Process):
-    def __init__(self, name, host=None, port=0):
+    def __init__(self, name, host=None, port=0, nshost=None, nsport=None):
         super().__init__()
         self.name = name
         self.daemon = None
         self.host = host
         self.port = port
+        self.nshost = nshost
+        self.nsport = nsport
 
     def run(self):
         # Capture SIGINT
         signal.signal(signal.SIGINT, self.sigint_handler)
 
-        self.daemon = Pyro4.Daemon(self.host, self.port)
         try:
-            ns = Pyro4.locateNS()
+            ns = Pyro4.locateNS(self.nshost, self.nsport)
         except PyroError as error:
             print(error)
             print('Agent %s is being killed' % self.name)
             return
+
+        # TODO: infer `host` if is `None` and we are connected to `ns_host`
+        #       through a LAN.
+        ns_host = ns._pyroUri.host
+
+        self.daemon = Pyro4.Daemon(self.host, self.port)
         uri = self.daemon.register(BaseAgent(name=self.name))
         ns.register(self.name, uri)
 

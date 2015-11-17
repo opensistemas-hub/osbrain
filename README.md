@@ -39,6 +39,11 @@ Always make sure to work within the virtual environment:
 
     workon osbrain
 
+To be able to compile dependences, it is essential to have the python3-dev 
+package installed, as long as all the gcc toolchain.
+
+    (for ubuntu) sudo apt-get install python3-dev build-essential autoconf libtool pkg-config
+
 First, we should make sure `pip` is updated:
 
     pip install --upgrade pip

@@ -337,6 +337,12 @@ class BaseAgent():
             if self.iterate():
                 break
 
+    def graceful_end(sefl):
+        """
+        Agent graceful termination. It ends current loop of work before exiting.
+        """
+        self.keep_alive = False
+
     def iterate(self):
         """
         Agent's main iteration.

@@ -105,6 +105,19 @@ ZMQ_TWIN = {
 }
 
 
+def address_str_to_host_port(addr):
+    if not addr:
+        return (None, None)
+    # TODO: for now we assume `addr` is a string, but it could be other types
+    aux = addr.split(':')
+    if len(aux) == 1:
+        port = None
+    else:
+        port = int(aux[-1])
+    host = aux[0]
+    return (host, port)
+
+
 class AgentAddress(object):
     """
     Agent address information consisting on the host, port, kind and role.
@@ -381,14 +394,12 @@ class BaseAgent():
 
 
 class Agent(multiprocessing.Process):
-    def __init__(self, name, host=None, port=0, nshost=None, nsport=None):
+    def __init__(self, name, addr=None, nsaddr=None):
         super().__init__()
         self.name = name
         self.daemon = None
-        self.host = host
-        self.port = port
-        self.nshost = nshost
-        self.nsport = nsport
+        self.host, self.port = address_to_host_port(addr)
+        self.nshost, self.nsport = address_to_host_port(nsaddr)
 
     def run(self):
         # Capture SIGINT
@@ -420,17 +431,17 @@ class Agent(multiprocessing.Process):
 
 
 class NameServer(multiprocessing.Process):
-    def __init__(self, host=None, port=None):
+    def __init__(self, addr=None):
         super().__init__()
-        self.host = host
-        self.port = port
+        self.host, self.port = address_to_host_port(addr)
 
     def run(self):
         Pyro4.naming.startNSloop(self.host, self.port)
 
 
 class Proxy(Pyro4.core.Proxy):
-    def __init__(self, name, nshost=None, nsport=None):
+    def __init__(self, name, nsaddr=None):
+        nshost, nsport = address_to_host_port(nsaddr)
         if nshost is None and nsport is None:
             super().__init__('PYRONAME:%s' % name)
         elif nsport is None:

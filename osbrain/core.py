@@ -178,16 +178,16 @@ class BaseAgent():
         # Set name
         self.name = name
 
-        # The `socket` key is the address or the alias
+        # The `socket` key is the address or the alias; value is the socket
         self.socket = {}
+        # The `address` key is the alias; value is the address
+        self.address = {}
         # The `handler` key is the socket
         self.handler = {}
         # Polling timeout
         self.poll_timeout = 1000
         # Keep alive
         self.keep_alive = True
-        # The `address` key is the alias
-        self.address = {}
 
         try:
             self.context = zmq.Context()
@@ -218,12 +218,16 @@ class BaseAgent():
         # TODO: implement actual logging methods
         print('INFO (%s): %s' % (self.name, message))
 
+    def get_addr(self, alias):
+        return self.address[alias]
+
     def register(self, socket, address, alias=None, handler=None):
         assert address not in self.socket
         if not alias:
             alias = str(address)
         self.socket[alias] = socket
         self.socket[address] = socket
+        self.address[alias] = address
         if handler is not None:
             try:
                 self.poller.register(socket, zmq.POLLIN)

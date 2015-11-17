@@ -189,7 +189,7 @@ class AgentAddress(object):
 
 
 class BaseAgent():
-    def __init__(self, name=None):
+    def __init__(self, name=None, host='127.0.0.1'):
         # Set name
         self.name = name
 
@@ -203,6 +203,8 @@ class BaseAgent():
         self.poll_timeout = 1000
         # Keep alive
         self.keep_alive = True
+        # Defaut host
+        self.host = host
 
         try:
             self.context = zmq.Context()
@@ -257,9 +259,8 @@ class BaseAgent():
         assert not ZMQ_HANDLE[kind] or handler is not None, \
             'This socket requires a handler!'
         zmq_kind = ZMQ_KIND[kind]
-        # TODO: the agent should have an attribute with its public IP
         if not host:
-            host = '127.0.0.1'
+            host = self.host
         try:
             socket = self.context.socket(zmq_kind)
             if not port:
@@ -422,7 +423,7 @@ class Agent(multiprocessing.Process):
         ns_host = ns._pyroUri.host
 
         self.daemon = Pyro4.Daemon(self.host, self.port)
-        uri = self.daemon.register(BaseAgent(name=self.name))
+        uri = self.daemon.register(BaseAgent(name=self.name, host=self.host))
         ns.register(self.name, uri)
 
         print('%s ready!' % self.name)

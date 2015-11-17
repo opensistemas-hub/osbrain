@@ -409,8 +409,13 @@ class Agent(multiprocessing.Process):
 
 
 class NameServer(multiprocessing.Process):
+    def __init__(self, host=None, port=None):
+        super().__init__()
+        self.host = host
+        self.port = port
+
     def run(self):
-        Pyro4.naming.startNSloop()
+        Pyro4.naming.startNSloop(self.host, self.port)
 
 
 class Proxy(Pyro4.core.Proxy):

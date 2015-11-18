@@ -470,3 +470,6 @@ class Proxy(Pyro4.core.Proxy):
     def add_method(self, method):
         self.new_method(method)
         self._pyroMethods.add(method.__name__)
+
+    def release(self):
+        self._pyroRelease()

@@ -1,4 +1,5 @@
 pycache/
 .cache/
+pyro_osbrain.log
 *.pyc
 *.swp

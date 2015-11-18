@@ -442,7 +442,7 @@ class Agent(multiprocessing.Process):
         """
         Handle interruption signals.
         """
-        self.daemon.close()
+        self.daemon.shutdown()
 
 
 class NameServer(multiprocessing.Process):

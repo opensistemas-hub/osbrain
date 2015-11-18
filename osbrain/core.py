@@ -20,6 +20,7 @@ from .message import Types as mType
 
 Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
 Pyro4.config.SERIALIZER = 'pickle'
+Pyro4.config.SERVERTYPE = 'multiplex'
 
 
 # TODO:

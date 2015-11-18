@@ -433,6 +433,7 @@ class Agent(multiprocessing.Process):
         self.daemon = Pyro4.Daemon(self.host, self.port)
         uri = self.daemon.register(BaseAgent(name=self.name, host=self.host))
         ns.register(self.name, uri)
+        ns._pyroRelease()
 
         print('%s ready!' % self.name)
         self.daemon.requestLoop()

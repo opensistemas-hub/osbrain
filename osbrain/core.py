@@ -330,6 +330,15 @@ class BaseAgent():
     def execute(self, function, *args, **kwargs):
         return function(args, kwargs)
 
+    def self_execute(self, function, *args, **kwargs):
+        if args and kwargs:
+            return function(self, args, kwargs)
+        if args:
+            return function(self, args)
+        if kwargs:
+            return function(self, kwargs)
+        return function(self)
+
     def loop(self):
         """
         Agent's main loop.

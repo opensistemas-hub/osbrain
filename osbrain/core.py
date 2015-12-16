@@ -192,7 +192,7 @@ class AgentAddress(object):
 
 
 class BaseAgent():
-    def __init__(self, name=None, host='127.0.0.1'):
+    def __init__(self, name=None, host=None):
         # Set name
         self.name = name
 
@@ -208,6 +208,8 @@ class BaseAgent():
         self.keep_alive = True
         # Defaut host
         self.host = host
+        if not self.host:
+            self.host = '127.0.0.1'
 
         try:
             self.context = zmq.Context()

@@ -322,9 +322,11 @@ class BaseAgent():
     def set_attr(self, name, value):
         setattr(self, name, value)
 
-    def new_method(self, method):
+    def new_method(self, method, name=None):
         method = types.MethodType(method, self)
-        setattr(self, method.__name__, method)
+        if not name:
+            name = method.__name__
+        setattr(self, name, method)
 
     def set_loop(self, loop):
         self.loop = types.MethodType(loop, self)
@@ -515,9 +517,13 @@ class Proxy(Pyro4.core.Proxy):
         else:
             super().__init__('PYRONAME:%s@%s:%s' % (name, nshost, nsport))
 
-    def add_method(self, method):
-        self.new_method(method)
-        self._pyroMethods.add(method.__name__)
+    def add_method(self, method, name=None):
+        self.new_method(method, name)
+        if not name:
+            name = method.__name__
+        if not isinstance(name, str):
+            raise ValueError('The new name must be of type `str`!')
+        self._pyroMethods.add(name)
 
     def release(self):
         self._pyroRelease()

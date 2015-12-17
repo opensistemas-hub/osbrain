@@ -407,6 +407,10 @@ class BaseAgent():
     def recv(self, address):
         return self.socket[address].recv_pyobj()
 
+    def send_recv(self, address, message):
+        self.send(address, message)
+        return self.recv(address)
+
     def ftp_configure(self, addr, user, passwd, path, perm='elr'):
         from pyftpdlib.authorizers import DummyAuthorizer
         from pyftpdlib.handlers import FTPHandler

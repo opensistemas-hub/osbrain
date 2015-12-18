@@ -244,7 +244,8 @@ class BaseAgent():
         return self.address[alias]
 
     def register(self, socket, address, alias=None, handler=None):
-        assert address not in self.socket
+        assert not self.registered(address), \
+            'Socket is already registered!'
         if not alias:
             alias = str(address)
         self.socket[alias] = socket
@@ -257,6 +258,9 @@ class BaseAgent():
                 self.error('Error registering socket: %s' % e)
                 raise
             self.handler[socket] = handler
+
+    def registered(self, address):
+        return address in self.socket
 
     def bind(self, kind, alias=None, handler=None, host=None, port=None):
         assert kind in ZMQ_KIND, \
@@ -286,6 +290,19 @@ class BaseAgent():
         client_address = server_address.twin()
         assert not ZMQ_HANDLE[client_address.kind] or handler is not None, \
             'This socket requires a handler!'
+        if self.registered(client_address):
+            self._connect_old(client_address, alias, handler)
+        else:
+            self._connect_new(client_address, alias, handler)
+
+    def _connect_old(self, client_address, alias=None, handler=None):
+        assert handler is None, \
+            'Undefined behavior when a new handler is given! (TODO)'
+        self.socket[alias] = self.socket[client_address]
+        self.address[alias] = client_address
+        return client_address
+
+    def _connect_new(self, client_address, alias=None, handler=None):
         try:
             # TODO: when using `socket(client_address.kind)` and running
             #       (for example) examples/push_pull/, we get a TypeError

@@ -263,6 +263,15 @@ class AgentAddress(object):
                 self.role == other.role and self.kind == other.kind
 
     def twin(self):
+        """
+        Returns
+        -------
+        AgentAddress
+            The twin address of the current one; while the `host` and `port`
+            are kept for the twin, the `kind` and `role` change to their
+            corresponding twins, according to the rules defined in the
+            respective classes.
+        """
         host = self.host
         port = self.port
         kind = self.kind.twin()

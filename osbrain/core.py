@@ -79,10 +79,10 @@ Pyro4.config.SERVERTYPE = 'multiplex'
 
 
 class AgentAddressRole(str):
-    def __init__(self, value):
+    def __new__(cls, value):
         if not value in ['server', 'client']:
             raise ValueError('Incorrect value "%s" for `value`!' % value)
-        super().__init__(self, value)
+        return super().__new__(cls, value)
 
     def twin(self):
         if self == 'server':

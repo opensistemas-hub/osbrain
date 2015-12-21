@@ -78,34 +78,65 @@ Pyro4.config.SERVERTYPE = 'multiplex'
 # ...
 
 
-ZMQ_KIND = {
-    'REQ': zmq.REQ,
-    'REP': zmq.REP,
-    'PUSH': zmq.PUSH,
-    'PULL': zmq.PULL,
-    'PUB': zmq.PUB,
-    'SUB': zmq.SUB
-}
+class ZMQKind(int):
+    ZMQ_KIND_TWIN = {
+        zmq.REQ: zmq.REP,
+        zmq.REP: zmq.REQ,
+        zmq.PUSH: zmq.PULL,
+        zmq.PULL: zmq.PUSH,
+        zmq.PUB: zmq.SUB,
+        zmq.SUB: zmq.PUB,
+    }
+    ZMQ_STR_CONVERSION = {
+        'REQ': zmq.REQ,
+        'REP': zmq.REP,
+        'PUSH': zmq.PUSH,
+        'PULL': zmq.PULL,
+        'PUB': zmq.PUB,
+        'SUB': zmq.SUB
+    }
+    keys = list(ZMQ_STR_CONVERSION.keys())
+    for key in keys:
+        ZMQ_STR_CONVERSION[ZMQ_STR_CONVERSION[key]] = key
 
-# TODO: once a class is created to store ZMQ_KIND, a method is to be
-#       implemented: .requires_handler(), which returns either True or False
-ZMQ_HANDLE = {
-    'REQ': False,
-    'REP': True,
-    'PUSH': False,
-    'PULL': True,
-    'PUB': False,
-    'SUB': True
-}
+    def __new__(cls, kind):
+        if isinstance(kind, str):
+            assert kind in cls.ZMQ_STR_CONVERSION, \
+                'Incorrect parameter kind `%s`!' % kind
+            int_kind = cls.ZMQ_STR_CONVERSION[kind]
+        elif isinstance(kind, int):
+            assert kind in cls.ZMQ_STR_CONVERSION, \
+                'Incorrect parameter kind `%s`!' % kind
+            int_kind = kind
+        else:
+            raise ValueError('Incorrect parameter `kind` of type %s!' %
+                    type(kind))
+        return super().__new__(cls, int_kind)
 
-ZMQ_TWIN = {
-    'REQ': 'REP',
-    'REP': 'REQ',
-    'PUSH': 'PULL',
-    'PULL': 'PUSH',
-    'PUB': 'SUB',
-    'SUB': 'PUB'
-}
+    def __eq__(self, other):
+        if isinstance(other, int):
+            return int(self) == other
+        if isinstance(other, str):
+            return str(self) == other
+        return False
+
+    def __str__(self):
+        return self.ZMQ_STR_CONVERSION[self]
+
+    def __repr__(self):
+        return str(self)
+
+    def __hash__(self):
+        return hash(int(self))
+
+    def requires_handler(self):
+        if self.ZMQ_STR_CONVERSION[self] in ('REP', 'PULL', 'SUB'):
+            return True
+        if self.ZMQ_STR_CONVERSION[self] in ('REQ', 'PUSH', 'PUB'):
+            return False
+
+    def twin(self):
+        return self.__class__(self.ZMQ_KIND_TWIN[self])
 
 
 def address_to_host_port(addr):
@@ -154,13 +185,14 @@ class AgentAddress(object):
             'Incorrect parameter host on AgentAddress; expecting type str.'
         assert isinstance(port, int), \
             'Incorrect parameter port on AgentAddress; expecting type int.'
-        assert kind in ZMQ_KIND.keys(), \
-            'Incorrect parameter kind "%s" on AgentAddress!' % kind
         assert role in ('server', 'client'), \
             'Incorrect parameter role on AgentAddress!'
         self.host = host
         self.port = port
-        self.kind = kind
+        if kind is not None:
+            self.kind = ZMQKind(kind)
+        else:
+            self.kind = kind
         self.role = role
 
     def __repr__(self):
@@ -186,7 +218,7 @@ class AgentAddress(object):
     def twin(self):
         host = self.host
         port = self.port
-        kind = ZMQ_TWIN[self.kind]
+        kind = self.kind.twin()
         role = 'client' if self.role == 'server' else 'server'
         return AgentAddress(host, port, kind, role)
 
@@ -263,15 +295,13 @@ class BaseAgent():
         return address in self.socket
 
     def bind(self, kind, alias=None, handler=None, host=None, port=None):
-        assert kind in ZMQ_KIND, \
-            'Wrong socket kind!'
-        assert not ZMQ_HANDLE[kind] or handler is not None, \
+        kind = ZMQKind(kind)
+        assert not kind.requires_handler() or handler is not None, \
             'This socket requires a handler!'
-        zmq_kind = ZMQ_KIND[kind]
         if not host:
             host = self.host
         try:
-            socket = self.context.socket(zmq_kind)
+            socket = self.context.socket(kind)
             if not port:
                 uri = 'tcp://%s' % host
                 port = socket.bind_to_random_port(uri)
@@ -288,7 +318,8 @@ class BaseAgent():
         assert server_address.role == 'server', \
             'Incorrect address! A server address must be provided!'
         client_address = server_address.twin()
-        assert not ZMQ_HANDLE[client_address.kind] or handler is not None, \
+        assert not client_address.kind.requires_handler() or \
+                handler is not None, \
             'This socket requires a handler!'
         if self.registered(client_address):
             self._connect_old(client_address, alias, handler)
@@ -304,11 +335,11 @@ class BaseAgent():
 
     def _connect_new(self, client_address, alias=None, handler=None):
         try:
-            # TODO: when using `socket(client_address.kind)` and running
+            # TODO: when using `socket(str(client_address.kind))` and running
             #       (for example) examples/push_pull/, we get a TypeError
             #       (integer is required). However, the line is not displayed.
             #       Perhaps we could improve the traceback display?
-            socket = self.context.socket(ZMQ_KIND[client_address.kind])
+            socket = self.context.socket(client_address.kind)
             socket.connect('tcp://%s:%s' % (client_address.host,
                                             client_address.port))
         except zmq.ZMQError as error:

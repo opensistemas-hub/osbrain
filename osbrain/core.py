@@ -276,7 +276,7 @@ class AgentAddress(object):
         port = self.port
         kind = self.kind.twin()
         role = self.role.twin()
-        return AgentAddress(host, port, kind, role)
+        return self.__class__(host, port, kind, role)
 
 
 class BaseAgent():

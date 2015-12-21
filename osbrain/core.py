@@ -96,9 +96,9 @@ class AgentAddressRole(str):
             of `client` and viceversa.
         """
         if self == 'server':
-            return AgentAddressRole('client')
+            return self.__class__('client')
         if self == 'client':
-            return AgentAddressRole('server')
+            return self.__class__('server')
 
 
 class AgentAddressKind(int):

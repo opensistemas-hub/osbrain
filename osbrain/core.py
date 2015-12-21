@@ -78,7 +78,7 @@ Pyro4.config.SERVERTYPE = 'multiplex'
 # ...
 
 
-class ZMQKind(int):
+class AgentAddressKind(int):
     ZMQ_KIND_TWIN = {
         zmq.REQ: zmq.REP,
         zmq.REP: zmq.REQ,
@@ -175,7 +175,7 @@ class AgentAddress(object):
         Agent host.
     port : int
         Agent port.
-    kind : str (TODO: create AgentAddressKind class)
+    kind : int, str, AgentAddressKind
         Agent kind.
     role : str (TODO: create AgentAddressRole class)
         Agent role.
@@ -190,7 +190,7 @@ class AgentAddress(object):
         self.host = host
         self.port = port
         if kind is not None:
-            self.kind = ZMQKind(kind)
+            self.kind = AgentAddressKind(kind)
         else:
             self.kind = kind
         self.role = role
@@ -295,7 +295,7 @@ class BaseAgent():
         return address in self.socket
 
     def bind(self, kind, alias=None, handler=None, host=None, port=None):
-        kind = ZMQKind(kind)
+        kind = AgentAddressKind(kind)
         assert not kind.requires_handler() or handler is not None, \
             'This socket requires a handler!'
         if not host:

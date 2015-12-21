@@ -79,12 +79,22 @@ Pyro4.config.SERVERTYPE = 'multiplex'
 
 
 class AgentAddressRole(str):
+    """
+    Agent's address role class. It can either be 'server' or 'client'.
+    """
     def __new__(cls, value):
         if not value in ['server', 'client']:
             raise ValueError('Incorrect value "%s" for `value`!' % value)
         return super().__new__(cls, value)
 
     def twin(self):
+        """
+        Returns
+        -------
+        AgentAddressRole
+            The twin role of the current one; `server` would be the twin
+            of `client` and viceversa.
+        """
         if self == 'server':
             return AgentAddressRole('client')
         if self == 'client':
@@ -92,6 +102,13 @@ class AgentAddressRole(str):
 
 
 class AgentAddressKind(int):
+    """
+    Agent's address kind class. It can be any ZMQ type ('REP', 'PUB'...).
+
+    Inherits from `int` to be compatible with ZMQ definitions, however,
+    it is represented in its string form. The equivalence can also be
+    evaluated against its string form.
+    """
     ZMQ_KIND_TWIN = {
         zmq.REQ: zmq.REP,
         zmq.REP: zmq.REQ,
@@ -143,12 +160,28 @@ class AgentAddressKind(int):
         return hash(int(self))
 
     def requires_handler(self):
+        """
+        Returns
+        -------
+        bool
+            Whether the Agent's address kind requires a handler or not.
+            A socket which processes incoming messages would require a
+            handler (i.e. 'REP', 'PULL', 'SUB'...).
+        """
         if self.ZMQ_STR_CONVERSION[self] in ('REP', 'PULL', 'SUB'):
             return True
         if self.ZMQ_STR_CONVERSION[self] in ('REQ', 'PUSH', 'PUB'):
             return False
 
     def twin(self):
+        """
+        Returns
+        -------
+        AgentAddressKind
+            The twin kind of the current one; `REQ` would be the twin
+            of `REP` and viceversa, `PUB` would be the twin of `SUB` and
+            viceversa, etc.
+        """
         return self.__class__(self.ZMQ_KIND_TWIN[self])
 
 

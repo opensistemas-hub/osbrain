@@ -250,7 +250,9 @@ class BaseAgent():
             self.log_error('Initialization failed: %s' % error)
             raise
         # TODO: Poller needs at least one registered socket
-        #       Implement this properly!
+        #       Implement this properly! Perhaps this could be an in-thread
+        #       socket which could, eventually, handle safe access to memory
+        #       from other threads (i.e. when using Pyro proxies).
         socket = self.context.socket(zmq.REP)
         host = '127.0.0.1'
         uri = 'tcp://%s' % host
@@ -443,7 +445,8 @@ class BaseAgent():
         for socket in events:
             if events[socket] != zmq.POLLIN:
                 continue
-            # TODO: handle all patterns (i.e.: REQ-REP must reply!)
+            # TODO: handle all patterns (i.e.: REQ-REP must reply!) This could
+            #       be implemented with `yield`.
             message = socket.recv_pyobj()
             self.handler[socket](self, message)
 
@@ -561,6 +564,9 @@ class NameServer(multiprocessing.Process):
 
 class Proxy(Pyro4.core.Proxy):
     def __init__(self, name, nsaddr=None):
+        # TODO: perhaps we could add a parameter `start=False` which, in case
+        #       is set to `True`, it will automatically start the Agent if it
+        #       did not exist.
         nshost, nsport = address_to_host_port(nsaddr)
         if nshost is None and nsport is None:
             super().__init__('PYRONAME:%s' % name)

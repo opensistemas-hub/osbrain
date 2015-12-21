@@ -78,6 +78,19 @@ Pyro4.config.SERVERTYPE = 'multiplex'
 # ...
 
 
+class AgentAddressRole(str):
+    def __init__(self, value):
+        if not value in ['server', 'client']:
+            raise ValueError('Incorrect value "%s" for `value`!' % value)
+        super().__init__(self, value)
+
+    def twin(self):
+        if self == 'server':
+            return AgentAddressRole('client')
+        if self == 'client':
+            return AgentAddressRole('server')
+
+
 class AgentAddressKind(int):
     ZMQ_KIND_TWIN = {
         zmq.REQ: zmq.REP,
@@ -164,9 +177,9 @@ class AgentAddress(object):
         Agent host.
     port : int
         Agent port.
-    kind : str
+    kind : int, str, AgentAddressKind
         Agent kind.
-    role : str
+    role : str, AgentAddressRole
         Agent role.
 
     Attributes
@@ -175,9 +188,9 @@ class AgentAddress(object):
         Agent host.
     port : int
         Agent port.
-    kind : int, str, AgentAddressKind
+    kind : AgentAddressKind
         Agent kind.
-    role : str (TODO: create AgentAddressRole class)
+    role : AgentAddressRole
         Agent role.
     """
     def __init__(self, host, port, kind=None, role=None):
@@ -185,15 +198,16 @@ class AgentAddress(object):
             'Incorrect parameter host on AgentAddress; expecting type str.'
         assert isinstance(port, int), \
             'Incorrect parameter port on AgentAddress; expecting type int.'
-        assert role in ('server', 'client'), \
-            'Incorrect parameter role on AgentAddress!'
         self.host = host
         self.port = port
         if kind is not None:
             self.kind = AgentAddressKind(kind)
         else:
             self.kind = kind
-        self.role = role
+        if role is not None:
+            self.role = AgentAddressrole(role)
+        else:
+            self.role = role
 
     def __repr__(self):
         """
@@ -219,7 +233,7 @@ class AgentAddress(object):
         host = self.host
         port = self.port
         kind = self.kind.twin()
-        role = 'client' if self.role == 'server' else 'server'
+        role = self.role.twin()
         return AgentAddress(host, port, kind, role)
 
 

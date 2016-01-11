@@ -192,7 +192,6 @@ def address_to_host_port(addr):
         raise ValueError('Only `AgentAddress` and `str` types are supported!')
     if not addr:
         return (None, None)
-    # TODO: for now we assume `addr` is a string, but it could be other types
     aux = addr.split(':')
     if len(aux) == 1:
         port = None

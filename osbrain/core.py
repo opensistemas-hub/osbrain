@@ -186,6 +186,10 @@ class AgentAddressKind(int):
 
 
 def address_to_host_port(addr):
+    if isinstance(addr, AgentAddress):
+        return (addr.host, addr.port)
+    if not isinstance(addr, str):
+        raise ValueError('Only `AgentAddress` and `str` types are supported!')
     if not addr:
         return (None, None)
     # TODO: for now we assume `addr` is a string, but it could be other types
@@ -198,7 +202,52 @@ def address_to_host_port(addr):
     return (host, port)
 
 
-class AgentAddress(object):
+class SocketAddress(object):
+    """
+    Socket address information consisting on the host and port.
+
+    Parameters
+    ----------
+    host : str
+        Agent host.
+    port : int
+        Agent port.
+
+    Attributes
+    ----------
+    host : str
+        Agent host.
+    port : int
+        Agent port.
+    """
+    def __init__(self, host, port):
+        assert isinstance(host, str), \
+            'Incorrect parameter host on AgentAddress; expecting type str.'
+        assert isinstance(port, int), \
+            'Incorrect parameter port on AgentAddress; expecting type int.'
+        self.host = host
+        self.port = port
+
+    def __repr__(self):
+        """
+        Return the string representation of the SocketAddress.
+
+        Returns
+        -------
+        representation : str
+        """
+        return '%s:%s' % (self.host, self.port)
+
+    def __hash__(self):
+        return hash(self.host) ^ hash(self.port)
+
+    def __eq__(self, other):
+        if not isinstance(other, SocketAddress):
+            return False
+        return self.host == other.host and self.port == other.port
+
+
+class AgentAddress(SocketAddress):
     """
     Agent address information consisting on the host, port, kind and role.
 
@@ -225,12 +274,7 @@ class AgentAddress(object):
         Agent role.
     """
     def __init__(self, host, port, kind=None, role=None):
-        assert isinstance(host, str), \
-            'Incorrect parameter host on AgentAddress; expecting type str.'
-        assert isinstance(port, int), \
-            'Incorrect parameter port on AgentAddress; expecting type int.'
-        self.host = host
-        self.port = port
+        super().__init__(host, port)
         if kind is not None:
             self.kind = AgentAddressKind(kind)
         else:
@@ -275,6 +319,9 @@ class AgentAddress(object):
         kind = self.kind.twin()
         role = self.role.twin()
         return self.__class__(host, port, kind, role)
+
+    def socket_addr(self):
+        return SocketAddress(self.host, self.port)
 
 
 class BaseAgent():

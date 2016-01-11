@@ -186,13 +186,11 @@ class AgentAddressKind(int):
 
 
 def address_to_host_port(addr):
-    # TODO: should we return 0 or None when port is not given?
     if not addr:
         return (None, None)
     # TODO: for now we assume `addr` is a string, but it could be other types
     aux = addr.split(':')
     if len(aux) == 1:
-        # TODO: should we return 0 or None when port is not given?
         port = None
     else:
         port = int(aux[-1])

@@ -45,22 +45,22 @@ def test_registration(nsaddr):
     """
     Verify new agents get registered in the nameserver.
     """
-    Agent('a0', nsaddr=nsaddr).start()
-    Agent('a1', nsaddr=nsaddr).start()
+    Agent('a0', nsaddr).start()
+    Agent('a1', nsaddr).start()
     agent_list = NSProxy(nsaddr).list()
     assert 'a0' in agent_list
     assert 'a1' in agent_list
     # TODO: automatically kill all agents registered in the nameserver
-    Proxy('a0', nsaddr=nsaddr).kill()
-    Proxy('a1', nsaddr=nsaddr).kill()
+    Proxy('a0', nsaddr).kill()
+    Proxy('a1', nsaddr).kill()
 
 
 def test_agent_loopback(nsaddr):
     """
     An agent should always have a loopback inproc socket.
     """
-    Agent('a0', nsaddr=nsaddr).start()
-    addr = Proxy('a0', nsaddr=nsaddr).get_addr('loopback')
+    Agent('a0', nsaddr).start()
+    addr = Proxy('a0', nsaddr).get_addr('loopback')
     assert addr == 'inproc://loopback'
     # TODO: automatically kill all agents registered in the nameserver
-    Proxy('a0', nsaddr=nsaddr).kill()
+    Proxy('a0', nsaddr).kill()

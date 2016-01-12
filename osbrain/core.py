@@ -628,7 +628,7 @@ class BaseAgent():
 
 
 class Agent(multiprocessing.Process):
-    def __init__(self, name, addr=None, nsaddr=None):
+    def __init__(self, name, nsaddr=None, addr=None):
         super().__init__()
         self.name = name
         self.daemon = None

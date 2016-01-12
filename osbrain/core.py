@@ -6,6 +6,7 @@ import types
 import zmq
 import signal
 import sys
+import time
 import multiprocessing
 import pprint
 import pickle
@@ -338,6 +339,8 @@ class BaseAgent():
         self.poll_timeout = 1000
         # Keep alive
         self.keep_alive = True
+        # Kill parent agent process
+        self.kill_agent = False
         # Defaut host
         self.host = host
         if not self.host:
@@ -349,14 +352,12 @@ class BaseAgent():
         except zmq.ZMQError as error:
             self.log_error('Initialization failed: %s' % error)
             raise
-        # TODO: Poller needs at least one registered socket
-        #       Implement this properly! Perhaps this could be an in-thread
-        #       socket which could, eventually, handle safe access to memory
-        #       from other threads (i.e. when using Pyro proxies).
+        # This in-process socket could, eventually, handle safe access to
+        # memory from other threads (i.e. when using Pyro proxies).
         socket = self.context.socket(zmq.REP)
-        host = '127.0.0.1'
-        uri = 'tcp://%s' % host
-        port = socket.bind_to_random_port(uri)
+        address = 'inproc://loopback'
+        socket.bind(address)
+        self.register(socket, address, 'loopback', self.handle_loopback)
 
         self.on_init()
 
@@ -365,6 +366,16 @@ class BaseAgent():
 
     def reply(self, message):
         pass
+
+    def handle_loopback(self, message):
+        print(message)
+        self.send('loopback', 'PONG')
+
+    def safe_ping(self):
+        loopback = self.context.socket(zmq.REQ)
+        loopback.connect('inproc://loopback')
+        loopback.send_pyobj('PING')
+        return loopback.recv_pyobj()
 
     def log_error(self, message):
         # TODO: implement actual logging methods
@@ -608,6 +619,13 @@ class BaseAgent():
         # Terminate agent
         self.terminate()
 
+    def kill(self):
+        """
+        Kill Agent process.
+        """
+        self.terminate()
+        self.kill_agent = True
+
 
 class Agent(multiprocessing.Process):
     def __init__(self, name, addr=None, nsaddr=None):
@@ -619,13 +637,20 @@ class Agent(multiprocessing.Process):
         if self.port is None:
             self.port = 0
         self.nshost, self.nsport = address_to_host_port(nsaddr)
+        self.shutdown_event = multiprocessing.Event()
+
+    def start(self):
+        super().start()
+        # TODO: wait until is registered in the nameserver. Make this wait
+        #       optional? (i.e.: start(skip=True))
+        time.sleep(1)
 
     def run(self):
         # Capture SIGINT
         signal.signal(signal.SIGINT, self.sigint_handler)
 
         try:
-            ns = Pyro4.locateNS(self.nshost, self.nsport)
+            ns = locate_ns(self.nshost, self.nsport)
         except PyroError as error:
             print(error)
             print('Agent %s is being killed' % self.name)
@@ -636,34 +661,84 @@ class Agent(multiprocessing.Process):
         ns_host = ns._pyroUri.host
 
         self.daemon = Pyro4.Daemon(self.host, self.port)
-        uri = self.daemon.register(BaseAgent(name=self.name, host=self.host))
+        self.agent = BaseAgent(name=self.name, host=self.host)
+        uri = self.daemon.register(self.agent)
         ns.register(self.name, uri)
         ns._pyroRelease()
 
         print('%s ready!' % self.name)
-        self.daemon.requestLoop()
+        self.daemon.requestLoop(lambda: not self.shutdown_event.is_set() and
+                                        not self.agent.kill_agent)
+
+    def kill(self):
+        self.shutdown_event.set()
+        if self.daemon:
+            self.daemon.shutdown()
 
     def sigint_handler(self, signal, frame):
         """
         Handle interruption signals.
         """
-        self.daemon.shutdown()
+        self.kill()
 
 
 class NameServer(multiprocessing.Process):
     def __init__(self, addr=None):
         super().__init__()
         self.host, self.port = address_to_host_port(addr)
+        self.shutdown_event = multiprocessing.Event()
 
     def run(self):
-        # FIXME: for now if `port` is None, it will default to 9090. Perhaps
-        #        we could always get a random port (pass 0 as parameter). For
-        #        now it does not work (problems with automatic discovering).
-        Pyro4.naming.startNSloop(self.host, self.port)
+        self.daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
+        self.uri = self.daemon.uriFor(self.daemon.nameserver)
+        self.host = self.uri.host
+        self.port = self.uri.port
+        self.addr = AgentAddress(self.host, self.port)
+        internalUri = self.daemon.uriFor(self.daemon.nameserver, nat=False)
+        enableBroadcast=True
+        bcserver=None
+        hostip=self.daemon.sock.getsockname()[0]
+        if hostip.startswith("127."):
+            print("Not starting broadcast server for localhost.")
+            enableBroadcast=False
+        if enableBroadcast:
+            # Make sure to pass the internal uri to the broadcast
+            # responder. It is almost always useless to let it return
+            # the external uri, because external systems won't be able
+            # to talk to this thing anyway.
+            bcserver=BroadcastServer(internalUri)
+            print("Broadcast server running on %s" % bcserver.locationStr)
+            bcserver.runInThread()
+        print("NS running on %s (%s)" % (self.daemon.locationStr, hostip))
+        print("URI = %s" % self.uri)
+        try:
+            self.daemon.requestLoop(lambda: not self.shutdown_event.is_set())
+        finally:
+            self.daemon.close()
+            if bcserver is not None:
+                bcserver.close()
+        print("NS shut down.")
+
+    def kill(self):
+        self.shutdown_event.set()
+        self.terminate()
+        self.join()
+
+    def sigint_handler(self, signal, frame):
+        """
+        Handle interruption signals.
+        """
+        self.shutdown()
 
 
 def NSProxy(nsaddr):
     host, port = address_to_host_port(nsaddr)
+    return locate_ns(host, port)
+
+
+def locate_ns(host, port):
+    # TODO: this sleep should not be necessary
+    time.sleep(1)
     return Pyro4.locateNS(host, port)
 
 
@@ -673,6 +748,7 @@ class Proxy(Pyro4.core.Proxy):
         #       is set to `True`, it will automatically start the Agent if it
         #       did not exist.
         nshost, nsport = address_to_host_port(nsaddr)
+        ns = locate_ns(nshost, nsport)
         if nshost is None and nsport is None:
             super().__init__('PYRONAME:%s' % name)
         elif nsport is None:

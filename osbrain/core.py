@@ -654,45 +654,12 @@ class NameServer(multiprocessing.Process):
     def __init__(self, addr=None):
         super().__init__()
         self.host, self.port = address_to_host_port(addr)
-        self.daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
-        self.uri = self.daemon.uriFor(self.daemon.nameserver)
-        self.host = self.uri.host
-        self.port = self.uri.port
-        self.addr = AgentAddress(self.host, self.port)
 
     def run(self):
-        self.startNSloop()
-
-    def startNSloop(self):
-        internalUri = self.daemon.uriFor(self.daemon.nameserver, nat=False)
-        enableBroadcast=True
-        bcserver=None
-        hostip=self.daemon.sock.getsockname()[0]
-        if hostip.startswith("127."):
-            print("Not starting broadcast server for localhost.")
-            enableBroadcast=False
-        if enableBroadcast:
-            # Make sure to pass the internal uri to the broadcast
-            # responder. It is almost always useless to let it return
-            # the external uri, because external systems won't be able
-            # to talk to this thing anyway.
-            bcserver=BroadcastServer(internalUri)
-            print("Broadcast server running on %s" % bcserver.locationStr)
-            bcserver.runInThread()
-        print("NS running on %s (%s)" % (self.daemon.locationStr, hostip))
-        print("URI = %s" % self.uri)
-        try:
-            self.daemon.requestLoop()
-        finally:
-            self.daemon.close()
-            if bcserver is not None:
-                bcserver.close()
-        print("NS shut down.")
-
-
-def NSProxy(nsaddr):
-    host, port = address_to_host_port(nsaddr)
-    return Pyro4.locateNS(host, port)
+        # FIXME: for now if `port` is None, it will default to 9090. Perhaps
+        #        we could always get a random port (pass 0 as parameter). For
+        #        now it does not work (problems with automatic discovering).
+        Pyro4.naming.startNSloop(self.host, self.port)
 
 
 class Proxy(Pyro4.core.Proxy):

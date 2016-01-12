@@ -662,6 +662,11 @@ class NameServer(multiprocessing.Process):
         Pyro4.naming.startNSloop(self.host, self.port)
 
 
+def NSProxy(nsaddr):
+    host, port = address_to_host_port(nsaddr)
+    return Pyro4.locateNS(host, port)
+
+
 class Proxy(Pyro4.core.Proxy):
     def __init__(self, name, nsaddr=None):
         # TODO: perhaps we could add a parameter `start=False` which, in case

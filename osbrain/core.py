@@ -185,13 +185,13 @@ class AgentAddressKind(int):
         return self.__class__(self.ZMQ_KIND_TWIN[self])
 
 
-def address_to_host_port(addr):
-    if isinstance(addr, AgentAddress):
+def address_to_host_port(addr=None):
+    if addr is None:
+        return (None, None)
+    if isinstance(addr, SocketAddress):
         return (addr.host, addr.port)
     if not isinstance(addr, str):
-        raise ValueError('Only `AgentAddress` and `str` types are supported!')
-    if not addr:
-        return (None, None)
+        raise ValueError('Only `SocketAddress` and `str` types are supported!')
     aux = addr.split(':')
     if len(aux) == 1:
         port = None

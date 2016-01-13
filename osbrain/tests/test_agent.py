@@ -151,9 +151,8 @@ def test_reqrep(nsaddr):
 
 def test_pushpull(nsaddr):
     """
-    Simple push-pull pattern between two agents.
+    Simple push-pull pattern test.
     """
-    time.sleep(2)
     a0 = run_agent('a0', nsaddr)
     a1 = run_agent('a1', nsaddr)
     addr = a1.bind('PULL', 'pull', redirect)

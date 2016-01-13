@@ -64,3 +64,17 @@ def test_agent_loopback(nsaddr):
     assert addr == 'inproc://loopback'
     # TODO: automatically kill all agents registered in the nameserver
     Proxy('a0', nsaddr).kill()
+
+
+def test_ping(nsaddr):
+    """
+    Test simple loopback ping.
+    """
+    Agent('a0', nsaddr).start()
+    a0 = Proxy('a0', nsaddr)
+    # TODO: decide wether we should manually .run() the agent
+    a0.run()
+    pong = a0.ping()
+    assert pong == 'PONG'
+    # TODO: automatically kill all agents registered in the nameserver
+    a0.kill()

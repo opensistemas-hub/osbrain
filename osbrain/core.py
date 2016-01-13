@@ -367,11 +367,11 @@ class BaseAgent():
     def reply(self, message):
         pass
 
-    def handle_loopback(self, message):
+    def handle_loopback(self, agent, message):
         print(message)
-        self.send('loopback', 'PONG')
+        agent.send('loopback', 'PONG')
 
-    def safe_ping(self):
+    def ping(self):
         loopback = self.context.socket(zmq.REQ)
         loopback.connect('inproc://loopback')
         loopback.send_pyobj('PING')

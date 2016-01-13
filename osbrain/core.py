@@ -575,6 +575,13 @@ class BaseAgent():
         self.terminate()
         self.kill_agent = True
 
+    def test(self):
+        """
+        A test method to check the readiness of the agent. Used for testing
+        purposes, where timing is very important. Do not remove.
+        """
+        return 'OK'
+
 
 class Agent(multiprocessing.Process):
     def __init__(self, name, nsaddr=None, addr=None):
@@ -587,12 +594,6 @@ class Agent(multiprocessing.Process):
             self.port = 0
         self.nsaddr = nsaddr
         self.shutdown_event = multiprocessing.Event()
-
-    def start(self):
-        super().start()
-        # TODO: wait until is registered in the nameserver. Make this wait
-        #       optional? (i.e.: start(skip=True))
-        time.sleep(1)
 
     def run(self):
         # Capture SIGINT
@@ -680,10 +681,13 @@ class NameServer(multiprocessing.Process):
 
 
 class NSProxy(Pyro4.core.Proxy):
-    def __init__(self, nsaddr=None):
+    def __init__(self, nsaddr=None, timeout=3):
         nshost, nsport = address_to_host_port(nsaddr)
+        if nsaddr is None:
+            nshost = '127.0.0.1'
+            nsport = 9090
         # Make sure name server exists
-        locate_ns(nsaddr)
+        locate_ns(nsaddr, timeout)
         super().__init__(
                 'PYRONAME:Pyro.NameServer@%s:%s' % (nshost, nsport))
 
@@ -715,9 +719,10 @@ def locate_ns(nsaddr, timeout=3):
     NamingError
         If the name server could not be located.
     """
-    assert isinstance(nsaddr, (str, SocketAddress)), \
-            'Name server address must be of type `str` or `SocketAddress`!'
     host, port = address_to_host_port(nsaddr)
+    if nsaddr is None:
+        host = '127.0.0.1'
+        port = 9090
     t0 = time.time()
     while time.time() - t0 < timeout:
         try:
@@ -729,19 +734,36 @@ def locate_ns(nsaddr, timeout=3):
 
 
 class Proxy(Pyro4.core.Proxy):
-    def __init__(self, name, nsaddr=None):
+    def __init__(self, name, nsaddr=None, timeout=3):
         # TODO: perhaps we could add a parameter `start=False` which, in case
         #       is set to `True`, it will automatically start the Agent if it
         #       did not exist.
         nshost, nsport = address_to_host_port(nsaddr)
         # Make sure name server exists
         locate_ns(nsaddr)
-        if nshost is None and nsport is None:
-            super().__init__('PYRONAME:%s' % name)
-        elif nsport is None:
-            super().__init__('PYRONAME:%s@%s' % (name, nshost))
+        t0 = time.time()
+        while time.time() - t0 < timeout:
+            try:
+                if nshost is None and nsport is None:
+                    super().__init__('PYRONAME:%s' % name)
+                elif nsport is None:
+                    super().__init__('PYRONAME:%s@%s' % (name, nshost))
+                else:
+                    super().__init__(
+                            'PYRONAME:%s@%s:%s' % (name, nshost, nsport))
+            except NamingError:
+                continue
+            break
         else:
-            super().__init__('PYRONAME:%s@%s:%s' % (name, nshost, nsport))
+            raise NamingError('Could not find agent after timeout!')
+        while time.time() - t0 < timeout:
+            try:
+                self.test()
+            except NamingError:
+                continue
+            break
+        else:
+            raise NamingError('Could not test agent!')
 
     def add_method(self, method, name=None):
         self.new_method(method, name)

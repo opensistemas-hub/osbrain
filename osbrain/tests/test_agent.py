@@ -74,12 +74,32 @@ def test_registration(nsaddr):
     """
     Agent('a0', nsaddr).start()
     Agent('a1', nsaddr).start()
+    # Make sure agents have started
+    Proxy('a0', nsaddr).test()
+    Proxy('a1', nsaddr).test()
+    # List registered agents
     agent_list = NSProxy(nsaddr).list()
     assert 'a0' in agent_list
     assert 'a1' in agent_list
     # TODO: automatically kill all agents registered in the nameserver
     Proxy('a0', nsaddr).kill()
     Proxy('a1', nsaddr).kill()
+
+
+def test_early_agent_proxy(nsaddr):
+    """
+    It must be possible to create a Proxy when the registration of the new
+    agent is imminent, even if it has not occured yet. A timeout will occur
+    in case the agent could not be located.
+    """
+    agent = Agent('a0', nsaddr)
+    # Start agent later
+    Timer(1, agent.start).start()
+    # Locate agent now
+    a0 = Proxy('a0', nsaddr)
+    assert a0.test() == 'OK'
+    # TODO: automatically kill all agents registered in the nameserver
+    a0.kill()
 
 
 def test_agent_loopback(nsaddr):

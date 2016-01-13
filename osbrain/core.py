@@ -15,68 +15,12 @@ import errno
 from Pyro4.errors import PyroError
 from multiprocessing.queues import Queue
 
-from .message import Message
-from .message import Types as mType
-
 
 Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
 Pyro4.config.SERIALIZER = 'pickle'
 Pyro4.config.THREADPOOL_SIZE = 16
 Pyro4.config.SERVERTYPE = 'multiplex'
 # TODO: should we set COMMTIMEOUT as well?
-
-
-# TODO:
-#   - Consider removing message types?
-#       - Perhaps it is fine as long as they are all hidden from the user.
-#         (only for basic, low-level messages types!)
-#       - Or even better, create a list of "commands" i.e. !PING, !DIE, ...
-#         which can be used by the user (create tests for each command).
-#   - Message should be hidden from the user: i.e. allow the user to pass
-#     messages with 2 parameters (that will automatically be wrapped in a
-#     message?
-#   - Do not require a message to inherit from Message (it could be anything)?
-#       - Perhaps it is fine if we allow a string as Message type (then only
-#         the type would be required.
-#       - Implement __eq__ to compare a Message to its topic.
-#       - Reconsider attribute name `type` to: topic? header? key?...
-#   - Tests, tests, tests!
-#   - Rethink Agent class and methods (better API)
-#   - Implement logging mechanisms (deprecate info(), warn(), ...)
-#   - Automatically handle error replies (i.e. log error and skip processing?)
-#   - An Agent should only have a REP socket at first. Then any number and
-#     type of sockets could be added to it.
-#   - Perhaps the init_agent() method makes no sense (could be embedded in
-#     __init__().
-#   - __getitem__ could select sockets by name (i.e. Agent()['rep0'])
-
-# REVIEW (API examples):
-# =============================
-# a1 = Agent()
-# a2 = Agent()
-# =============================
-# a1.bind_push(host, port)
-# a2.connect_pull(host, port, handler)
-# -----------------------------
-# address = a1.bind_push(host, port)
-# a2.connect_pull(address, handler)
-# -----------------------------
-# address = Address(host, port)
-# a1.bind_push(address)       # If port is changed it is done inside `address`
-# a2.connect_pull(address)    # In this case address only contains host + port
-# -----------------------------
-# address = Address(host, port, kind)
-# a1.bind(address)            # If port is changed it is done inside `address`
-# a2.connect(address.pair())
-# -----------------------------
-# a1.bind(kind, host, port)   # May return port
-# a2.connect(kind, host, port, handler)
-# -----------------------------
-# address = Address(host, port, kind, role)
-# a1.add(address)            # If port is changed it is done inside `address`
-# a2.add(address.pair())
-# -----------------------------
-# ...
 
 
 class AgentAddressRole(str):
@@ -363,6 +307,10 @@ class BaseAgent():
 
     def on_init(self):
         pass
+
+    # TODO: __getitem__ could select sockets by name (i.e. Agent()['rep0'])
+    def __getitem__(self):
+        raise
 
     def reply(self, message):
         pass

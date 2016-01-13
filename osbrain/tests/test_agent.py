@@ -111,6 +111,20 @@ def test_registration(nsaddr):
     assert 'a1' in agent_list
 
 
+def test_socket_creation(nsaddr):
+    """
+    Test ZMQ socket creation.
+    """
+    a0 = run_agent('a0', nsaddr)
+    a0.bind('REQ', 'alias0')
+    a0.bind('PUB', 'alias1')
+    a0.bind('PUSH', 'alias2')
+    addresses = a0.get_attr('address')
+    assert 'alias0' in addresses
+    assert 'alias1' in addresses
+    assert 'alias2' in addresses
+
+
 # TODO: this function is used just within the scope of the next test.
 #       Could we directly send the bytecode to the agent so that we can
 #       declare it within a more constrained scope? (i.e. in the test code).

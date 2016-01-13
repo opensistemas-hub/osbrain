@@ -432,6 +432,9 @@ class BaseAgent():
     def set_attr(self, name, value):
         setattr(self, name, value)
 
+    def get_attr(self, name):
+        return getattr(self, name)
+
     def new_method(self, method, name=None):
         method = types.MethodType(method, self)
         if not name:

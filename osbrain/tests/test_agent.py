@@ -4,6 +4,7 @@ import random
 from threading import Timer
 from Pyro4.errors import NamingError
 from osbrain.core import locate_ns
+from osbrain.core import run_agent
 from osbrain.core import Agent
 from osbrain.core import Proxy
 from osbrain.core import NSProxy
@@ -68,24 +69,6 @@ def test_locate_ns():
     ns.kill()
 
 
-def test_registration(nsaddr):
-    """
-    Verify new agents get registered in the nameserver.
-    """
-    Agent('a0', nsaddr).start()
-    Agent('a1', nsaddr).start()
-    # Make sure agents have started
-    Proxy('a0', nsaddr).test()
-    Proxy('a1', nsaddr).test()
-    # List registered agents
-    agent_list = NSProxy(nsaddr).list()
-    assert 'a0' in agent_list
-    assert 'a1' in agent_list
-    # TODO: automatically kill all agents registered in the nameserver
-    Proxy('a0', nsaddr).kill()
-    Proxy('a1', nsaddr).kill()
-
-
 def test_early_agent_proxy(nsaddr):
     """
     It must be possible to create a Proxy when the registration of the new
@@ -106,9 +89,8 @@ def test_agent_loopback(nsaddr):
     """
     An agent should always have a loopback inproc socket.
     """
-    Agent('a0', nsaddr).start()
-    addr = Proxy('a0', nsaddr).get_addr('loopback')
-    assert addr == 'inproc://loopback'
+    a0 = run_agent('a0', nsaddr)
+    assert a0.get_addr('loopback') == 'inproc://loopback'
     # TODO: automatically kill all agents registered in the nameserver
     Proxy('a0', nsaddr).kill()
 
@@ -117,14 +99,25 @@ def test_ping(nsaddr):
     """
     Test simple loopback ping.
     """
-    Agent('a0', nsaddr).start()
-    a0 = Proxy('a0', nsaddr)
-    # TODO: decide wether we should manually .run() the agent
-    a0.run()
-    pong = a0.ping()
-    assert pong == 'PONG'
+    a0 = run_agent('a0', nsaddr)
+    assert a0.ping() == 'PONG'
     # TODO: automatically kill all agents registered in the nameserver
     a0.kill()
+
+
+def test_registration(nsaddr):
+    """
+    Verify new agents get registered in the nameserver.
+    """
+    a0 = run_agent('a0', nsaddr)
+    a1 = run_agent('a1', nsaddr)
+    # List registered agents
+    agent_list = NSProxy(nsaddr).list()
+    assert 'a0' in agent_list
+    assert 'a1' in agent_list
+    # TODO: automatically kill all agents registered in the nameserver
+    Proxy('a0', nsaddr).kill()
+    Proxy('a1', nsaddr).kill()
 
 
 # TODO: this function is used just within the scope of the next test.
@@ -138,15 +131,10 @@ def test_reqrep(nsaddr):
     """
     Simple request-reply pattern between two agents.
     """
-    Agent('a0', nsaddr).start()
-    Agent('a1', nsaddr).start()
-    a0 = Proxy('a0', nsaddr)
-    a1 = Proxy('a1', nsaddr)
+    a0 = run_agent('a0', nsaddr)
+    a1 = run_agent('a1', nsaddr)
     addr = a0.bind('REP', 'reply', rep_handler)
     a1.connect(addr, 'request')
-    # TODO: decide wether we should manually .run() the agent
-    a0.run()
-    a1.run()
     response = a1.send_recv('request', 'Hello world')
     assert response == 'OK'
     # TODO: automatically kill all agents registered in the nameserver

@@ -733,6 +733,13 @@ def locate_ns(nsaddr, timeout=3):
     raise NamingError('Could not find name server after timeout!')
 
 
+def run_agent(name, nsaddr=None, addr=None):
+    Agent(name, nsaddr, addr).start()
+    agent = Proxy(name, nsaddr)
+    agent.run()
+    return agent
+
+
 class Proxy(Pyro4.core.Proxy):
     def __init__(self, name, nsaddr=None, timeout=3):
         # TODO: perhaps we could add a parameter `start=False` which, in case

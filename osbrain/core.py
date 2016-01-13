@@ -734,10 +734,30 @@ def locate_ns(nsaddr, timeout=3):
 
 
 def run_agent(name, nsaddr=None, addr=None):
+    """
+    Ease the agent creation process.
+
+    This function will create a new agent, start the process and then run
+    its main loop through a proxy.
+
+    Parameters
+    ----------
+    name : str
+        Agent name or alias.
+    nsaddr : SocketAddress, default is None
+        Name server address.
+    addr : SocketAddress, default is None
+        New agent address, if it is to be fixed.
+
+    Returns
+    -------
+    proxy
+        A proxy to the new agent.
+    """
     Agent(name, nsaddr, addr).start()
-    agent = Proxy(name, nsaddr)
-    agent.run()
-    return agent
+    proxy = Proxy(name, nsaddr)
+    proxy.run()
+    return proxy
 
 
 class Proxy(Pyro4.core.Proxy):

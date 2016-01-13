@@ -101,8 +101,7 @@ def test_reqrep(nsaddr):
     a0.run()
     a1.run()
     response = a1.send_recv('request', 'Hello world')
-    print(response)
-    assert response is not None
+    assert response == 'OK'
     # TODO: automatically kill all agents registered in the nameserver
     a0.kill()
     a1.kill()

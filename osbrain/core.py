@@ -13,6 +13,7 @@ import pickle
 import errno
 
 from Pyro4.errors import PyroError
+from Pyro4.errors import NamingError
 from multiprocessing.queues import Queue
 
 
@@ -584,7 +585,7 @@ class Agent(multiprocessing.Process):
         # TODO: pull request?
         if self.port is None:
             self.port = 0
-        self.nshost, self.nsport = address_to_host_port(nsaddr)
+        self.nsaddr = nsaddr
         self.shutdown_event = multiprocessing.Event()
 
     def start(self):
@@ -598,7 +599,7 @@ class Agent(multiprocessing.Process):
         signal.signal(signal.SIGINT, self.sigint_handler)
 
         try:
-            ns = locate_ns(self.nshost, self.nsport)
+            ns = NSProxy(self.nsaddr)
         except PyroError as error:
             print(error)
             print('Agent %s is being killed' % self.name)
@@ -606,7 +607,6 @@ class Agent(multiprocessing.Process):
 
         # TODO: infer `host` if is `None` and we are connected to `ns_host`
         #       through a LAN.
-        ns_host = ns._pyroUri.host
 
         self.daemon = Pyro4.Daemon(self.host, self.port)
         self.agent = BaseAgent(name=self.name, host=self.host)
@@ -679,15 +679,53 @@ class NameServer(multiprocessing.Process):
         self.shutdown()
 
 
-def NSProxy(nsaddr):
+class NSProxy(Pyro4.core.Proxy):
+    def __init__(self, nsaddr=None):
+        nshost, nsport = address_to_host_port(nsaddr)
+        # Make sure name server exists
+        locate_ns(nsaddr)
+        super().__init__(
+                'PYRONAME:Pyro.NameServer@%s:%s' % (nshost, nsport))
+
+    def addr(self):
+        return SocketAddress(self._pyroUri.host, self._pyroUri.port)
+
+    def release(self):
+        self._pyroRelease()
+
+
+def locate_ns(nsaddr, timeout=3):
+    """
+    Locate a name server (ping) to ensure it actually exists.
+
+    Parameters
+    ----------
+    nsaddr : SocketAddress
+        The address where the name server should be up and running.
+    timeout : float
+        Timeout in seconds before aborting location.
+
+    Returns
+    -------
+    nsaddr
+        The address where the name server was located.
+
+    Raises
+    ------
+    NamingError
+        If the name server could not be located.
+    """
+    assert isinstance(nsaddr, (str, SocketAddress)), \
+            'Name server address must be of type `str` or `SocketAddress`!'
     host, port = address_to_host_port(nsaddr)
-    return locate_ns(host, port)
-
-
-def locate_ns(host, port):
-    # TODO: this sleep should not be necessary
-    time.sleep(1)
-    return Pyro4.locateNS(host, port)
+    t0 = time.time()
+    while time.time() - t0 < timeout:
+        try:
+            Pyro4.locateNS(host, port)
+            return nsaddr
+        except NamingError:
+            continue
+    raise NamingError('Could not find name server after timeout!')
 
 
 class Proxy(Pyro4.core.Proxy):
@@ -696,7 +734,8 @@ class Proxy(Pyro4.core.Proxy):
         #       is set to `True`, it will automatically start the Agent if it
         #       did not exist.
         nshost, nsport = address_to_host_port(nsaddr)
-        ns = locate_ns(nshost, nsport)
+        # Make sure name server exists
+        locate_ns(nsaddr)
         if nshost is None and nsport is None:
             super().__init__('PYRONAME:%s' % name)
         elif nsport is None:

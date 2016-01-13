@@ -634,6 +634,7 @@ class Agent(multiprocessing.Process):
 class NameServer(multiprocessing.Process):
     def __init__(self, addr=None):
         super().__init__()
+        self.addr = addr
         self.host, self.port = address_to_host_port(addr)
         self.shutdown_event = multiprocessing.Event()
 
@@ -668,7 +669,16 @@ class NameServer(multiprocessing.Process):
                 bcserver.close()
         print("NS shut down.")
 
+    def kill_all(self):
+        proxy = NSProxy(self.addr)
+        for agent in proxy.list():
+            if agent == 'Pyro.NameServer':
+                continue
+            agent = Proxy(agent, self.addr)
+            agent.kill()
+
     def kill(self):
+        self.kill_all()
         self.shutdown_event.set()
         self.terminate()
         self.join()

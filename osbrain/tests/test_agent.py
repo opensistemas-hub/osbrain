@@ -81,8 +81,6 @@ def test_early_agent_proxy(nsaddr):
     # Locate agent now
     a0 = Proxy('a0', nsaddr)
     assert a0.test() == 'OK'
-    # TODO: automatically kill all agents registered in the nameserver
-    a0.kill()
 
 
 def test_agent_loopback(nsaddr):
@@ -91,8 +89,6 @@ def test_agent_loopback(nsaddr):
     """
     a0 = run_agent('a0', nsaddr)
     assert a0.get_addr('loopback') == 'inproc://loopback'
-    # TODO: automatically kill all agents registered in the nameserver
-    Proxy('a0', nsaddr).kill()
 
 
 def test_ping(nsaddr):
@@ -101,8 +97,6 @@ def test_ping(nsaddr):
     """
     a0 = run_agent('a0', nsaddr)
     assert a0.ping() == 'PONG'
-    # TODO: automatically kill all agents registered in the nameserver
-    a0.kill()
 
 
 def test_registration(nsaddr):
@@ -115,9 +109,6 @@ def test_registration(nsaddr):
     agent_list = NSProxy(nsaddr).list()
     assert 'a0' in agent_list
     assert 'a1' in agent_list
-    # TODO: automatically kill all agents registered in the nameserver
-    Proxy('a0', nsaddr).kill()
-    Proxy('a1', nsaddr).kill()
 
 
 # TODO: this function is used just within the scope of the next test.
@@ -137,6 +128,3 @@ def test_reqrep(nsaddr):
     a1.connect(addr, 'request')
     response = a1.send_recv('request', 'Hello world')
     assert response == 'OK'
-    # TODO: automatically kill all agents registered in the nameserver
-    a0.kill()
-    a1.kill()

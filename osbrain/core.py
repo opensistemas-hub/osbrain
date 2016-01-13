@@ -280,7 +280,7 @@ class AgentAddress(SocketAddress):
         else:
             self.kind = kind
         if role is not None:
-            self.role = AgentAddressrole(role)
+            self.role = AgentAddressRole(role)
         else:
             self.role = role
 

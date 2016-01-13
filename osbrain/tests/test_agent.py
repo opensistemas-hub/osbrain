@@ -44,7 +44,7 @@ def test_nameserver(nsaddr):
     assert agents[name] == 'PYRO:%s@%s' % (name, nsaddr)
 
 
-def test_locatens():
+def test_locate_ns():
     """
     Locate nameserver as fast as possible. The function `locate_ns` should
     have a timeout before raising an error.

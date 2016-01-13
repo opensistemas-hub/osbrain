@@ -78,3 +78,31 @@ def test_ping(nsaddr):
     assert pong == 'PONG'
     # TODO: automatically kill all agents registered in the nameserver
     a0.kill()
+
+
+# TODO: this function is used just within the scope of the next test.
+#       Could we directly send the bytecode to the agent so that we can
+#       declare it within a more constrained scope? (i.e. in the test code).
+def rep_handler(agent, message):
+    agent.send('reply', 'OK')
+
+
+def test_reqrep(nsaddr):
+    """
+    Simple request-reply pattern between two agents.
+    """
+    Agent('a0', nsaddr).start()
+    Agent('a1', nsaddr).start()
+    a0 = Proxy('a0', nsaddr)
+    a1 = Proxy('a1', nsaddr)
+    addr = a0.bind('REP', 'reply', rep_handler)
+    a1.connect(addr, 'request')
+    # TODO: decide wether we should manually .run() the agent
+    a0.run()
+    a1.run()
+    response = a1.send_recv('request', 'Hello world')
+    print(response)
+    assert response is not None
+    # TODO: automatically kill all agents registered in the nameserver
+    a0.kill()
+    a1.kill()

@@ -5,6 +5,7 @@ from threading import Timer
 from Pyro4.errors import NamingError
 from osbrain.core import locate_ns
 from osbrain.core import run_agent
+from osbrain.core import BaseAgent
 from osbrain.core import Agent
 from osbrain.core import Proxy
 from osbrain.core import NSProxy
@@ -125,11 +126,15 @@ def test_socket_creation(nsaddr):
     assert 'alias2' in addresses
 
 
-# TODO: this function is used just within the scope of the next test.
+# TODO: this functions are used just within the scope of the next test.
 #       Could we directly send the bytecode to the agent so that we can
-#       declare it within a more constrained scope? (i.e. in the test code).
+#       declare them within a more constrained scope? (i.e. in the test code).
 def rep_handler(agent, message):
     agent.send('reply', 'OK')
+def redirect(agent, message):
+    agent.send('push', '%s (redirected)' % message)
+def set_received(agent, message):
+    agent.received = message
 
 
 def test_reqrep(nsaddr):
@@ -142,3 +147,25 @@ def test_reqrep(nsaddr):
     a1.connect(addr, 'request')
     response = a1.send_recv('request', 'Hello world')
     assert response == 'OK'
+
+
+def test_pushpull(nsaddr):
+    """
+    Simple push-pull pattern between two agents.
+    """
+    time.sleep(2)
+    a0 = run_agent('a0', nsaddr)
+    a1 = run_agent('a1', nsaddr)
+    addr = a1.bind('PULL', 'pull', redirect)
+    a0.connect(addr, 'push')
+    # Create a BaseAgent as end-point
+    a2 = BaseAgent('a2')
+    a2.received = ''
+    addr = a2.bind('PULL', 'pull', set_received)
+    a1.connect(addr, 'push')
+    # Send message (will be passed from a0 to a1 and then to a2)
+    message = 'Hello world'
+    a0.send('push', message)
+    while not a2.received:
+        a2.iterate()
+    assert a2.received == '%s (redirected)' % message

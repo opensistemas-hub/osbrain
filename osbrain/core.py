@@ -427,12 +427,6 @@ class BaseAgent():
         """
         self.socket[alias].setsockopt_string(zmq.SUBSCRIBE, topic)
 
-    def terminate(self):
-        self.log_info('Closing sockets...')
-        for address in self.socket:
-            self.socket[address].close()
-        self.log_info('Terminated!')
-
     def iddle(self):
         """
         This function is to be executed when the agent is iddle.
@@ -587,15 +581,13 @@ class BaseAgent():
         """
         self.loop()
 
-        # Terminate agent
-        self.terminate()
-
-    def kill(self):
-        """
-        Kill Agent process.
-        """
-        self.terminate()
+    def shutdown(self):
+        self.close_sockets()
         self.kill_agent = True
+
+    def close_sockets(self):
+        for address in self.socket:
+            self.socket[address].close()
 
     def test(self):
         """
@@ -691,16 +683,16 @@ class NameServer(multiprocessing.Process):
                 bcserver.close()
         print("NS shut down.")
 
-    def kill_all(self):
+    def shutdown_all(self):
         proxy = NSProxy(self.addr)
         for agent in proxy.list():
             if agent == 'Pyro.NameServer':
                 continue
             agent = Proxy(agent, self.addr)
-            agent.kill()
+            agent.shutdown()
 
-    def kill(self):
-        self.kill_all()
+    def shutdown(self):
+        self.shutdown_all()
         self.shutdown_event.set()
         self.terminate()
         self.join()

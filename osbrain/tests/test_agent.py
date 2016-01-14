@@ -24,7 +24,7 @@ def nsaddr(request):
             ns = NameServer(addr)
             def terminate():
                 print('addfinalizer...')
-                ns.kill()
+                ns.shutdown()
             request.addfinalizer(terminate)
             ns.start()
             return addr
@@ -67,7 +67,7 @@ def test_locate_ns():
         break
     assert nsaddr.host == host
     assert nsaddr.port == port
-    ns.kill()
+    ns.shutdown()
 
 
 def test_early_agent_proxy(nsaddr):

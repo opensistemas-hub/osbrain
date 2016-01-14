@@ -317,14 +317,18 @@ class BaseAgent():
         pass
 
     def handle_loopback(self, agent, message):
-        print(message)
-        agent.send('loopback', 'PONG')
+        header, data = message
+        if header == 'PING':
+            return 'PONG'
 
-    def ping(self):
+    def loopback(self, header, data=None):
         loopback = self.context.socket(zmq.REQ)
         loopback.connect('inproc://loopback')
-        loopback.send_pyobj('PING')
+        loopback.send_pyobj((header, data))
         return loopback.recv_pyobj()
+
+    def ping(self):
+        return self.loopback('PING')
 
     def log_error(self, message):
         # TODO: implement actual logging methods

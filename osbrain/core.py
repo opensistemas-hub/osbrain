@@ -286,6 +286,8 @@ class BaseAgent():
         self.keep_alive = True
         # Kill parent agent process
         self.kill_agent = False
+        # Agent running
+        self.running = False
         # Defaut host
         self.host = host
         if not self.host:
@@ -320,8 +322,18 @@ class BaseAgent():
         header, data = message
         if header == 'PING':
             return 'PONG'
+        if header == 'STOP':
+            self.log_info('Stopping...')
+            self.keep_alive = False
+            return 'OK'
+        if header == 'CLOSE':
+            self.log_info('Closing sockets...')
+            self.close_sockets()
+            self.send('loopback', 'OK')
 
     def loopback(self, header, data=None):
+        if not self.running:
+            raise NotImplementedError()
         loopback = self.context.socket(zmq.REQ)
         loopback.connect('inproc://loopback')
         loopback.send_pyobj((header, data))
@@ -579,14 +591,29 @@ class BaseAgent():
         """
         Run the agent.
         """
+        self.running = True
         self.loop()
+        self.running = False
+
+    def stop(self):
+        self.loopback('STOP')
 
     def shutdown(self):
-        self.close_sockets()
+        # Stop the running thread
+        self.loopback('STOP')
+        while self.running:
+            time.sleep(0.1)
+        # Kill the agent
+        self.kill()
+
+    def kill(self):
+        self.context.destroy()
         self.kill_agent = True
 
     def close_sockets(self):
         for address in self.socket:
+            if address in ('loopback', 'inproc://loopback'):
+                continue
             self.socket[address].close()
 
     def test(self):
@@ -632,6 +659,15 @@ class Agent(multiprocessing.Process):
         print('%s ready!' % self.name)
         self.daemon.requestLoop(lambda: not self.shutdown_event.is_set() and
                                         not self.agent.kill_agent)
+        try:
+            ns = NSProxy(self.nsaddr)
+            ns.remove(self.name)
+        except PyroError as error:
+            print(error)
+            print('Agent %s is being killed' % self.name)
+            return
+        self.agent._killed = True
+        self.daemon.close()
 
     def kill(self):
         self.shutdown_event.set()
@@ -685,7 +721,8 @@ class NameServer(multiprocessing.Process):
 
     def shutdown_all(self):
         proxy = NSProxy(self.addr)
-        for agent in proxy.list():
+        agents = proxy.list()
+        for agent in agents:
             if agent == 'Pyro.NameServer':
                 continue
             agent = Proxy(agent, self.addr)
@@ -693,6 +730,10 @@ class NameServer(multiprocessing.Process):
 
     def shutdown(self):
         self.shutdown_all()
+        ns = NSProxy(self.addr)
+        # Wait for all agents to be shutdown (unregistered)
+        while len(ns.list()) > 1:
+            time.sleep(0.1)
         self.shutdown_event.set()
         self.terminate()
         self.join()

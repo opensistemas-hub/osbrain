@@ -82,6 +82,7 @@ def test_early_agent_proxy(nsaddr):
     # Locate agent now
     a0 = Proxy('a0', nsaddr)
     assert a0.test() == 'OK'
+    a0.kill()
 
 
 def test_agent_loopback(nsaddr):
@@ -110,6 +111,21 @@ def test_registration(nsaddr):
     agent_list = NSProxy(nsaddr).list()
     assert 'a0' in agent_list
     assert 'a1' in agent_list
+
+
+def test_agent_shutdown(nsaddr):
+    """
+    An agent must unregister itself before shutting down.
+    """
+    agent = Agent('a0', nsaddr)
+    agent.start()
+    a0 = Proxy('a0', nsaddr)
+    a0.run()
+    ns = NSProxy(nsaddr)
+    assert 'a0' in ns.list()
+    a0.shutdown()
+    agent.join()
+    assert 'a0' not in ns.list()
 
 
 def test_socket_creation(nsaddr):

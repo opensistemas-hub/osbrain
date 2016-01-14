@@ -130,7 +130,7 @@ def test_socket_creation(nsaddr):
 #       Could we directly send the bytecode to the agent so that we can
 #       declare them within a more constrained scope? (i.e. in the test code).
 def rep_handler(agent, message):
-    agent.send('reply', 'OK')
+    return 'OK'
 def redirect(agent, message):
     agent.send('push', '%s (redirected)' % message)
 def set_received(agent, message):

@@ -521,10 +521,12 @@ class BaseAgent():
         for socket in events:
             if events[socket] != zmq.POLLIN:
                 continue
-            # TODO: handle all patterns (i.e.: REQ-REP must reply!) This could
-            #       be implemented with `yield`.
             message = socket.recv_pyobj()
-            self.handler[socket](self, message)
+            handler_return = self.handler[socket](self, message)
+            if handler_return is not None:
+                # TODO: raise if the socket is not able to reply (i.e.
+                #       has already replied or it simply cannot by definition)
+                socket.send_pyobj(handler_return)
 
         return 0
 

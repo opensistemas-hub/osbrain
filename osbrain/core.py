@@ -6,6 +6,7 @@ import types
 import zmq
 import signal
 import sys
+import os
 import time
 import multiprocessing
 import pprint
@@ -635,6 +636,10 @@ class Agent(multiprocessing.Process):
             self.port = 0
         self.nsaddr = nsaddr
         self.shutdown_event = multiprocessing.Event()
+        self.permission_error = multiprocessing.Event()
+        self.unknown_error = multiprocessing.Event()
+        self.os_error = multiprocessing.Event()
+        self.daemon_started = multiprocessing.Event()
 
     def run(self):
         # Capture SIGINT
@@ -647,10 +652,21 @@ class Agent(multiprocessing.Process):
             print('Agent %s is being killed' % self.name)
             return
 
-        # TODO: infer `host` if is `None` and we are connected to `ns_host`
-        #       through a LAN.
+        try:
+            # TODO: infer `host` if is `None` and we are connected to `ns_host`
+            #       through a LAN.
+            self.daemon = Pyro4.Daemon(self.host, self.port)
+        except PermissionError:
+            self.permission_error.set()
+            return
+        except OSError:
+            self.os_error.set()
+            return
+        except:
+            self.unknown_error.set()
+            raise
+        self.daemon_started.set()
 
-        self.daemon = Pyro4.Daemon(self.host, self.port)
         self.agent = BaseAgent(name=self.name, host=self.host)
         uri = self.daemon.register(self.agent)
         ns.register(self.name, uri)
@@ -668,6 +684,23 @@ class Agent(multiprocessing.Process):
             return
         self.agent._killed = True
         self.daemon.close()
+
+    def start(self):
+        super().start()
+        # TODO: instead of Event(), use message passing to handle exceptions.
+        #       It would be easier to know the exact exception that occurred.
+        while not self.daemon_started.is_set() and \
+              not self.permission_error.is_set() and \
+              not self.os_error.is_set() and \
+              not self.unknown_error.is_set():
+            time.sleep(0.01)
+        if self.unknown_error.is_set():
+            raise RuntimeError('Unknown error occured while creating daemon!')
+        elif self.os_error.is_set():
+            raise OSError('TODO: use message passing to know the exact error')
+        elif self.permission_error.is_set():
+            self.permission_error.clear()
+            raise PermissionError()
 
     def kill(self):
         self.shutdown_event.set()
@@ -687,9 +720,24 @@ class NameServer(multiprocessing.Process):
         self.addr = addr
         self.host, self.port = address_to_host_port(addr)
         self.shutdown_event = multiprocessing.Event()
+        self.permission_error = multiprocessing.Event()
+        self.unknown_error = multiprocessing.Event()
+        self.os_error = multiprocessing.Event()
+        self.daemon_started = multiprocessing.Event()
 
     def run(self):
-        self.daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
+        try:
+            self.daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
+        except PermissionError:
+            self.permission_error.set()
+            return
+        except OSError:
+            self.os_error.set()
+            return
+        except:
+            self.unknown_error.set()
+            raise
+        self.daemon_started.set()
         self.uri = self.daemon.uriFor(self.daemon.nameserver)
         self.host = self.uri.host
         self.port = self.uri.port
@@ -718,6 +766,23 @@ class NameServer(multiprocessing.Process):
             if bcserver is not None:
                 bcserver.close()
         print("NS shut down.")
+
+    def start(self):
+        super().start()
+        # TODO: instead of Event(), use message passing to handle exceptions.
+        #       It would be easier to know the exact exception that occurred.
+        while not self.daemon_started.is_set() and \
+              not self.permission_error.is_set() and \
+              not self.os_error.is_set() and \
+              not self.unknown_error.is_set():
+            time.sleep(0.01)
+        if self.unknown_error.is_set():
+            raise RuntimeError('Unknown error occured while creating daemon!')
+        elif self.os_error.is_set():
+            raise OSError('TODO: use message passing to know the exact error')
+        elif self.permission_error.is_set():
+            self.permission_error.clear()
+            raise PermissionError()
 
     def shutdown_all(self):
         proxy = NSProxy(self.addr)

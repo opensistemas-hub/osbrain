@@ -23,7 +23,6 @@ def nsaddr(request):
             addr = SocketAddress(host, port)
             ns = NameServer(addr)
             def terminate():
-                print('addfinalizer...')
                 ns.shutdown()
             request.addfinalizer(terminate)
             ns.start()
@@ -32,6 +31,8 @@ def nsaddr(request):
             continue
         except PermissionError:
             continue
+        except:
+            raise
 
 
 def test_nameserver(nsaddr):
@@ -44,6 +45,52 @@ def test_nameserver(nsaddr):
     assert len(agents) == 1
     assert list(agents.keys())[0] == name
     assert agents[name] == 'PYRO:%s@%s' % (name, nsaddr)
+
+
+def test_ns_error_os(nsaddr):
+    """
+    Name server start() should raise an error if address is already in use.
+    """
+    ns = NameServer(nsaddr)
+    try:
+        ns.start()
+        ns.shutdown()
+        assert 0
+    except OSError:
+        pass
+    except:
+        assert 0
+
+
+def test_agent_error_os(nsaddr):
+    """
+    Agent start() should raise an error if address is already in use.
+    """
+    agent = Agent('a0', nsaddr, nsaddr)
+    try:
+        agent.start()
+        agent.shutdown()
+        assert 0
+    except OSError:
+        pass
+    except:
+        assert 0
+
+
+def test_agent_error_permission(nsaddr):
+    """
+    Agent start() should raise an error if it has not sufficient permissions.
+    """
+    # TODO: is there anything more reliable than trying port 22?
+    agent = Agent('a0', nsaddr, '127.0.0.1:22')
+    try:
+        agent.start()
+        agent.shutdown()
+        assert 0
+    except PermissionError:
+        pass
+    except:
+        assert 0
 
 
 def test_locate_ns():

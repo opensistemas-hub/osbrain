@@ -155,12 +155,12 @@ def test_pushpull(nsaddr):
     """
     a0 = run_agent('a0', nsaddr)
     a1 = run_agent('a1', nsaddr)
-    addr = a1.bind('PULL', 'pull', redirect)
+    addr = a1.bind('PULL', handler=redirect)
     a0.connect(addr, 'push')
     # Create a BaseAgent as end-point
     a2 = BaseAgent('a2')
     a2.received = ''
-    addr = a2.bind('PULL', 'pull', set_received)
+    addr = a2.bind('PULL', handler=set_received)
     a1.connect(addr, 'push')
     # Send message (will be passed from a0 to a1 and then to a2)
     message = 'Hello world'

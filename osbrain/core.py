@@ -410,6 +410,19 @@ class BaseAgent():
         self.register(socket, client_address, alias, handler)
         return client_address
 
+    def subscribe(self, alias, topic):
+        """
+        Subscribe a SUB socket to a topic.
+
+        Parameters
+        ----------
+        alias : str, AgentAddress
+            Alias or AgentAddress of the SUB socket.
+        topic : str
+            Topic to filter subscription messages.
+        """
+        self.socket[alias].setsockopt_string(zmq.SUBSCRIBE, topic)
+
     def terminate(self):
         self.log_info('Closing sockets...')
         for address in self.socket:

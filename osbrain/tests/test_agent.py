@@ -168,3 +168,27 @@ def test_pushpull(nsaddr):
     while not a2.received:
         a2.iterate()
     assert a2.received == '%s (redirected)' % message
+
+
+def test_pubsub(nsaddr):
+    """
+    Simple publisher-subscriber pattern test.
+    """
+    a0 = run_agent('a0', nsaddr)
+    a1 = run_agent('a1', nsaddr)
+    addr = a1.bind('SUB', handler=redirect)
+    # Subscribe to all topics
+    a1.subscribe(addr, '')
+    a0.connect(addr, 'pub')
+    # Create a BaseAgent as end-point
+    a2 = BaseAgent('a2')
+    a2.received = ''
+    a2.poll_timeout = 200
+    addr = a2.bind('PULL', handler=set_received)
+    a1.connect(addr, 'push')
+    # Send message (will be passed from a0 to a1 and then to a2)
+    while not a2.received:
+        message = 'Hello world'
+        a0.send('pub', message)
+        a2.iterate()
+    assert a2.received == '%s (redirected)' % message

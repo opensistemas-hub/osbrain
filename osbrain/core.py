@@ -395,6 +395,9 @@ class BaseAgent():
             raise
         server_address = AgentAddress(host, port, kind, 'server')
         self.register(socket, server_address, alias, handler)
+        # SUB sockets are a special case
+        if kind == 'SUB':
+            self.subscribe(server_address, handler)
         return server_address
 
     def connect(self, server_address, alias=None, handler=None):
@@ -431,20 +434,18 @@ class BaseAgent():
         self.register(socket, client_address, alias, handler)
         return client_address
 
-    def subscribe(self, alias, topic):
+    def subscribe(self, alias, handlers):
         """
-        Subscribe a SUB socket to a topic.
-
-        Parameters
-        ----------
-        alias : str, AgentAddress
-            Alias or AgentAddress of the SUB socket.
-        topic : str
-            Topic to filter subscription messages.
+        TODO
         """
-        assert isinstance(topic, str), 'Topic must be of `str` type!'
-        topic = self.str2bytes(topic)
-        self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
+        if not isinstance(handlers, dict):
+            handlers = {'': handlers}
+        for topic in handlers.keys():
+            assert isinstance(topic, str), 'Topic must be of type `str`!'
+            topic = self.str2bytes(topic)
+            self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
+        # Reset handlers
+        self.handler[self.socket[alias]] = handlers
 
     def iddle(self):
         """
@@ -538,12 +539,21 @@ class BaseAgent():
         for socket in events:
             if events[socket] != zmq.POLLIN:
                 continue
-            message = socket.recv_pyobj()
-            handler_return = self.handler[socket](self, message)
-            if handler_return is not None:
-                # TODO: raise if the socket is not able to reply (i.e.
-                #       has already replied or it simply cannot by definition)
-                socket.send_pyobj(handler_return)
+            serialized = socket.recv()
+            socket_kind = AgentAddressKind(socket.socket_type)
+            if socket_kind == 'SUB':
+                handlers = self.handler[socket]
+                for str_topic in handlers:
+                    btopic = self.str2bytes(str_topic)
+                    if serialized.startswith(btopic):
+                        message = pickle.loads(serialized.lstrip(btopic))
+                        handlers[str_topic](self, message)
+            else:
+                message = pickle.loads(serialized)
+                handler_return = self.handler[socket](self, message)
+            if socket_kind == 'REP':
+                if handler_return is not None:
+                    socket.send_pyobj(handler_return)
 
         return 0
 

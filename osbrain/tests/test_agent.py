@@ -241,8 +241,6 @@ def test_pubsub(nsaddr):
     a0 = run_agent('a0', nsaddr)
     a1 = run_agent('a1', nsaddr)
     addr = a1.bind('SUB', handler=redirect)
-    # Subscribe to all topics
-    a1.subscribe(addr, '')
     a0.connect(addr, 'pub')
     # Create a BaseAgent as end-point
     a2 = BaseAgent('a2')

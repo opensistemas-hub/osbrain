@@ -128,7 +128,7 @@ def test_socket_creation(nsaddr):
 #       declare them within a more constrained scope? (i.e. in the test code).
 def rep_handler(agent, message):
     return 'OK'
-def redirect(agent, message, topic=None):
+def redirect(agent, message):
     agent.send('push', '%s (redirected)' % message)
 def set_received(agent, message, topic=None):
     agent.received = message
@@ -206,3 +206,9 @@ def test_logger(nsaddr):
         if len(history):
             break
     assert message in history[0]
+
+
+# TODO:
+#  - Test handler with 2 parameters (agent, message)
+#  - Test handler with 3 parameters (agent, message, topic)
+#  - Test topic is properly filtered (no match, partial match, full match)

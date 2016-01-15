@@ -8,6 +8,7 @@ import signal
 import sys
 import os
 import time
+import inspect
 import multiprocessing
 import pprint
 import pickle
@@ -550,18 +551,24 @@ class BaseAgent():
                 handlers = self.handler[socket]
                 for str_topic in handlers:
                     btopic = self.str2bytes(str_topic)
-                    if serialized.startswith(btopic):
-                        m0 = serialized.index(b'\x80')
-                        topic = serialized[:m0]
-                        message = serialized[m0:]
-                        try:
-                            message = pickle.loads(serialized[m0:])
-                        except ValueError:
-                            # TODO: should we raise? (at least log error)
-                            pass
-                        # TODO: allow handlers with two parameters (if so,
-                        #       simply ommit the topic)
-                        handlers[str_topic](self, message, topic)
+                    if not serialized.startswith(btopic):
+                        continue
+                    m0 = serialized.index(b'\x80')
+                    topic = serialized[:m0]
+                    message = serialized[m0:]
+                    try:
+                        message = pickle.loads(serialized[m0:])
+                    except ValueError:
+                        # TODO: should we raise? (at least log error)
+                        pass
+                    # TODO: allow handlers with two parameters (if so,
+                    #       simply ommit the topic)
+                    handler = handlers[str_topic]
+                    nparams = len(inspect.signature(handler).parameters)
+                    if nparams == 2:
+                        handler(self, message)
+                    elif nparams == 3:
+                        handler(self, message, topic)
             else:
                 message = pickle.loads(serialized)
                 handler_return = self.handler[socket](self, message)

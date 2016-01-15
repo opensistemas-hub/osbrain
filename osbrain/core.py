@@ -561,8 +561,7 @@ class BaseAgent():
                     except ValueError:
                         # TODO: should we raise? (at least log error)
                         pass
-                    # TODO: allow handlers with two parameters (if so,
-                    #       simply ommit the topic)
+                    # Call the handler (with or without the topic)
                     handler = handlers[str_topic]
                     nparams = len(inspect.signature(handler).parameters)
                     if nparams == 2:

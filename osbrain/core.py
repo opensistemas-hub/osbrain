@@ -344,12 +344,16 @@ class BaseAgent():
         return self.loopback('PING')
 
     def log_error(self, message):
-        # TODO: implement actual logging methods
-        print('ERROR (%s): %s' % (self.name, message))
+        if self.registered('log'):
+            self.send('log', 'ERROR %s' % message)
+        else:
+            print('ERROR (%s): %s' % (self.name, message))
 
     def log_info(self, message):
-        # TODO: implement actual logging methods
-        print('INFO (%s): %s' % (self.name, message))
+        if self.registered('log'):
+            self.send('log', 'INFO %s' % message)
+        else:
+            print('INFO (%s): %s' % (self.name, message))
 
     def get_addr(self, alias):
         return self.address[alias]
@@ -438,7 +442,9 @@ class BaseAgent():
         topic : str
             Topic to filter subscription messages.
         """
-        self.socket[alias].setsockopt_string(zmq.SUBSCRIBE, topic)
+        assert isinstance(topic, str), 'Topic must be of `str` type!'
+        topic = self.str2bytes(topic)
+        self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
 
     def iddle(self):
         """
@@ -541,11 +547,20 @@ class BaseAgent():
 
         return 0
 
-    def send(self, address, message):
-        self.socket[address].send_pyobj(message)
+    def str2bytes(self, message):
+        # TODO: what happens if the topic is non-ASCII?
+        return message.encode('ascii')
+
+    def send(self, address, message, topic=''):
+        assert isinstance(topic, str), 'Topic must be of `str` type!'
+        serialized = pickle.dumps(message, -1)
+        topic = self.str2bytes(topic)
+        self.socket[address].send(topic + serialized)
 
     def recv(self, address):
-        return self.socket[address].recv_pyobj()
+        serialized = self.socket[address].recv()
+        deserialized = pickle.loads(serialized)
+        return deserialized
 
     def send_recv(self, address, message):
         self.send(address, message)

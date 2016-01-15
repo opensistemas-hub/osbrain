@@ -3,6 +3,7 @@ import pytest
 import random
 from threading import Timer
 from Pyro4.errors import NamingError
+from osbrain.logging import run_logger
 from osbrain.core import locate_ns
 from osbrain.core import run_agent
 from osbrain.core import BaseAgent
@@ -255,3 +256,24 @@ def test_pubsub(nsaddr):
         a0.send('pub', message)
         a2.iterate()
     assert a2.received == '%s (redirected)' % message
+
+
+def test_logger(nsaddr):
+    """
+    TODO
+    """
+    logger = run_logger('logger', nsaddr)
+    a0 = run_agent('a0', nsaddr)
+    # TODO: automatically connect to logger if it is already registered in
+    #       the name server
+    addr = logger.get_addr('log')
+    a0.connect(addr, 'log')
+    message = 'Hello world'
+    while True:
+        a0.log_info(message)
+        history = logger.get_attr('log_history')
+        if len(history):
+            break
+    assert message in history[0]
+    print(history)
+    time.sleep(2)

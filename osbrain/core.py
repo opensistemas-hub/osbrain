@@ -343,15 +343,20 @@ class BaseAgent():
     def ping(self):
         return self.loopback('PING')
 
-    def log_error(self, message):
-        if self.registered('log'):
-            self.send('log', 'ERROR %s' % message)
+    def log_error(self, message, loger='log'):
+        if self.registered(logger):
+            logger_kind = AgentAddressKind(self.socket[logger].socket_type)
+            assert logger_kind == 'PUB', 'Logger must use publisher-subscriber pattern!'
+            self.send(logger, message, 'ERROR')
         else:
             print('ERROR (%s): %s' % (self.name, message))
 
-    def log_info(self, message):
-        if self.registered('log'):
-            self.send('log', 'INFO %s' % message)
+    def log_info(self, message, logger='log'):
+        if self.registered(logger):
+            logger_kind = AgentAddressKind(self.socket[logger].socket_type)
+            assert logger_kind == 'PUB', \
+                'Logger must use publisher-subscriber pattern!'
+            self.send(logger, message, 'INFO')
         else:
             print('INFO (%s): %s' % (self.name, message))
 
@@ -546,7 +551,14 @@ class BaseAgent():
                 for str_topic in handlers:
                     btopic = self.str2bytes(str_topic)
                     if serialized.startswith(btopic):
-                        message = pickle.loads(serialized.lstrip(btopic))
+                        assert isinstance(btopic, bytes)
+                        assert isinstance(serialized, bytes)
+                        try:
+                            message = pickle.loads(serialized.lstrip(btopic))
+                        except ValueError:
+                            # TODO: should we raise?
+                            print('WARNING: probably wrong topic!')
+                            message = serialized
                         handlers[str_topic](self, message)
             else:
                 message = pickle.loads(serialized)

@@ -197,7 +197,7 @@ def test_logger(nsaddr):
     a0 = run_agent('a0', nsaddr)
     # TODO: automatically connect to logger if it is already registered in
     #       the name server
-    addr = logger.get_addr('log')
+    addr = logger.get_addr('logger_sub_socket')
     a0.connect(addr, 'log')
     message = 'Hello world'
     while True:
@@ -206,5 +206,3 @@ def test_logger(nsaddr):
         if len(history):
             break
     assert message in history[0]
-    print(history)
-    time.sleep(2)

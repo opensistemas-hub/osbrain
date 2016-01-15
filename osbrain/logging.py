@@ -36,7 +36,11 @@ def run_logger(name, nsaddr=None, addr=None):
     Agent(name, nsaddr, addr).start()
     proxy = Proxy(name, nsaddr)
     proxy.set_attr('log_history', [])
-    # TODO: differenciate between INFO, ERROR...
-    proxy.bind('SUB', 'log', log_handler)
+    # TODO: handle INFO, ERROR... differently?
+    handlers = {
+        'INFO': log_handler,
+        'ERROR': log_handler
+    }
+    proxy.bind('SUB', 'logger_sub_socket', handlers)
     proxy.run()
     return proxy

@@ -19,6 +19,23 @@ def test_ns_error_os(nsaddr):
         assert 0
 
 
+def test_ns_error_permission(nsaddr):
+    """
+    Name server start() should raise an error if it has not sufficient
+    permissions.
+    """
+    # TODO: is there anything more reliable than trying port 22?
+    ns = NameServer('127.0.0.1:22')
+    try:
+        ns.start()
+        ns.shutdown()
+        assert 0
+    except PermissionError:
+        pass
+    except:
+        assert 0
+
+
 def test_agent_error_os(nsaddr):
     """
     Agent start() should raise an error if address is already in use.

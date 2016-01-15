@@ -128,9 +128,9 @@ def test_socket_creation(nsaddr):
 #       declare them within a more constrained scope? (i.e. in the test code).
 def rep_handler(agent, message):
     return 'OK'
-def redirect(agent, message):
+def redirect(agent, message, topic=None):
     agent.send('push', '%s (redirected)' % message)
-def set_received(agent, message):
+def set_received(agent, message, topic=None):
     agent.received = message
 
 

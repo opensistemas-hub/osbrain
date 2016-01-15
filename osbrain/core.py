@@ -551,15 +551,17 @@ class BaseAgent():
                 for str_topic in handlers:
                     btopic = self.str2bytes(str_topic)
                     if serialized.startswith(btopic):
-                        assert isinstance(btopic, bytes)
-                        assert isinstance(serialized, bytes)
+                        m0 = serialized.index(b'\x80')
+                        topic = serialized[:m0]
+                        message = serialized[m0:]
                         try:
-                            message = pickle.loads(serialized.lstrip(btopic))
+                            message = pickle.loads(serialized[m0:])
                         except ValueError:
-                            # TODO: should we raise?
-                            print('WARNING: probably wrong topic!')
-                            message = serialized
-                        handlers[str_topic](self, message)
+                            # TODO: should we raise? (at least log error)
+                            pass
+                        # TODO: allow handlers with two parameters (if so,
+                        #       simply ommit the topic)
+                        handlers[str_topic](self, message, topic)
             else:
                 message = pickle.loads(serialized)
                 handler_return = self.handler[socket](self, message)

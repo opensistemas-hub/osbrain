@@ -8,7 +8,8 @@ def pyro_log():
     os.environ["PYRO_LOGLEVEL"] = "DEBUG"
 
 
-def log_handler(agent, message):
+def log_handler(agent, message, topic):
+    # TODO: handle INFO, ERROR... differently?
     agent.log_history.append(message)
 
 
@@ -36,7 +37,6 @@ def run_logger(name, nsaddr=None, addr=None):
     Agent(name, nsaddr, addr).start()
     proxy = Proxy(name, nsaddr)
     proxy.set_attr('log_history', [])
-    # TODO: handle INFO, ERROR... differently?
     handlers = {
         'INFO': log_handler,
         'ERROR': log_handler

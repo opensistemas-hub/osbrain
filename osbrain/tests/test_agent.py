@@ -2,7 +2,6 @@ import time
 import pytest
 import random
 from threading import Timer
-from Pyro4.errors import NamingError
 from osbrain.logging import run_logger
 from osbrain.core import locate_ns
 from osbrain.core import run_agent
@@ -13,27 +12,7 @@ from osbrain.core import NSProxy
 from osbrain.core import NameServer
 from osbrain.core import SocketAddress
 
-
-@pytest.fixture(scope='function')
-def nsaddr(request):
-    while True:
-        try:
-            # Bind to random port
-            host = '127.0.0.1'
-            port = random.randrange(10000, 20000)
-            addr = SocketAddress(host, port)
-            ns = NameServer(addr)
-            def terminate():
-                ns.shutdown()
-            request.addfinalizer(terminate)
-            ns.start()
-            return addr
-        except NamingError:
-            continue
-        except PermissionError:
-            continue
-        except:
-            raise
+from common import nsaddr
 
 
 def test_nameserver(nsaddr):
@@ -46,52 +25,6 @@ def test_nameserver(nsaddr):
     assert len(agents) == 1
     assert list(agents.keys())[0] == name
     assert agents[name] == 'PYRO:%s@%s' % (name, nsaddr)
-
-
-def test_ns_error_os(nsaddr):
-    """
-    Name server start() should raise an error if address is already in use.
-    """
-    ns = NameServer(nsaddr)
-    try:
-        ns.start()
-        ns.shutdown()
-        assert 0
-    except OSError:
-        pass
-    except:
-        assert 0
-
-
-def test_agent_error_os(nsaddr):
-    """
-    Agent start() should raise an error if address is already in use.
-    """
-    agent = Agent('a0', nsaddr, nsaddr)
-    try:
-        agent.start()
-        agent.shutdown()
-        assert 0
-    except OSError:
-        pass
-    except:
-        assert 0
-
-
-def test_agent_error_permission(nsaddr):
-    """
-    Agent start() should raise an error if it has not sufficient permissions.
-    """
-    # TODO: is there anything more reliable than trying port 22?
-    agent = Agent('a0', nsaddr, '127.0.0.1:22')
-    try:
-        agent.start()
-        agent.shutdown()
-        assert 0
-    except PermissionError:
-        pass
-    except:
-        assert 0
 
 
 def test_locate_ns():

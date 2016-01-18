@@ -39,7 +39,7 @@ Always make sure to work within the virtual environment:
 
     workon osbrain
 
-To be able to compile dependences, it is essential to have the python3-dev 
+To be able to compile dependences, it is essential to have the python3-dev
 package installed, as long as all the gcc toolchain.
 
     (for ubuntu) sudo apt-get install python3-dev build-essential autoconf libtool pkg-config
@@ -61,6 +61,6 @@ installation.
 
 If everything is set up correctly, all the tests should pass:
 
-    py.test -s -v ./
+    py.test -s -v -n 4 ./
 
 We can also try any example in the `examples` folder.

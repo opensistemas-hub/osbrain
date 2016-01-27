@@ -478,6 +478,9 @@ class BaseAgent():
             name = method.__name__
         setattr(self, name, method)
 
+    # TODO: remove/deprecate. If an Agent is to be active, then loopback could
+    #       be used to send execution orders. E.g.: each second, send function
+    #       over loopback and let it be executed by the main thread.
     def set_loop(self, loop):
         self.loop = types.MethodType(loop, self)
 

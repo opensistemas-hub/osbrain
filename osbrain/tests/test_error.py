@@ -65,3 +65,7 @@ def test_agent_error_permission(nsaddr):
         pass
     except:
         assert 0
+
+# TODO:
+#  - Test "obscure" errors (exceptions not correctly returned by Pyro? or
+#    not correctly propagated to the parent process?)

@@ -189,6 +189,24 @@ def test_pubsub(nsaddr):
     assert a2.received == '%s (redirected)' % message
 
 
+def test_agent_inheritance(nsaddr):
+    """
+    Test agent inheritance; agents can be based on a custom class.
+    """
+    class NewAgent(BaseAgent):
+        def the_answer_to_life(self):
+            return 42
+
+    # Test an Agent based on the new class
+    Agent('new', nsaddr=nsaddr, base=NewAgent).start()
+    new = Proxy('new', nsaddr)
+    assert new.the_answer_to_life() == 42
+
+    # Test the quick `run_agent` function
+    a0 = run_agent('a0', nsaddr, base=NewAgent)
+    assert a0.the_answer_to_life() == 42
+
+
 def test_logger(nsaddr):
     """
     TODO

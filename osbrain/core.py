@@ -672,7 +672,7 @@ class BaseAgent():
 
 
 class Agent(multiprocessing.Process):
-    def __init__(self, name, nsaddr=None, addr=None):
+    def __init__(self, name, nsaddr=None, addr=None, base=BaseAgent):
         super().__init__()
         self.name = name
         self.daemon = None
@@ -681,6 +681,7 @@ class Agent(multiprocessing.Process):
         if self.port is None:
             self.port = 0
         self.nsaddr = nsaddr
+        self.base = base
         self.shutdown_event = multiprocessing.Event()
         self.permission_error = multiprocessing.Event()
         self.unknown_error = multiprocessing.Event()
@@ -713,7 +714,7 @@ class Agent(multiprocessing.Process):
             raise
         self.daemon_started.set()
 
-        self.agent = BaseAgent(name=self.name, host=self.host)
+        self.agent = self.base(name=self.name, host=self.host)
         uri = self.daemon.register(self.agent)
         ns.register(self.name, uri)
         ns._pyroRelease()
@@ -909,7 +910,7 @@ def locate_ns(nsaddr, timeout=3):
     raise NamingError('Could not find name server after timeout!')
 
 
-def run_agent(name, nsaddr=None, addr=None):
+def run_agent(name, nsaddr=None, addr=None, base=BaseAgent):
     """
     Ease the agent creation process.
 
@@ -930,7 +931,7 @@ def run_agent(name, nsaddr=None, addr=None):
     proxy
         A proxy to the new agent.
     """
-    Agent(name, nsaddr, addr).start()
+    Agent(name, nsaddr=nsaddr, addr=addr, base=base).start()
     proxy = Proxy(name, nsaddr)
     proxy.run()
     return proxy

@@ -1,6 +1,8 @@
 import os
 from .core import Agent
 from .core import Proxy
+from .core import BaseAgent
+from .core import run_agent
 
 
 def pyro_log():
@@ -8,12 +10,21 @@ def pyro_log():
     os.environ["PYRO_LOGLEVEL"] = "DEBUG"
 
 
-def log_handler(agent, message, topic):
-    # TODO: handle INFO, ERROR... differently?
-    agent.log_history.append(message)
+class Logger(BaseAgent):
+    def on_init(self):
+        self.log_history = []
+        handlers = {
+            'INFO': self.log_handler,
+            'ERROR': self.log_handler
+        }
+        self.bind('SUB', 'logger_sub_socket', handlers)
+
+    def log_handler(self, message, topic):
+        # TODO: handle INFO, ERROR... differently?
+        self.log_history.append(message)
 
 
-def run_logger(name, nsaddr=None, addr=None):
+def run_logger(name, nsaddr=None, addr=None, base=Logger):
     """
     Ease the logger creation process.
 
@@ -34,13 +45,4 @@ def run_logger(name, nsaddr=None, addr=None):
     proxy
         A proxy to the new logger.
     """
-    Agent(name, nsaddr, addr).start()
-    proxy = Proxy(name, nsaddr)
-    proxy.set_attr('log_history', [])
-    handlers = {
-        'INFO': log_handler,
-        'ERROR': log_handler
-    }
-    proxy.bind('SUB', 'logger_sub_socket', handlers)
-    proxy.run()
-    return proxy
+    return run_agent(name, nsaddr, addr, base)

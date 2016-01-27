@@ -320,7 +320,7 @@ class BaseAgent():
     def reply(self, message):
         pass
 
-    def handle_loopback(self, agent, message):
+    def handle_loopback(self, message):
         header, data = message
         if header == 'PING':
             return 'PONG'
@@ -567,13 +567,27 @@ class BaseAgent():
                     # Call the handler (with or without the topic)
                     handler = handlers[str_topic]
                     nparams = len(inspect.signature(handler).parameters)
-                    if nparams == 2:
-                        handler(self, message)
-                    elif nparams == 3:
-                        handler(self, message, topic)
+                    if isinstance(handler, types.FunctionType):
+                        if nparams == 2:
+                            handler(self, message)
+                        elif nparams == 3:
+                            handler(self, message, topic)
+                    elif isinstance(handler, types.MethodType):
+                        if nparams == 1:
+                            handler(message)
+                        elif nparams == 2:
+                            handler(message, topic)
+                    else:
+                        raise TypeError('Handler must be a function/method!')
             else:
                 message = pickle.loads(serialized)
-                handler_return = self.handler[socket](self, message)
+                handler = self.handler[socket]
+                if isinstance(handler, types.FunctionType):
+                    handler_return = handler(self, message)
+                elif isinstance(handler, types.MethodType):
+                    handler_return = handler(message)
+                else:
+                    raise TypeError('Handler must be a function/method!')
             if socket_kind == 'REP':
                 if handler_return is not None:
                     socket.send_pyobj(handler_return)

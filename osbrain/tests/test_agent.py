@@ -226,6 +226,42 @@ def test_logger(nsaddr):
     assert message in history[0]
 
 
+def test_method_handlers(nsaddr):
+    """
+    Test handlers which are methods of a custom class.
+    """
+    class NewAgent(BaseAgent):
+        def rep(self, message):
+            self.received['rep'] = message
+            self.connect(message, 'endpoint')
+            return 'OK'
+        def pull(self, message):
+            self.received['pull'] = message
+            self.send('endpoint', message + ' (redirected)')
+        def on_init(self):
+            self.received = {}
+            self.bind('REP', 'rep', handler=self.rep)
+            self.bind('PULL', 'pull', handler=self.pull)
+
+    server = run_agent('server', nsaddr, base=NewAgent)
+    client = run_agent('client', nsaddr)
+    # Create a BaseAgent as end-point
+    endpoint = BaseAgent('endpoint')
+    endpoint.received = ''
+    endpoint_addr = endpoint.bind('PULL', handler=set_received)
+    # Request
+    client.connect(server.get_addr('rep'), 'req')
+    assert client.send_recv('req', endpoint_addr) == 'OK'
+    assert server.get_attr('received')['rep'] == endpoint_addr
+    # Push
+    client.connect(server.get_addr('pull'), 'push')
+    client.send('push', 'Hello')
+    while not endpoint.received:
+        endpoint.iterate()
+    assert server.get_attr('received')['pull'] == 'Hello'
+    assert endpoint.received == 'Hello (redirected)'
+
+
 # TODO:
 #  - Test handler with 2 parameters (agent, message)
 #  - Test handler with 3 parameters (agent, message, topic)

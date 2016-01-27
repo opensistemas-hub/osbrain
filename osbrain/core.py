@@ -646,7 +646,8 @@ class BaseAgent():
 
     def shutdown(self):
         # Stop the running thread
-        self.loopback('STOP')
+        if self.running:
+            self.loopback('STOP')
         while self.running:
             time.sleep(0.1)
         # Kill the agent

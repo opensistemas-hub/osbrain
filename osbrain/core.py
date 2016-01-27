@@ -133,6 +133,10 @@ class AgentAddressKind(int):
         return self.__class__(self.ZMQ_KIND_TWIN[self])
 
 
+def unbound_method(method):
+    return getattr(method.__self__.__class__, method.__name__)
+
+
 def address_to_host_port(addr=None):
     if addr is None:
         return (None, None)
@@ -378,7 +382,36 @@ class BaseAgent():
             except:
                 self.error('Error registering socket: %s' % e)
                 raise
+            self.set_handler(socket, handler)
+
+    def set_handler(self, socket, handler):
+        # TODO: clean-up
+        if isinstance(handler, types.FunctionType):
             self.handler[socket] = handler
+            return
+        if isinstance(handler, types.MethodType):
+            self.handler[socket] = unbound_method(handler)
+            return
+        if isinstance(handler, list):
+            handlers = []
+            for h in handler:
+                if isinstance(h, types.FunctionType):
+                    handlers.append(h)
+                elif isinstance(h, types.MethodType):
+                    handlers.append(unbound_method(h))
+            self.handler[socket] = handlers
+            return
+        if isinstance(handler, dict):
+            handlers = {}
+            for key in handler:
+                if isinstance(handler[key], types.FunctionType):
+                    handlers[key] = handler[key]
+                elif isinstance(handler[key], types.MethodType):
+                    handlers[key] = unbound_method(handler[key])
+            self.handler[socket] = handlers
+            return
+        # TODO: allow `str` (method name)
+        raise NotImplementedError('Only functions/methods are allowed!')
 
     def registered(self, address):
         return address in self.socket
@@ -451,7 +484,7 @@ class BaseAgent():
             topic = self.str2bytes(topic)
             self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
         # Reset handlers
-        self.handler[self.socket[alias]] = handlers
+        self.set_handler(self.socket[alias], handlers)
 
     def iddle(self):
         """
@@ -567,27 +600,14 @@ class BaseAgent():
                     # Call the handler (with or without the topic)
                     handler = handlers[str_topic]
                     nparams = len(inspect.signature(handler).parameters)
-                    if isinstance(handler, types.FunctionType):
-                        if nparams == 2:
-                            handler(self, message)
-                        elif nparams == 3:
-                            handler(self, message, topic)
-                    elif isinstance(handler, types.MethodType):
-                        if nparams == 1:
-                            handler(message)
-                        elif nparams == 2:
-                            handler(message, topic)
-                    else:
-                        raise TypeError('Handler must be a function/method!')
+                    if nparams == 2:
+                        handler(self, message)
+                    elif nparams == 3:
+                        handler(self, message, topic)
             else:
                 message = pickle.loads(serialized)
                 handler = self.handler[socket]
-                if isinstance(handler, types.FunctionType):
-                    handler_return = handler(self, message)
-                elif isinstance(handler, types.MethodType):
-                    handler_return = handler(message)
-                else:
-                    raise TypeError('Handler must be a function/method!')
+                handler_return = handler(self, message)
             if socket_kind == 'REP':
                 if handler_return is not None:
                     socket.send_pyobj(handler_return)

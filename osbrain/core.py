@@ -366,8 +366,12 @@ class BaseAgent():
         else:
             print('INFO (%s): %s' % (self.name, message))
 
-    def get_addr(self, alias):
+    def addr(self, alias):
         return self.address[alias]
+
+    def get_addr(self, alias):
+        # TODO: deprecate
+        return self.addr(alias)
 
     def register(self, socket, address, alias=None, handler=None):
         assert not self.registered(address), \

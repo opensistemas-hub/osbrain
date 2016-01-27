@@ -9,6 +9,7 @@ import sys
 import os
 import time
 import inspect
+import random
 import multiprocessing
 import pprint
 import pickle
@@ -945,6 +946,27 @@ def locate_ns(nsaddr, timeout=3):
         except NamingError:
             continue
     raise NamingError('Could not find name server after timeout!')
+
+
+def random_nameserver():
+    """
+    TODO
+    """
+    while True:
+        try:
+            # Bind to random port
+            host = '127.0.0.1'
+            port = random.randrange(10000, 20000)
+            addr = SocketAddress(host, port)
+            ns = NameServer(addr)
+            ns.start()
+            return addr
+        except NamingError:
+            continue
+        except PermissionError:
+            continue
+        except:
+            raise
 
 
 def run_agent(name, nsaddr=None, addr=None, base=BaseAgent):

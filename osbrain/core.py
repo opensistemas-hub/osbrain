@@ -377,7 +377,7 @@ class BaseAgent():
         assert not self.registered(address), \
             'Socket is already registered!'
         if not alias:
-            alias = str(address)
+            alias = address
         self.socket[alias] = socket
         self.socket[address] = socket
         self.address[alias] = address

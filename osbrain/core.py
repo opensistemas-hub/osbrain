@@ -612,7 +612,12 @@ class BaseAgent():
             else:
                 message = pickle.loads(serialized)
                 handler = self.handler[socket]
-                handler_return = handler(self, message)
+                if not isinstance(handler, list):
+                    handler = [handler]
+                # TODO: test (allow multiple handlers, which get executed in
+                #       order)
+                for h in handler:
+                    handler_return = h(self, message)
             if socket_kind == 'REP':
                 if handler_return is not None:
                     socket.send_pyobj(handler_return)

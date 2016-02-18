@@ -368,13 +368,16 @@ class BaseAgent():
                 'Logger must use publisher-subscriber pattern!'
             self.send(logger, message, topic=level)
         elif level == 'INFO':
-            sys.stdout.writelines('INFO ' + message)
+            sys.stdout.write('INFO %s\n' % message)
+            sys.stdout.flush()
         # When logging an error, always write to stderr
         if level == 'ERROR':
-            sys.stderr.writelines('ERROR ' + message)
+            sys.stderr.write('ERROR %s\n' % message)
+            sys.stderr.flush()
         # When logging a warning, always write to stdout
         elif level == 'WARNING':
-            sys.stdout.writelines('WARNING ' + message)
+            sys.stdout.write('WARNING %s\n' % message)
+            sys.stdout.flush()
 
     def log_error(self, message, logger='log'):
         self._log_message('ERROR', message, logger)

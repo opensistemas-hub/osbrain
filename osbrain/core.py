@@ -27,6 +27,16 @@ Pyro4.config.SERVERTYPE = 'multiplex'
 # TODO: should we set COMMTIMEOUT as well?
 
 
+class LogLevel(str):
+    """
+    Identifies the log level: ERROR, WARNING, INFO.
+    """
+    def __new__(cls, value):
+        if not value in ['ERROR', 'WARNING', 'INFO']:
+            raise ValueError('Incorrect value "%s"!' % value)
+        return super().__new__(cls, value)
+
+
 class AgentAddressRole(str):
     """
     Agent's address role class. It can either be 'server' or 'client'.
@@ -349,22 +359,31 @@ class BaseAgent():
     def ping(self):
         return self.loopback('PING')
 
-    def log_error(self, message, loger='log'):
-        if self.registered(logger):
-            logger_kind = AgentAddressKind(self.socket[logger].socket_type)
-            assert logger_kind == 'PUB', 'Logger must use publisher-subscriber pattern!'
-            self.send(logger, message, 'ERROR')
-        else:
-            print('ERROR (%s): %s' % (self.name, message))
-
-    def log_info(self, message, logger='log'):
+    def _log_message(self, level, message, logger='log'):
+        level = LogLevel(level)
+        message = '(%s): %s' % (self.name, message)
         if self.registered(logger):
             logger_kind = AgentAddressKind(self.socket[logger].socket_type)
             assert logger_kind == 'PUB', \
                 'Logger must use publisher-subscriber pattern!'
-            self.send(logger, message, 'INFO')
-        else:
-            print('INFO (%s): %s' % (self.name, message))
+            self.send(logger, message, topic=level)
+        elif level == 'INFO':
+            sys.stdout.writelines('INFO ' + message)
+        # When logging an error, always write to stderr
+        if level == 'ERROR':
+            sys.stderr.writelines('ERROR ' + message)
+        # When logging a warning, always write to stdout
+        elif level == 'WARNING':
+            sys.stdout.writelines('WARNING ' + message)
+
+    def log_error(self, message, logger='log'):
+        self._log_message('ERROR', message, logger)
+
+    def log_warning(self, message, logger='log'):
+        self._log_message('WARNING', message, logger)
+
+    def log_info(self, message, logger='log'):
+        self._log_message('INFO', message, logger)
 
     def addr(self, alias):
         return self.address[alias]

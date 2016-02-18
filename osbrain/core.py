@@ -504,8 +504,9 @@ class BaseAgent():
         """
         pass
 
-    def set_attr(self, name, value):
-        setattr(self, name, value)
+    def set_attr(self, **kwargs):
+        for name, value in kwargs.items():
+            setattr(self, name, value)
 
     def get_attr(self, name):
         return getattr(self, name)

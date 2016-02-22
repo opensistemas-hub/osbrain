@@ -1,7 +1,7 @@
 import zmq
 import pytest
-from osbrain.core import AgentAddressKind
-from osbrain.core import AgentAddressRole
+from osbrain.address import AgentAddressKind
+from osbrain.address import AgentAddressRole
 
 
 def twin_list(elements):

@@ -3,14 +3,14 @@ import pytest
 import random
 from threading import Timer
 from osbrain.logging import run_logger
-from osbrain.core import locate_ns
+from osbrain.nameserver import NameServer
+from osbrain.address import SocketAddress
 from osbrain.core import run_agent
 from osbrain.core import BaseAgent
 from osbrain.core import Agent
-from osbrain.core import Proxy
-from osbrain.core import NSProxy
-from osbrain.core import NameServer
-from osbrain.core import SocketAddress
+from osbrain.proxy import Proxy
+from osbrain.proxy import NSProxy
+from osbrain.proxy import locate_ns
 
 from common import nsaddr
 

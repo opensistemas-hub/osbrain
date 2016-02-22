@@ -1,5 +1,5 @@
 from osbrain.core import Agent
-from osbrain.core import NameServer
+from osbrain.nameserver import NameServer
 
 from common import nsaddr
 

@@ -1,8 +1,8 @@
 import os
 from .core import Agent
-from .core import Proxy
 from .core import BaseAgent
 from .core import run_agent
+from .proxy import Proxy
 
 
 def pyro_log():

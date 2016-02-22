@@ -7,12 +7,13 @@ import sys
 import time
 import inspect
 import multiprocessing
+
 import pickle
 import errno
 import zmq
 import Pyro4
 from Pyro4.errors import PyroError
-from Pyro4.errors import NamingError
+
 from .common import address_to_host_port
 from .common import unbound_method
 from .common import LogLevel
@@ -20,13 +21,6 @@ from .address import AgentAddress
 from .address import AgentAddressKind
 from .proxy import Proxy
 from .proxy import NSProxy
-
-
-Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
-Pyro4.config.SERIALIZER = 'pickle'
-Pyro4.config.THREADPOOL_SIZE = 16
-Pyro4.config.SERVERTYPE = 'multiplex'
-# TODO: should we set COMMTIMEOUT as well?
 
 
 class BaseAgent():

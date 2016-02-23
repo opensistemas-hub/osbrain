@@ -272,11 +272,13 @@ class BaseAgent():
     def get_attr(self, name):
         return getattr(self, name)
 
-    def new_method(self, method, name=None):
-        method = types.MethodType(method, self)
-        if not name:
-            name = method.__name__
-        setattr(self, name, method)
+    def set_method(self, *args, **kwargs):
+        for method in args:
+            method = types.MethodType(method, self)
+            setattr(self, method.__name__, method)
+        for name, method in kwargs:
+            method = types.MethodType(method, self)
+            setattr(self, name, method)
 
     # TODO: remove/deprecate. If an Agent is to be active, then loopback could
     #       be used to send execution orders. E.g.: each second, send function

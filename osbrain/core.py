@@ -7,6 +7,7 @@ import sys
 import time
 import inspect
 import multiprocessing
+from datetime import datetime
 
 import pickle
 import errno
@@ -99,7 +100,7 @@ class BaseAgent():
 
     def _log_message(self, level, message, logger='log'):
         level = LogLevel(level)
-        message = '(%s): %s' % (self.name, message)
+        message = '[%s] (%s): %s' % (datetime.utcnow(), self.name, message)
         if self.registered(logger):
             logger_kind = AgentAddressKind(self.socket[logger].socket_type)
             assert logger_kind == 'PUB', \

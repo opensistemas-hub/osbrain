@@ -1,3 +1,4 @@
+import sys
 import time
 import Pyro4
 from Pyro4.errors import NamingError
@@ -82,6 +83,15 @@ class Proxy(Pyro4.core.Proxy):
 
     def release(self):
         self._pyroRelease()
+
+    def _pyroInvoke(self, methodname, vargs, kwargs, flags=0, objectId=None):
+        try:
+            return super()._pyroInvoke(
+                methodname, vargs, kwargs, flags=flags, objectId=objectId)
+        except:
+            sys.stdout.write(''.join(Pyro4.util.getPyroTraceback()))
+            sys.stdout.flush()
+            raise
 
 
 class NSProxy(Pyro4.core.Proxy):

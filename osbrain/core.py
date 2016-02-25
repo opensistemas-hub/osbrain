@@ -226,10 +226,6 @@ class BaseAgent():
 
     def _connect_new(self, client_address, alias=None, handler=None):
         try:
-            # TODO: when using `socket(str(client_address.kind))` and running
-            #       (for example) examples/push_pull/, we get a TypeError
-            #       (integer is required). However, the line is not displayed.
-            #       Perhaps we could improve the traceback display?
             socket = self.context.socket(client_address.kind)
             socket.connect('tcp://%s:%s' % (client_address.host,
                                             client_address.port))

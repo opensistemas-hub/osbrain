@@ -1,4 +1,6 @@
-import time
+"""
+Test file for agents.
+"""
 import pytest
 import random
 from threading import Timer
@@ -10,7 +12,6 @@ from osbrain.core import BaseAgent
 from osbrain.core import Agent
 from osbrain.proxy import Proxy
 from osbrain.proxy import NSProxy
-from osbrain.proxy import locate_ns
 
 from common import nsaddr
 
@@ -38,17 +39,17 @@ def test_locate_ns():
             host = '127.0.0.1'
             port = random.randrange(10000, 20000)
             addr = SocketAddress(host, port)
-            ns = NameServer(addr)
+            nameserver = NameServer(addr)
             # Start name server later
-            Timer(1, ns.start).start()
+            Timer(1, nameserver.start).start()
             # Locate name server now
-            nsaddr = NSProxy(addr).addr()
+            pyro_address = NSProxy(addr).addr()
         except PermissionError:
             continue
         break
-    assert nsaddr.host == host
-    assert nsaddr.port == port
-    ns.shutdown()
+    assert pyro_address.host == host
+    assert pyro_address.port == port
+    nameserver.shutdown()
 
 
 def test_early_agent_proxy(nsaddr):
@@ -270,12 +271,10 @@ def test_agent_inheritance(nsaddr):
 
 def test_logger(nsaddr):
     """
-    TODO
+    Test basic logging.
     """
     logger = run_logger('logger', nsaddr)
     a0 = run_agent('a0', nsaddr)
-    # TODO: automatically connect to logger if it is already registered in
-    #       the name server
     addr = logger.get_addr('logger_sub_socket')
     a0.connect(addr, 'log')
     message = 'Hello world'

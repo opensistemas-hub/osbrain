@@ -91,6 +91,15 @@ class Proxy(Pyro4.core.Proxy):
         """
         self._pyroRelease()
 
+    def pyro_addr(self):
+        """
+        Returns
+        -------
+        SocketAddress
+            The socket address of the Pyro server.
+        """
+        return SocketAddress(self._pyroUri.host, self._pyroUri.port)
+
     def _pyroInvoke(self, methodname, args, kwargs, flags=0, objectId=None):
         try:
             result = super()._pyroInvoke(
@@ -105,7 +114,7 @@ class Proxy(Pyro4.core.Proxy):
             for name, method in kwargs.items():
                 self._pyroMethods.add(name)
         if methodname == 'set_attr':
-            for name, value in kwargs.items():
+            for name in kwargs:
                 self._pyroAttrs.add(name)
         return result
 
@@ -124,6 +133,16 @@ class Proxy(Pyro4.core.Proxy):
 
 
 class NSProxy(Pyro4.core.Proxy):
+    """
+    A proxy to access a name server.
+
+    Parameters
+    ----------
+    nsaddr : SocketAddress, str
+        Name server address.
+    timeout : float
+        Timeout, in seconds, to wait until the name server is discovered.
+    """
     def __init__(self, nsaddr=None, timeout=3):
         nshost, nsport = address_to_host_port(nsaddr)
         if nsaddr is None:
@@ -134,7 +153,16 @@ class NSProxy(Pyro4.core.Proxy):
         super().__init__('PYRONAME:Pyro.NameServer@%s:%s' % (nshost, nsport))
 
     def addr(self):
+        """
+        Returns
+        -------
+        SocketAddress
+            The socket address of the Pyro server.
+        """
         return SocketAddress(self._pyroUri.host, self._pyroUri.port)
 
     def release(self):
+        """
+        Release the connection to the Pyro daemon.
+        """
         self._pyroRelease()

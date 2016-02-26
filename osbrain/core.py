@@ -25,28 +25,57 @@ from .proxy import NSProxy
 
 
 class BaseAgent():
-    def __init__(self, name=None, host=None):
-        # Set name
-        self.name = name
+    """
+    A base agent class which is to be served by the Agent process.
 
-        # The `socket` key is the address or the alias; value is the socket
-        self.socket = {}
-        # The `address` key is the alias; value is the address
-        self.address = {}
-        # The `handler` key is the socket
-        self.handler = {}
-        # Polling timeout
-        self.poll_timeout = 1000
-        # Keep alive
-        self.keep_alive = True
-        # Kill parent agent process
-        self.kill_agent = False
-        # Agent running
-        self.running = False
-        # Defaut host
+    An agent process runs a Pyro multiplexed server and serves one BaseAgent
+    object.
+
+    Parameters
+    ----------
+    name : str, default is None
+        Name of the BaseAgent.
+    host : str, default is None
+        Host address where the agent will bind to. When not set, `'127.0.0.1'`
+        (localhost) is used.
+
+    Attributes
+    ----------
+    name : str
+        Name of the agent.
+    host : str
+        Host address where the agent is binding to.
+    socket : dict
+        A dictionary in which the key is the address or the alias and the
+        value is the actual socket.
+    adddress : dict
+        A dictionary in which the key is the alias and the value is the
+        actual address.
+    handler : dict
+        A dictionary in which the key is the socket and the values are the
+        handlers for each socket.
+    poll_timeout : int
+        Polling timeout, in milliseconds. After this timeout, if no message
+        is received, the agent executes de `iddle()` method before going back
+        to polling.
+    keep_alive : bool
+        When set to `True`, the agent will continue executing the main loop.
+    running : bool
+        Set to `True` if the agent is running (executing the main loop).
+    """
+    def __init__(self, name=None, host=None):
+        self.name = name
         self.host = host
         if not self.host:
             self.host = '127.0.0.1'
+        self.socket = {}
+        self.address = {}
+        self.handler = {}
+        self.poll_timeout = 1000
+        self.keep_alive = True
+        self.running = False
+        # Kill parent agent process
+        self.kill_agent = False
 
         try:
             self.context = zmq.Context()
@@ -64,13 +93,15 @@ class BaseAgent():
         self.on_init()
 
     def on_init(self):
-        pass
-
-    # TODO: __getitem__ could select sockets by name (i.e. Agent()['rep0'])
-    def __getitem__(self, key):
+        """
+        This user-defined method is to be executed after initialization.
+        """
         pass
 
     def handle_loopback(self, message):
+        """
+        Handle incoming messages in the loopback socket.
+        """
         header, data = message
         if header == 'PING':
             return 'PONG'
@@ -85,6 +116,9 @@ class BaseAgent():
         self.log_error('Unrecognized message: %s %s' % (header, data))
 
     def loopback(self, header, data=None):
+        """
+        Send a message to the loopback socket.
+        """
         if not self.running:
             raise NotImplementedError()
         loopback = self.context.socket(zmq.REQ)
@@ -93,12 +127,30 @@ class BaseAgent():
         return loopback.recv_pyobj()
 
     def ping(self):
+        """
+        A simple loopback ping for testing purposes.
+        """
         return self.loopback('PING')
 
     def stop(self):
+        """
+        Stop the agent. Agent will stop running.
+        """
         return self.loopback('STOP')
 
     def _log_message(self, level, message, logger='log'):
+        """
+        Log a message.
+
+        Parameters
+        ----------
+        level : LogLevel
+            Logging severity level: INFO, WARNING, ERROR.
+        message : str
+            Message to log.
+        logger : str
+            Alias of the logger.
+        """
         level = LogLevel(level)
         message = '[%s] (%s): %s' % (datetime.utcnow(), self.name, message)
         if self.registered(logger):
@@ -119,15 +171,56 @@ class BaseAgent():
             sys.stdout.flush()
 
     def log_error(self, message, logger='log'):
+        """
+        Log an error message.
+
+        Parameters
+        ----------
+        message : str
+            Message to log.
+        logger : str
+            Alias of the logger.
+        """
         self._log_message('ERROR', message, logger)
 
     def log_warning(self, message, logger='log'):
+        """
+        Log a warning message.
+
+        Parameters
+        ----------
+        message : str
+            Message to log.
+        logger : str
+            Alias of the logger.
+        """
         self._log_message('WARNING', message, logger)
 
     def log_info(self, message, logger='log'):
+        """
+        Log an info message.
+
+        Parameters
+        ----------
+        message : str
+            Message to log.
+        logger : str
+            Alias of the logger.
+        """
         self._log_message('INFO', message, logger)
 
     def addr(self, alias):
+        """
+        Parameters
+        ----------
+        alias : str
+            Alias of the socket whose address is to be retreived.
+
+        Returns
+        -------
+        AgentAddress
+            Address of the agent socket associated with the alias.
+        """
         return self.address[alias]
 
     def get_addr(self, alias):
@@ -184,6 +277,25 @@ class BaseAgent():
         return address in self.socket
 
     def bind(self, kind, alias=None, handler=None, host=None, port=None):
+        """
+        Bind to an agent address.
+
+        Parameters
+        ----------
+        kind : str, AgentAddressKind
+            The agent address kind: PUB, REQ...
+        alias : str, default is None
+            Optional alias for the socket.
+        handler, default is None
+            If the socket receives input messages, the handler/s is/are to
+            be set with this parameter.
+        host : str, default is None
+            The host to bind to, when not given `self.host` is taken as
+            default.
+        port : int, default is None
+            An optional port number. If not set, a random port is used for
+            binding.
+        """
         kind = AgentAddressKind(kind)
         assert not kind.requires_handler() or handler is not None, \
             'This socket requires a handler!'
@@ -207,6 +319,19 @@ class BaseAgent():
         return server_address
 
     def connect(self, server_address, alias=None, handler=None):
+        """
+        Connect to a server agent address.
+
+        Parameters
+        ----------
+        server_address : AgentAddress
+            Agent address to connect to.
+        alias : str, default is None
+            Optional alias for the new address.
+        handler, default is None
+            If the new socket receives input messages, the handler/s is/are to
+            be set with this parameter.
+        """
         assert server_address.role == 'server', \
             'Incorrect address! A server address must be provided!'
         client_address = server_address.twin()
@@ -471,6 +596,10 @@ class BaseAgent():
 
 
 class Agent(multiprocessing.Process):
+    """
+    Agent class. Instances of an Agent are system processes which
+    can be run independently.
+    """
     def __init__(self, name, nsaddr=None, addr=None, base=BaseAgent):
         super().__init__()
         self.name = name

@@ -1,3 +1,6 @@
+"""
+Implementation of name server.
+"""
 import time
 import random
 import multiprocessing
@@ -11,6 +14,10 @@ from .proxy import NSProxy
 
 
 class NameServer(multiprocessing.Process):
+    """
+    Name server class. Instances of a name server are system processes which
+    can be run independently.
+    """
     def __init__(self, addr=None):
         super().__init__()
         self.addr = addr
@@ -20,6 +27,7 @@ class NameServer(multiprocessing.Process):
         self.unknown_error = multiprocessing.Event()
         self.os_error = multiprocessing.Event()
         self.daemon_started = multiprocessing.Event()
+        self.uri = None
 
     def run(self):
         try:
@@ -81,6 +89,9 @@ class NameServer(multiprocessing.Process):
             raise PermissionError()
 
     def shutdown_all(self):
+        """
+        Shutdown all agents registered in the name server.
+        """
         proxy = NSProxy(self.addr)
         agents = proxy.list()
         for agent in agents:
@@ -90,10 +101,13 @@ class NameServer(multiprocessing.Process):
             agent.shutdown()
 
     def shutdown(self):
+        """
+        Shutdown the name server. All agents will be shutdown as well.
+        """
         self.shutdown_all()
-        ns = NSProxy(self.addr)
+        nameserver = NSProxy(self.addr)
         # Wait for all agents to be shutdown (unregistered)
-        while len(ns.list()) > 1:
+        while len(nameserver.list()) > 1:
             time.sleep(0.1)
         self.shutdown_event.set()
         self.terminate()
@@ -108,7 +122,12 @@ class NameServer(multiprocessing.Process):
 
 def random_nameserver():
     """
-    TODO
+    Start a random name server.
+
+    Returns
+    -------
+    SocketAddress
+        The name server address.
     """
     while True:
         try:
@@ -116,8 +135,8 @@ def random_nameserver():
             host = '127.0.0.1'
             port = random.randrange(10000, 20000)
             addr = SocketAddress(host, port)
-            ns = NameServer(addr)
-            ns.start()
+            nameserver = NameServer(addr)
+            nameserver.start()
             return addr
         except NamingError:
             continue

@@ -1,3 +1,6 @@
+"""
+Miscellaneous utilities.
+"""
 from .address import SocketAddress
 
 
@@ -12,6 +15,18 @@ class LogLevel(str):
 
 
 def address_to_host_port(addr=None):
+    """
+    Try to convert a string or SocketAddress to a (host, port) tuple.
+
+    Parameters
+    ----------
+    addr : str, SocketAddress
+
+    Returns
+    -------
+    tuple
+        A (host, port) tuple formed with the corresponding data.
+    """
     if addr is None:
         return (None, None)
     if isinstance(addr, SocketAddress):
@@ -28,4 +43,10 @@ def address_to_host_port(addr=None):
 
 
 def unbound_method(method):
+    """
+    Returns
+    -------
+    function
+        Unbounded function.
+    """
     return getattr(method.__self__.__class__, method.__name__)

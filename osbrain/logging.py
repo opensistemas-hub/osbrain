@@ -1,16 +1,25 @@
+"""
+Implementation of logging-related features.
+"""
 import os
-from .core import Agent
 from .core import BaseAgent
 from .core import run_agent
-from .proxy import Proxy
 
 
 def pyro_log():
-    os.environ["PYRO_LOGFILE"] = "pyro_osbrain.log"
-    os.environ["PYRO_LOGLEVEL"] = "DEBUG"
+    """
+    Set environment variables to activate Pyro logging. The log level is
+    set to "DEBUG".
+    """
+    os.environ['PYRO_LOGFILE'] = 'pyro_osbrain.log'
+    os.environ['PYRO_LOGLEVEL'] = 'DEBUG'
 
 
 class Logger(BaseAgent):
+    """
+    Specialized BaseAgent for logging. Binds a `SUB` socket and starts
+    logging incoming messages.
+    """
     def on_init(self):
         self.log_history = []
         handlers = {
@@ -20,7 +29,9 @@ class Logger(BaseAgent):
         self.bind('SUB', 'logger_sub_socket', handlers)
 
     def log_handler(self, message, topic):
-        # TODO: handle INFO, ERROR... differently?
+        """
+        Handle incoming log messages.
+        """
         self.log_history.append(message)
 
 

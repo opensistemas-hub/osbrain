@@ -109,6 +109,53 @@ def test_agent_shutdown(nsaddr):
     assert 'a0' not in ns.list()
 
 
+# TODO: this functions are used just within the scope of the next test.
+#       Could we directly send the bytecode to the agent so that we can
+#       declare them within a more constrained scope? (i.e. in the test code).
+def square(agent, x):
+    return x ** 2
+def one(agent):
+    return 1
+def two(agent):
+    return 2
+
+
+def test_set_method(nsaddr):
+    """
+    Set new methods for the agent.
+    """
+    a0 = run_agent('a0', nsaddr)
+    # Single method, same name
+    a0.set_method(square)
+    assert a0.square(3) == 9
+    # Multiple methods, same name
+    a0.set_method(one, two)
+    assert a0.one() == 1
+    assert a0.two() == 2
+    # Single method, change name
+    a0.set_method(xx=square)
+    assert a0.xx(3) == 9
+    # Multiple methods, change name
+    a0.set_method(uno=one, dos=two)
+    assert a0.uno() == 1
+    assert a0.dos() == 2
+
+
+def test_set_attr(nsaddr):
+    """
+    Set new methods for the agent.
+    """
+    a0 = run_agent('a0', nsaddr)
+    # Single attribute
+    a0.set_attr(zero=0)
+    assert a0.get_attr('zero') == 0
+    # Multiple attributes
+    a0.set_attr(one=1)
+    a0.set_attr(two=2)
+    assert a0.get_attr('one') == 1
+    assert a0.get_attr('two') == 2
+
+
 def test_socket_creation(nsaddr):
     """
     Test ZMQ socket creation.

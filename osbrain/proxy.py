@@ -1,3 +1,6 @@
+"""
+Implementation of proxy-related features.
+"""
 import sys
 import time
 import Pyro4
@@ -31,8 +34,8 @@ def locate_ns(nsaddr, timeout=3):
     if nsaddr is None:
         host = '127.0.0.1'
         port = 9090
-    t0 = time.time()
-    while time.time() - t0 < timeout:
+    time0 = time.time()
+    while time.time() - time0 < timeout:
         try:
             Pyro4.locateNS(host, port)
             return nsaddr
@@ -42,15 +45,24 @@ def locate_ns(nsaddr, timeout=3):
 
 
 class Proxy(Pyro4.core.Proxy):
-    def __init__(self, name, nsaddr=None, timeout=3):
-        # TODO: perhaps we could add a parameter `start=False` which, in case
-        #       is set to `True`, it will automatically start the Agent if it
-        #       did not exist.
+    """
+    A proxy to access remote agents.
+
+    Parameters
+    ----------
+    name : str
+        Proxy name, as registered in the name server.
+    nsaddr : SocketAddress, str
+        Name server address.
+    timeout : float
+        Timeout, in seconds, to wait until the agent is discovered.
+    """
+    def __init__(self, name, nsaddr=None, timeout=3.):
         nshost, nsport = address_to_host_port(nsaddr)
         # Make sure name server exists
         locate_ns(nsaddr)
-        t0 = time.time()
-        while time.time() - t0 < timeout:
+        time0 = time.time()
+        while time.time() - time0 < timeout:
             try:
                 if nshost is None and nsport is None:
                     super().__init__('PYRONAME:%s' % name)
@@ -64,7 +76,7 @@ class Proxy(Pyro4.core.Proxy):
             break
         else:
             raise NamingError('Could not find agent after timeout!')
-        while time.time() - t0 < timeout:
+        while time.time() - time0 < timeout:
             try:
                 self.test()
             except NamingError:
@@ -73,25 +85,26 @@ class Proxy(Pyro4.core.Proxy):
         else:
             raise NamingError('Could not test agent!')
 
-    def add_method(self, method, name=None):
-        self.new_method(method, name)
-        if not name:
-            name = method.__name__
-        if not isinstance(name, str):
-            raise ValueError('The new name must be of type `str`!')
-        self._pyroMethods.add(name)
-
     def release(self):
+        """
+        Release the connection to the Pyro daemon.
+        """
         self._pyroRelease()
 
-    def _pyroInvoke(self, methodname, vargs, kwargs, flags=0, objectId=None):
+    def _pyroInvoke(self, methodname, args, kwargs, flags=0, objectId=None):
         try:
-            return super()._pyroInvoke(
-                methodname, vargs, kwargs, flags=flags, objectId=objectId)
+            result = super()._pyroInvoke(
+                methodname, args, kwargs, flags=flags, objectId=objectId)
         except:
             sys.stdout.write(''.join(Pyro4.util.getPyroTraceback()))
             sys.stdout.flush()
             raise
+        if methodname == 'set_method':
+            for method in args:
+                self._pyroMethods.add(method.__name__)
+            for name, method in kwargs.items():
+                self._pyroMethods.add(name)
+        return result
 
 
 class NSProxy(Pyro4.core.Proxy):

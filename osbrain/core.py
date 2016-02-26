@@ -262,17 +262,38 @@ class BaseAgent():
         pass
 
     def set_attr(self, **kwargs):
+        """
+        Set object attributes.
+
+        Parameters
+        ----------
+        kwargs : [name, value]
+            Keyword arguments will be used to set the object attributes.
+        """
         for name, value in kwargs.items():
             setattr(self, name, value)
 
     def get_attr(self, name):
         return getattr(self, name)
 
+    # TODO: merge set_method() and set_attr() into set()?
     def set_method(self, *args, **kwargs):
+        """
+        Set object methods.
+
+        Parameters
+        ----------
+        args : [function]
+            New methods will be created for each function, taking the same
+            name as the original function.
+        kwargs : [name, function]
+            New methods will be created for each function, taking the name
+            specified by the parameter.
+        """
         for method in args:
             method = types.MethodType(method, self)
             setattr(self, method.__name__, method)
-        for name, method in kwargs:
+        for name, method in kwargs.items():
             method = types.MethodType(method, self)
             setattr(self, name, method)
 
@@ -500,9 +521,8 @@ class Agent(multiprocessing.Process):
             ns = NSProxy(self.nsaddr)
             ns.remove(self.name)
         except PyroError as error:
-            print(error)
-            print('Agent %s is being killed' % self.name)
-            return
+            pass
+
         self.agent._killed = True
         self.daemon.close()
 

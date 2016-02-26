@@ -141,19 +141,33 @@ def test_set_method(nsaddr):
     assert a0.dos() == 2
 
 
-def test_set_attr(nsaddr):
+# TODO: this functions are used just within the scope of the next test.
+#       Could we directly send the bytecode to the agent so that we can
+#       declare them within a more constrained scope? (i.e. in the test code).
+def increment(agent):
+    agent.zero += 10
+    agent.one += 10
+    agent.two += 10
+
+
+def test_set_and_get_attributes(nsaddr):
     """
-    Set new methods for the agent.
+    Set and get attributes through the proxy.
     """
     a0 = run_agent('a0', nsaddr)
+    a0.set_method(increment)
     # Single attribute
-    a0.set_attr(zero=0)
-    assert a0.get_attr('zero') == 0
+    a0.zero = 0
+    assert a0.zero == 0
     # Multiple attributes
-    a0.set_attr(one=1)
-    a0.set_attr(two=2)
-    assert a0.get_attr('one') == 1
-    assert a0.get_attr('two') == 2
+    a0.set_attr(one=1, two=2)
+    assert a0.one == 1
+    assert a0.two == 2
+    # Make sure the attributes come from the remote object
+    a0.increment()
+    assert a0.zero == 10
+    assert a0.one == 11
+    assert a0.two == 12
 
 
 def test_socket_creation(nsaddr):

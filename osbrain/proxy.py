@@ -104,7 +104,23 @@ class Proxy(Pyro4.core.Proxy):
                 self._pyroMethods.add(method.__name__)
             for name, method in kwargs.items():
                 self._pyroMethods.add(name)
+        if methodname == 'set_attr':
+            for name, value in kwargs.items():
+                self._pyroAttrs.add(name)
         return result
+
+    def __getattr__(self, name):
+        if name in self._pyroAttrs:
+            return self.get_attr(name)
+        else:
+            return super().__getattr__(name)
+
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            return super().__setattr__(name, value)
+        else:
+            kwargs = {name: value}
+            return self.set_attr(**kwargs)
 
 
 class NSProxy(Pyro4.core.Proxy):

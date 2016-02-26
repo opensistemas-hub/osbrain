@@ -272,6 +272,7 @@ class BaseAgent():
         """
         for name, value in kwargs.items():
             setattr(self, name, value)
+            self.log_info('SET self.%s = %s' % (name, value))
 
     def get_attr(self, name):
         return getattr(self, name)
@@ -290,12 +291,15 @@ class BaseAgent():
             New methods will be created for each function, taking the name
             specified by the parameter.
         """
-        for method in args:
-            method = types.MethodType(method, self)
-            setattr(self, method.__name__, method)
-        for name, method in kwargs.items():
-            method = types.MethodType(method, self)
+        for function in args:
+            method = types.MethodType(function, self)
+            name = method.__name__
             setattr(self, name, method)
+            self.log_info('SET self.%s() = %s' % (name, function))
+        for name, function in kwargs.items():
+            method = types.MethodType(function, self)
+            setattr(self, name, method)
+            self.log_info('SET self.%s() = %s' % (name, function))
 
     # TODO: remove/deprecate. If an Agent is to be active, then loopback could
     #       be used to send execution orders. E.g.: each second, send function

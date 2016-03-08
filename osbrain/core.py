@@ -531,7 +531,7 @@ class BaseAgent():
                     if nparams == 2:
                         handler(self, message)
                     elif nparams == 3:
-                        handler(self, message, topic)
+                        handler(self, message, str_topic)
             else:
                 message = pickle.loads(serialized)
                 handlers = self.handler[socket]

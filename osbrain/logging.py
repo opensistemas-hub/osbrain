@@ -21,9 +21,13 @@ class Logger(BaseAgent):
     logging incoming messages.
     """
     def on_init(self):
+        self.log_history_info = []
+        self.log_history_warning = []
+        self.log_history_error = []
         self.log_history = []
         handlers = {
             'INFO': self.log_handler,
+            'WARNING': self.log_handler,
             'ERROR': self.log_handler
         }
         self.bind('SUB', 'sub', handlers)
@@ -32,6 +36,12 @@ class Logger(BaseAgent):
         """
         Handle incoming log messages.
         """
+        if topic == 'INFO':
+            self.log_history_info.append(message)
+        elif topic == 'WARNING':
+            self.log_history_warning.append(message)
+        elif topic == 'ERROR':
+            self.log_history_error.append(message)
         self.log_history.append(message)
 
 

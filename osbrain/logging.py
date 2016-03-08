@@ -26,7 +26,7 @@ class Logger(BaseAgent):
             'INFO': self.log_handler,
             'ERROR': self.log_handler
         }
-        self.bind('SUB', 'logger_sub_socket', handlers)
+        self.bind('SUB', 'sub', handlers)
 
     def log_handler(self, message, topic):
         """

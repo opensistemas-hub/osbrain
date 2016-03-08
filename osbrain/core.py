@@ -138,7 +138,17 @@ class BaseAgent():
         """
         return self.loopback('STOP')
 
-    def _log_message(self, level, message, logger='log'):
+    def set_logger(self, logger, alias='_logger'):
+        """
+        TODO.
+        """
+        if isinstance(logger, Proxy):
+            logger = logger.addr('sub')
+        if not isinstance(logger, AgentAddress):
+            raise ValueError('An AgentAddress must be provided for logging!')
+        self.connect(logger, alias=alias)
+
+    def _log_message(self, level, message, logger='_logger'):
         """
         Log a message.
 
@@ -170,7 +180,7 @@ class BaseAgent():
             sys.stdout.write('WARNING %s\n' % message)
             sys.stdout.flush()
 
-    def log_error(self, message, logger='log'):
+    def log_error(self, message, logger='_logger'):
         """
         Log an error message.
 
@@ -183,7 +193,7 @@ class BaseAgent():
         """
         self._log_message('ERROR', message, logger)
 
-    def log_warning(self, message, logger='log'):
+    def log_warning(self, message, logger='_logger'):
         """
         Log a warning message.
 
@@ -196,7 +206,7 @@ class BaseAgent():
         """
         self._log_message('WARNING', message, logger)
 
-    def log_info(self, message, logger='log'):
+    def log_info(self, message, logger='_logger'):
         """
         Log an info message.
 

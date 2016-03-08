@@ -275,8 +275,7 @@ def test_logger(nsaddr):
     """
     logger = run_logger('logger', nsaddr)
     a0 = run_agent('a0', nsaddr)
-    addr = logger.get_addr('logger_sub_socket')
-    a0.connect(addr, 'log')
+    a0.set_logger(logger)
     message = 'Hello world'
     while True:
         a0.log_info(message)

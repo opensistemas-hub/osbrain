@@ -383,6 +383,10 @@ class BaseAgent():
         # Reset handlers
         self.set_handler(self.socket[alias], handlers)
 
+    def timer(self, timeout, function):
+        # TODO
+        pass
+
     def iddle(self):
         """
         This function is to be executed when the agent is iddle.

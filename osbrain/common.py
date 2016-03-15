@@ -6,10 +6,10 @@ from .address import SocketAddress
 
 class LogLevel(str):
     """
-    Identifies the log level: ERROR, WARNING, INFO.
+    Identifies the log level: ERROR, WARNING, INFO, DEBUG.
     """
     def __new__(cls, value):
-        if value not in ['ERROR', 'WARNING', 'INFO']:
+        if value not in ['ERROR', 'WARNING', 'INFO', 'DEBUG']:
             raise ValueError('Incorrect value "%s"!' % value)
         return super().__new__(cls, value)
 

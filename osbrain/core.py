@@ -219,6 +219,19 @@ class BaseAgent():
         """
         self._log_message('INFO', message, logger)
 
+    def log_debug(self, message, logger='_logger'):
+        """
+        Log a debug message.
+
+        Parameters
+        ----------
+        message : str
+            Message to log.
+        logger : str
+            Alias of the logger.
+        """
+        self._log_message('DEBUG', message, logger)
+
     def addr(self, alias):
         """
         Parameters

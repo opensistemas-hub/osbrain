@@ -76,6 +76,7 @@ class BaseAgent():
         self.running = False
         # Kill parent agent process
         self.kill_agent = False
+        self._DEBUG = False
 
         try:
             self.context = zmq.Context()
@@ -155,21 +156,24 @@ class BaseAgent():
         Parameters
         ----------
         level : LogLevel
-            Logging severity level: INFO, WARNING, ERROR.
+            Logging severity level: INFO, WARNING, ERROR, DEBUG.
         message : str
             Message to log.
         logger : str
             Alias of the logger.
         """
         level = LogLevel(level)
+        # Ignore DEBUG logs if not `self._DEBUG`
+        if level == 'DEBUG' and not self._DEBUG:
+            return
         message = '[%s] (%s): %s' % (datetime.utcnow(), self.name, message)
         if self.registered(logger):
             logger_kind = AgentAddressKind(self.socket[logger].socket_type)
             assert logger_kind == 'PUB', \
                 'Logger must use publisher-subscriber pattern!'
             self.send(logger, message, topic=level)
-        elif level == 'INFO':
-            sys.stdout.write('INFO %s\n' % message)
+        elif level in ('INFO', 'DEBUG'):
+            sys.stdout.write('%s %s\n' % (level, message))
             sys.stdout.flush()
         # When logging an error, always write to stderr
         if level == 'ERROR':
@@ -230,6 +234,9 @@ class BaseAgent():
         logger : str
             Alias of the logger.
         """
+        # Ignore DEBUG logs if not `self._DEBUG`
+        if not self._DEBUG:
+            return
         self._log_message('DEBUG', message, logger)
 
     def addr(self, alias):

@@ -3,7 +3,6 @@ Implementation of name server.
 """
 import time
 import random
-import signal
 import multiprocessing
 import Pyro4
 from Pyro4.errors import NamingError
@@ -31,9 +30,6 @@ class NameServer(multiprocessing.Process):
         self.uri = None
 
     def run(self):
-        # Capture SIGINT
-        signal.signal(signal.SIGINT, self.sigint_handler)
-
         try:
             self.daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
         except PermissionError:

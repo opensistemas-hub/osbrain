@@ -1,6 +1,7 @@
 """
 Implementation of FTP-related features.
 """
+import Pyro4
 from .core import BaseAgent
 from .common import address_to_host_port
 

@@ -6,6 +6,7 @@ import random
 import multiprocessing
 import Pyro4
 from Pyro4.errors import NamingError
+from Pyro4.naming import BroadcastServer
 from .common import address_to_host_port
 from .address import AgentAddress
 from .address import SocketAddress

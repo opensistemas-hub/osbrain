@@ -157,11 +157,17 @@ class BaseAgent():
         loopback.send_pyobj((header, data))
         return loopback.recv_pyobj()
 
-    def ping(self):
+    def safe_ping(self):
         """
         A simple loopback ping for testing purposes.
         """
         return self.loopback('PING')
+
+    def ping(self):
+        """
+        A simple ping method testing purposes.
+        """
+        return 'PONG'
 
     def raise_exception(self):
         """

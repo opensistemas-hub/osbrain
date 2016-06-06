@@ -115,7 +115,36 @@ class BaseAgent():
             self.log_info('Closing sockets...')
             self.close_sockets()
             return 'OK'
+        if header == 'EXECUTE_METHOD':
+            method, args, kwargs = data
+            try:
+                response = getattr(self, method)(*args, **kwargs)
+            except Exception as error:
+                message = 'Error executing `%s`! (%s)\n' % (method, error)
+                message += traceback.format_exc()
+                self.send('loopback', message)
+                raise
+            if not response:
+                return True
+            return response
         self.log_error('Unrecognized message: %s %s' % (header, data))
+
+    def safe(self, method, *args, **kwargs):
+        """
+        A safe call to a method.
+
+        A safe call is simply sent to be executed by the main thread.
+
+        Parameters
+        ----------
+        method : str
+            Method name to be executed by the main thread.
+        *args : arguments
+            Method arguments.
+        *kwargs : keyword arguments
+            Method keyword arguments.
+        """
+        return self.loopback('EXECUTE_METHOD', (method, args, kwargs))
 
     def loopback(self, header, data=None):
         """

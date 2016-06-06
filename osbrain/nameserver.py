@@ -89,15 +89,20 @@ class NameServer(multiprocessing.Process):
             self.permission_error.clear()
             raise PermissionError()
 
+    def agents(self):
+        """
+        List agents registered in the name server.
+        """
+        proxy = NSProxy(self.addr)
+        agents = proxy.list()
+        proxy.release()
+        return [name for name in agents if name != 'Pyro.NameServer']
+
     def shutdown_all(self):
         """
         Shutdown all agents registered in the name server.
         """
-        proxy = NSProxy(self.addr)
-        agents = proxy.list()
-        for agent in agents:
-            if agent == 'Pyro.NameServer':
-                continue
+        for agent in self.agents():
             agent = Proxy(agent, self.addr)
             agent.shutdown()
 

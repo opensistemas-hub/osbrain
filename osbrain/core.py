@@ -6,6 +6,7 @@ import signal
 import sys
 import time
 import inspect
+import traceback
 import multiprocessing
 from datetime import datetime
 
@@ -596,7 +597,14 @@ class BaseAgent():
         Run the agent.
         """
         self.running = True
-        self.loop()
+        try:
+            self.loop()
+        except Exception as error:
+            msg = 'An exception occured while running! (%s)\n' % error
+            msg += traceback.format_exc()
+            self.log_error(msg)
+            self.running = False
+            raise
         self.running = False
 
     def stop(self):

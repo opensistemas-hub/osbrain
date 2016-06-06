@@ -134,6 +134,12 @@ class BaseAgent():
         """
         return self.loopback('PING')
 
+    def raise_exception(self):
+        """
+        Raise an exception (for testing purposes).
+        """
+        raise RuntimeError('User raised an exception!')
+
     def stop(self):
         """
         Stop the agent. Agent will stop running.

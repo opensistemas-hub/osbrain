@@ -413,6 +413,10 @@ class BaseAgent():
             self._connect_old(client_address, alias, handler)
         else:
             self._connect_new(client_address, alias, handler)
+        if client_address.kind == 'SUB':
+            if not alias:
+                alias = client_address
+            self.subscribe(alias, handler)
 
     def _connect_old(self, client_address, alias=None, handler=None):
         assert handler is None, \

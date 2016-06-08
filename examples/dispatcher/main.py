@@ -1,8 +1,6 @@
 import time
 from osbrain import random_nameserver
 from osbrain import run_agent
-from osbrain import Agent
-from osbrain import Proxy
 
 
 def log(agent, message):

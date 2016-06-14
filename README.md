@@ -12,7 +12,7 @@ osBrain is a general-purpose, distributed, scalable multiagent system.
 
 Managing Python virtual environments is easier with `virtualenvwrapper`:
 
-    sudo dnf install python-virtualenvwrapper
+    (for fedora) sudo dnf install python-virtualenvwrapper
     (for ubuntu) sudo apt-get install virtualenvwrapper
 
 If you just installed virtualenvwrapper, you might need to execute "source ~/.bashrc"
@@ -48,9 +48,10 @@ First, we should make sure `pip` is updated:
 
     pip install --upgrade pip
 
-Then we can proceed to install all the required modules:
+Then we can proceed to install osBrain. Withing the `osbrain` root directory,
+where the `setup.py` file can be found:
 
-    pip install -r requirements.txt
+    pip install ./
 
 This process may take some time and may require the installation of some
 libraries/packages in our system. Just check for any errors in the process
@@ -61,6 +62,7 @@ installation.
 
 If everything is set up correctly, all the tests should pass:
 
+    pip install pytest
     py.test -s -v -n 4 ./
 
 We can also try any example in the `examples` folder.

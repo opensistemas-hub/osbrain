@@ -21,6 +21,8 @@ class NameServer(multiprocessing.Process):
     """
     def __init__(self, addr=None):
         super().__init__()
+        if isinstance(addr, int):
+            addr = '127.0.0.1:%s' % addr
         self.addr = addr
         self.host, self.port = address_to_host_port(addr)
         self.shutdown_event = multiprocessing.Event()

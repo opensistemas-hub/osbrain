@@ -7,7 +7,7 @@ Pyro4.config.SERVERTYPE = 'multiplex'
 Pyro4.config.DETAILED_TRACEBACK = True
 
 from .core import BaseAgent, Agent, run_agent
-from .nameserver import NameServer, random_nameserver
+from .nameserver import NameServer, random_nameserver, run_nameserver
 from .proxy import Proxy, NSProxy
 from .address import SocketAddress, AgentAddress
 from .logging import Logger, run_logger

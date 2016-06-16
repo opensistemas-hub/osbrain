@@ -150,3 +150,27 @@ def random_nameserver():
             continue
         except:
             raise
+
+
+def run_nameserver(addr=None):
+    """
+    Ease the name server creation process.
+
+    This function will create a new nameserver, start the process and then run
+    its main loop through a proxy.
+
+    Parameters
+    ----------
+    addr : SocketAddress, default is None
+        Name server address.
+
+    Returns
+    -------
+    proxy
+        A proxy to the name server.
+    """
+    if not addr:
+        addr = random_nameserver()
+    else:
+        NameServer(addr).start()
+    return NSProxy(addr)

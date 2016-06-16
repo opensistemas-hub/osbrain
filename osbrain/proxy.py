@@ -166,3 +166,21 @@ class NSProxy(Pyro4.core.Proxy):
         Release the connection to the Pyro daemon.
         """
         self._pyroRelease()
+
+    def proxy(self, name, timeout=3.):
+        """
+        Get a proxy to access an agent registered in the name server.
+
+        Parameters
+        ----------
+        name : str
+            Proxy name, as registered in the name server.
+        timeout : float
+            Timeout, in seconds, to wait until the agent is discovered.
+
+        Returns
+        -------
+        Proxy
+            A proxy to access an agent registered in the name server.
+        """
+        return Proxy(name, nsaddr=self.addr(), timeout=timeout)

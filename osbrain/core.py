@@ -698,10 +698,9 @@ class Agent(multiprocessing.Process):
         self.nsaddr = nsaddr
         self.base = base
         self.shutdown_event = multiprocessing.Event()
-        self.permission_error = multiprocessing.Event()
-        self.unknown_error = multiprocessing.Event()
-        self.os_error = multiprocessing.Event()
+        self.daemon_error = multiprocessing.Event()
         self.daemon_started = multiprocessing.Event()
+        self.queue = multiprocessing.Queue()
 
     def run(self):
         # Capture SIGINT
@@ -718,15 +717,10 @@ class Agent(multiprocessing.Process):
             # TODO: infer `host` if is `None` and we are connected to `ns_host`
             #       through a LAN.
             self.daemon = Pyro4.Daemon(self.host, self.port)
-        except PermissionError:
-            self.permission_error.set()
-            return
-        except OSError:
-            self.os_error.set()
-            return
         except:
-            self.unknown_error.set()
-            raise
+            self.daemon_error.set()
+            self.queue.put(traceback.format_exc())
+            return
         self.daemon_started.set()
 
         self.agent = self.base(name=self.name, host=self.host)
@@ -748,20 +742,15 @@ class Agent(multiprocessing.Process):
 
     def start(self):
         super().start()
-        # TODO: instead of Event(), use message passing to handle exceptions.
-        #       It would be easier to know the exact exception that occurred.
         while not self.daemon_started.is_set() and \
-              not self.permission_error.is_set() and \
-              not self.os_error.is_set() and \
-              not self.unknown_error.is_set():
+                not self.daemon_error.is_set():
             time.sleep(0.01)
-        if self.unknown_error.is_set():
-            raise RuntimeError('Unknown error occured while creating daemon!')
-        elif self.os_error.is_set():
-            raise OSError('TODO: use message passing to know the exact error')
-        elif self.permission_error.is_set():
-            self.permission_error.clear()
-            raise PermissionError()
+        if self.daemon_error.is_set():
+            remote_traceback = self.queue.get()
+            raise RuntimeError('An error occured while creating the daemon!' +
+                               '\n===============\n' +
+                               remote_traceback +
+                               '===============')
 
     def kill(self):
         self.shutdown_event.set()

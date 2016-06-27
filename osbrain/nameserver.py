@@ -3,10 +3,13 @@ Implementation of name server.
 """
 import time
 import random
+import traceback
 import multiprocessing
+
 import Pyro4
 from Pyro4.errors import NamingError
 from Pyro4.naming import BroadcastServer
+
 from .common import address_to_host_port
 from .address import AgentAddress
 from .address import SocketAddress
@@ -26,24 +29,18 @@ class NameServer(multiprocessing.Process):
         self.addr = addr
         self.host, self.port = address_to_host_port(addr)
         self.shutdown_event = multiprocessing.Event()
-        self.permission_error = multiprocessing.Event()
-        self.unknown_error = multiprocessing.Event()
-        self.os_error = multiprocessing.Event()
+        self.daemon_error = multiprocessing.Event()
         self.daemon_started = multiprocessing.Event()
         self.uri = None
+        self.queue = multiprocessing.Queue()
 
     def run(self):
         try:
             self.daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
-        except PermissionError:
-            self.permission_error.set()
-            return
-        except OSError:
-            self.os_error.set()
-            return
         except:
-            self.unknown_error.set()
-            raise
+            self.daemon_error.set()
+            self.queue.put(traceback.format_exc())
+            return
         self.daemon_started.set()
         self.uri = self.daemon.uriFor(self.daemon.nameserver)
         self.host = self.uri.host
@@ -76,20 +73,15 @@ class NameServer(multiprocessing.Process):
 
     def start(self):
         super().start()
-        # TODO: instead of Event(), use message passing to handle exceptions.
-        #       It would be easier to know the exact exception that occurred.
         while not self.daemon_started.is_set() and \
-                not self.permission_error.is_set() and \
-                not self.os_error.is_set() and \
-                not self.unknown_error.is_set():
+                not self.daemon_error.is_set():
             time.sleep(0.01)
-        if self.unknown_error.is_set():
-            raise RuntimeError('Unknown error occured while creating daemon!')
-        elif self.os_error.is_set():
-            raise OSError('TODO: use message passing to know the exact error')
-        elif self.permission_error.is_set():
-            self.permission_error.clear()
-            raise PermissionError()
+        if self.daemon_error.is_set():
+            remote_traceback = self.queue.get()
+            raise RuntimeError('An error occured while creating the daemon!' +
+                               '\n===============\n' +
+                               remote_traceback +
+                               '===============')
 
     def agents(self):
         """

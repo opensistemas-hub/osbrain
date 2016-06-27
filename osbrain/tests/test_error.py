@@ -13,7 +13,7 @@ def test_ns_error_os(nsaddr):
         ns.start()
         ns.shutdown()
         assert 0
-    except OSError:
+    except RuntimeError:
         pass
     except:
         assert 0
@@ -30,7 +30,7 @@ def test_ns_error_permission(nsaddr):
         ns.start()
         ns.shutdown()
         assert 0
-    except PermissionError:
+    except RuntimeError:
         pass
     except:
         assert 0
@@ -45,7 +45,7 @@ def test_agent_error_os(nsaddr):
         agent.start()
         agent.shutdown()
         assert 0
-    except OSError:
+    except RuntimeError:
         pass
     except:
         assert 0
@@ -61,7 +61,7 @@ def test_agent_error_permission(nsaddr):
         agent.start()
         agent.shutdown()
         assert 0
-    except PermissionError:
+    except RuntimeError:
         pass
     except:
         assert 0

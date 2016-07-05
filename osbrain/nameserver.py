@@ -29,19 +29,16 @@ class NameServer(multiprocessing.Process):
         self.addr = addr
         self.host, self.port = address_to_host_port(addr)
         self.shutdown_event = multiprocessing.Event()
-        self.daemon_error = multiprocessing.Event()
-        self.daemon_started = multiprocessing.Event()
         self.uri = None
         self.queue = multiprocessing.Queue()
 
     def run(self):
         try:
             self.daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
-        except:
-            self.daemon_error.set()
+        except Exception:
             self.queue.put(traceback.format_exc())
             return
-        self.daemon_started.set()
+        self.queue.put('STARTED')
         self.uri = self.daemon.uriFor(self.daemon.nameserver)
         self.host = self.uri.host
         self.port = self.uri.port
@@ -73,15 +70,11 @@ class NameServer(multiprocessing.Process):
 
     def start(self):
         super().start()
-        while not self.daemon_started.is_set() and \
-                not self.daemon_error.is_set():
-            time.sleep(0.01)
-        if self.daemon_error.is_set():
-            remote_traceback = self.queue.get()
-            raise RuntimeError('An error occured while creating the daemon!' +
-                               '\n===============\n' +
-                               remote_traceback +
-                               '===============')
+        status = self.queue.get()
+        if status == 'STARTED':
+            return
+        raise RuntimeError('An error occured while creating the daemon!' +
+                           '\n===============\n'.join(status))
 
     def agents(self):
         """

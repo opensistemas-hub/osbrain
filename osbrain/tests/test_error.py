@@ -16,7 +16,7 @@ def test_ns_error_os(nsaddr):
     except RuntimeError:
         pass
     except:
-        assert 0
+        raise
 
 
 def test_ns_error_permission(nsaddr):
@@ -33,7 +33,7 @@ def test_ns_error_permission(nsaddr):
     except RuntimeError:
         pass
     except:
-        assert 0
+        raise
 
 
 def test_agent_error_os(nsaddr):
@@ -48,7 +48,7 @@ def test_agent_error_os(nsaddr):
     except RuntimeError:
         pass
     except:
-        assert 0
+        raise
 
 
 def test_agent_error_permission(nsaddr):
@@ -64,7 +64,7 @@ def test_agent_error_permission(nsaddr):
     except RuntimeError:
         pass
     except:
-        assert 0
+        raise
 
 # TODO:
 #  - Test "obscure" errors (exceptions not correctly returned by Pyro? or

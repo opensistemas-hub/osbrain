@@ -698,8 +698,6 @@ class Agent(multiprocessing.Process):
         self.nsaddr = nsaddr
         self.base = base
         self.shutdown_event = multiprocessing.Event()
-        self.daemon_error = multiprocessing.Event()
-        self.daemon_started = multiprocessing.Event()
         self.queue = multiprocessing.Queue()
 
     def run(self):
@@ -708,20 +706,13 @@ class Agent(multiprocessing.Process):
 
         try:
             ns = NSProxy(self.nsaddr)
-        except PyroError as error:
-            print(error)
-            print('Agent %s is being killed' % self.name)
-            return
-
-        try:
             # TODO: infer `host` if is `None` and we are connected to `ns_host`
             #       through a LAN.
             self.daemon = Pyro4.Daemon(self.host, self.port)
-        except:
-            self.daemon_error.set()
+        except Exception:
             self.queue.put(traceback.format_exc())
             return
-        self.daemon_started.set()
+        self.queue.put('STARTED')
 
         self.agent = self.base(name=self.name, host=self.host)
         uri = self.daemon.register(self.agent)
@@ -742,15 +733,11 @@ class Agent(multiprocessing.Process):
 
     def start(self):
         super().start()
-        while not self.daemon_started.is_set() and \
-                not self.daemon_error.is_set():
-            time.sleep(0.01)
-        if self.daemon_error.is_set():
-            remote_traceback = self.queue.get()
-            raise RuntimeError('An error occured while creating the daemon!' +
-                               '\n===============\n' +
-                               remote_traceback +
-                               '===============')
+        status = self.queue.get()
+        if status == 'STARTED':
+            return
+        raise RuntimeError('An error occured while creating the daemon!' +
+                           '\n===============\n'.join(status))
 
     def kill(self):
         self.shutdown_event.set()

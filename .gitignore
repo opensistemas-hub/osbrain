@@ -1,5 +1,7 @@
 pycache/
 .cache/
+.tox/
+*.egg-info/
 pyro_osbrain.log
 *.pyc
 *.swp

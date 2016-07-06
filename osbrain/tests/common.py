@@ -5,7 +5,7 @@ from osbrain.nameserver import NameServer
 from osbrain.address import SocketAddress
 
 
-@pytest.fixture(scope='function')
+@pytest.yield_fixture(scope='function')
 def nsaddr(request):
     while True:
         try:
@@ -14,14 +14,11 @@ def nsaddr(request):
             port = random.randrange(10000, 20000)
             addr = SocketAddress(host, port)
             nameserver = NameServer(addr)
-            def terminate():
-                nameserver.shutdown()
-            request.addfinalizer(terminate)
             nameserver.start()
-            return addr
-        except NamingError:
-            continue
-        except PermissionError:
+            break
+        except RuntimeError:
             continue
         except:
             raise
+    yield addr
+    nameserver.shutdown()

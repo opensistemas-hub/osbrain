@@ -11,6 +11,7 @@ class Push(BaseAgent):
         self.log_info('Sending message...')
         self.send('push', 'Hello, world!')
 
+
 def log_message(agent, message):
     agent.log_info('received: %s' % message)
 

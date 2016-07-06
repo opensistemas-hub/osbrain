@@ -115,8 +115,12 @@ def test_agent_shutdown(nsaddr):
 #       declare them within a more constrained scope? (i.e. in the test code).
 def square(agent, x):
     return x ** 2
+
+
 def one(agent):
     return 1
+
+
 def two(agent):
     return 2
 
@@ -190,8 +194,12 @@ def test_socket_creation(nsaddr):
 #       declare them within a more constrained scope? (i.e. in the test code).
 def rep_handler(agent, message):
     return 'OK'
+
+
 def redirect(agent, message):
     agent.send('push', '%s (redirected)' % message)
+
+
 def set_received(agent, message, topic=None):
     agent.received = message
 
@@ -294,9 +302,11 @@ def test_method_handlers(nsaddr):
             self.received['rep'] = message
             self.connect(message, 'endpoint')
             return 'OK'
+
         def pull(self, message):
             self.received['pull'] = message
             self.send('endpoint', message + ' (redirected)')
+
         def on_init(self):
             self.received = {}
             self.bind('REP', 'rep', handler=self.rep)

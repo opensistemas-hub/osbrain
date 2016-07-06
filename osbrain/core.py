@@ -295,11 +295,6 @@ class BaseAgent():
         """
         return self.address[alias]
 
-    def get_addr(self, alias):
-        # TODO: deprecate
-        self.log_warning('get_addr() is deprecated! use addr() instead')
-        return self.addr(alias)
-
     def register(self, socket, address, alias=None, handler=None):
         assert not self.registered(address), \
             'Socket is already registered!'
@@ -534,14 +529,6 @@ class BaseAgent():
         while self.keep_alive:
             if self.iterate():
                 break
-
-    def graceful_end(self):
-        """
-        Agent graceful termination. It ends current loop of work before exiting.
-        """
-        # TODO: deprecate
-        self.log_warning('graceful_end() is deprecated! use stop() instead')
-        self.keep_alive = False
 
     def iterate(self):
         """

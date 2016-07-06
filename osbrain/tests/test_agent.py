@@ -72,7 +72,7 @@ def test_agent_loopback(nsaddr):
     An agent should always have a loopback inproc socket.
     """
     a0 = run_agent('a0', nsaddr)
-    assert a0.get_addr('loopback') == 'inproc://loopback'
+    assert a0.addr('loopback') == 'inproc://loopback'
 
 
 def test_ping(nsaddr):
@@ -319,11 +319,11 @@ def test_method_handlers(nsaddr):
     endpoint.received = ''
     endpoint_addr = endpoint.bind('PULL', handler=set_received)
     # Request
-    client.connect(server.get_addr('rep'), 'req')
+    client.connect(server.addr('rep'), 'req')
     assert client.send_recv('req', endpoint_addr) == 'OK'
     assert server.get_attr('received')['rep'] == endpoint_addr
     # Push
-    client.connect(server.get_addr('pull'), 'push')
+    client.connect(server.addr('pull'), 'push')
     client.send('push', 'Hello')
     while not endpoint.received:
         endpoint.iterate()

@@ -1,4 +1,3 @@
-import random
 from osbrain import random_nameserver
 from osbrain import run_agent
 

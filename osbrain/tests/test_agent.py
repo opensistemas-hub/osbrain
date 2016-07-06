@@ -1,7 +1,6 @@
 """
 Test file for agents.
 """
-import pytest
 import random
 from threading import Timer
 from osbrain.logging import run_logger
@@ -13,7 +12,7 @@ from osbrain.core import Agent
 from osbrain.proxy import Proxy
 from osbrain.proxy import NSProxy
 
-from common import nsaddr
+from common import nsaddr  # pragma: no flakes
 
 
 def test_nameserver(nsaddr):
@@ -87,8 +86,8 @@ def test_registration(nsaddr):
     """
     Verify new agents get registered in the nameserver.
     """
-    a0 = run_agent('a0', nsaddr)
-    a1 = run_agent('a1', nsaddr)
+    run_agent('a0', nsaddr)
+    run_agent('a1', nsaddr)
     # List registered agents
     agent_list = NSProxy(nsaddr).list()
     assert 'a0' in agent_list

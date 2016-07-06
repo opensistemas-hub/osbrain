@@ -1,5 +1,4 @@
 import zmq
-import pytest
 from osbrain.address import AgentAddressKind
 from osbrain.address import AgentAddressRole
 

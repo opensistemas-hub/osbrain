@@ -1,7 +1,7 @@
 from osbrain import Agent
 from osbrain import NameServer
 
-from common import nsaddr
+from common import nsaddr  # pragma: no flakes
 
 
 def test_ns_error_os(nsaddr):
@@ -19,7 +19,7 @@ def test_ns_error_os(nsaddr):
         raise
 
 
-def test_ns_error_permission(nsaddr):
+def test_ns_error_permission():
     """
     Name server start() should raise an error if it has not sufficient
     permissions.

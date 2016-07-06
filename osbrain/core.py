@@ -570,7 +570,6 @@ class BaseAgent():
             if socket_kind == 'SUB':
                 handlers = self.handler[socket]
                 sepp = serialized.index(b'\x80')
-                topic = serialized[:sepp]
                 data = serialized[sepp:]
                 try:
                     message = pickle.loads(data)
@@ -638,9 +637,6 @@ class BaseAgent():
             self.running = False
             raise
         self.running = False
-
-    def stop(self):
-        self.loopback('STOP')
 
     def shutdown(self):
         # Stop the running thread

@@ -1,6 +1,5 @@
 import random
 import pytest
-from Pyro4.errors import NamingError
 from osbrain.nameserver import NameServer
 from osbrain.address import SocketAddress
 

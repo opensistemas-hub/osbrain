@@ -700,7 +700,7 @@ class Agent(multiprocessing.Process):
         self.agent = self.base(name=self.name, host=self.host)
         uri = self.daemon.register(self.agent)
         ns.register(self.name, uri)
-        ns._pyroRelease()
+        ns.release()
 
         print('%s ready!' % self.name)
         self.daemon.requestLoop(lambda: (not self.shutdown_event.is_set() and

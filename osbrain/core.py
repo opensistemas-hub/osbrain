@@ -648,7 +648,6 @@ class BaseAgent():
         self.kill()
 
     def kill(self):
-        self.context.destroy()
         self.kill_agent = True
 
     def close_sockets(self):

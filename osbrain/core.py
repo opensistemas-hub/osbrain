@@ -705,6 +705,8 @@ class Agent(multiprocessing.Process):
         print('%s ready!' % self.name)
         self.daemon.requestLoop(lambda: (not self.shutdown_event.is_set() and
                                          not self.agent.kill_agent))
+        self.daemon.unregister(self.agent)
+
         try:
             ns = NSProxy(self.nsaddr)
             ns.remove(self.name)

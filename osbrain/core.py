@@ -702,7 +702,6 @@ class Agent(multiprocessing.Process):
         ns.register(self.name, uri)
         ns.release()
 
-        print('%s ready!' % self.name)
         self.daemon.requestLoop(lambda: (not self.shutdown_event.is_set() and
                                          not self.agent.kill_agent))
         self.daemon.unregister(self.agent)
@@ -710,7 +709,8 @@ class Agent(multiprocessing.Process):
         try:
             ns = NSProxy(self.nsaddr)
             ns.remove(self.name)
-        except PyroError as error:
+        except PyroError:
+            sys.stderr.write(traceback.format_exc())
             pass
 
         self.agent._killed = True

@@ -110,8 +110,7 @@ def test_agent_shutdown(nsaddr):
 
 
 # TODO: this functions are used just within the scope of the next test.
-#       Could we directly send the bytecode to the agent so that we can
-#       declare them within a more constrained scope? (i.e. in the test code).
+#       Remove once Dill is integrated in osbrain.
 def square(agent, x):
     return x ** 2
 
@@ -146,8 +145,7 @@ def test_set_method(nsaddr):
 
 
 # TODO: this functions are used just within the scope of the next test.
-#       Could we directly send the bytecode to the agent so that we can
-#       declare them within a more constrained scope? (i.e. in the test code).
+#       Remove once Dill is integrated in osbrain.
 def increment(agent):
     agent.zero += 10
     agent.one += 10
@@ -189,8 +187,7 @@ def test_socket_creation(nsaddr):
 
 
 # TODO: this functions are used just within the scope of the next test.
-#       Could we directly send the bytecode to the agent so that we can
-#       declare them within a more constrained scope? (i.e. in the test code).
+#       Remove once Dill is integrated in osbrain.
 def rep_handler(agent, message):
     return 'OK'
 

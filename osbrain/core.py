@@ -183,7 +183,7 @@ class BaseAgent():
 
     def set_logger(self, logger, alias='_logger'):
         """
-        TODO.
+        Connect the agent to a logger and start logging messages to it.
         """
         if isinstance(logger, Proxy):
             logger = logger.addr('sub')
@@ -312,7 +312,6 @@ class BaseAgent():
             self.set_handler(socket, handler)
 
     def set_handler(self, socket, handler):
-        # TODO: clean-up
         if isinstance(handler, types.FunctionType):
             self.handler[socket] = handler
             return
@@ -433,7 +432,17 @@ class BaseAgent():
 
     def subscribe(self, alias, handlers):
         """
-        TODO
+        Subscribe the agent to another agent.
+
+        Parameters
+        ----------
+        alias : str
+            Alias of the new subscriber socket.
+        handlers : dict
+            A dictionary in which the keys represent the different topics
+            and the values the actual handlers. If ,instead of a dictionary,
+            a single handler is given, it will be used to subscribe the agent
+            to any topic.
         """
         if not isinstance(handlers, dict):
             handlers = {'': handlers}
@@ -445,8 +454,7 @@ class BaseAgent():
         self.set_handler(self.socket[alias], handlers)
 
     def timer(self, timeout, function):
-        # TODO
-        pass
+        raise NotImplementedError('Timers are not implemented yet. (TODO)')
 
     def iddle(self):
         """
@@ -477,7 +485,9 @@ class BaseAgent():
     def get_attr(self, name):
         return getattr(self, name)
 
-    # TODO: merge set_method() and set_attr() into set()?
+    # TODO: merge set_method() and set_attr() into set()? or rather make
+    #       the proxy able to set attributes and methods automatically with
+    #       `proxy.x = y`?
     def set_method(self, *args, **kwargs):
         """
         Set object methods.
@@ -604,7 +614,6 @@ class BaseAgent():
         return 0
 
     def str2bytes(self, message):
-        # TODO: what happens if the topic is non-ASCII?
         return message.encode('ascii')
 
     def send(self, address, message, topic=''):
@@ -674,7 +683,6 @@ class Agent(multiprocessing.Process):
         self.name = name
         self.daemon = None
         self.host, self.port = address_to_host_port(addr)
-        # TODO: pull request?
         if self.port is None:
             self.port = 0
         self.nsaddr = nsaddr
@@ -688,8 +696,6 @@ class Agent(multiprocessing.Process):
 
         try:
             ns = NSProxy(self.nsaddr)
-            # TODO: infer `host` if is `None` and we are connected to `ns_host`
-            #       through a LAN.
             self.daemon = Pyro4.Daemon(self.host, self.port)
         except Exception:
             self.queue.put(traceback.format_exc())

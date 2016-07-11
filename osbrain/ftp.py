@@ -22,7 +22,6 @@ class FTPAgent(BaseAgent):
         handler.authorizer = authorizer
         # Create server
         host, port = address_to_host_port(addr)
-        # TODO: is this necessary? Or would `None` be sufficient?
         if port is None:
             port = 0
         self.ftp_server = FTPServer((host, port), handler)

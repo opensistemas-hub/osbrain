@@ -1,12 +1,18 @@
 """
 Setup module.
 """
+import re
+from os.path import join as pjoin
 from setuptools import setup
 
 
+with open(pjoin('osbrain', '__init__.py')) as f:
+    line = next(l for l in f if l.startswith('__version__'))
+    version = re.match('__version__ = [\'"]([^\'"]+)[\'"]', line).group(1)
+
 setup(
     name='osbrain',
-    version='0.1.0',
+    version=version,
     description='A general-purpose multi-agent-system module',
     long_description='''A general-purpose multi-agent-system module written
         in Python. It uses ZeroMQ for flexible and efficient communications

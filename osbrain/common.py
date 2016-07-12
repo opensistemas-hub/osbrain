@@ -32,7 +32,11 @@ def address_to_host_port(addr=None):
     if isinstance(addr, SocketAddress):
         return (addr.host, addr.port)
     if not isinstance(addr, str):
-        raise ValueError('Only `SocketAddress` and `str` types are supported!')
+        try:
+            addr = addr.addr()
+            return (addr.host, addr.port)
+        except:
+            raise ValueError('Unsupported address type "%s"!' % type(addr))
     aux = addr.split(':')
     if len(aux) == 1:
         port = None

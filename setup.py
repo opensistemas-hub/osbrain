@@ -20,14 +20,13 @@ setup(
     url='',  # TODO
     author='Miguel Sánchez de León Peque',
     author_email='msdeleon@opensistemas.com',
-    license='AGPL',
+    license='Apache License, Version 2.0',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'Topic :: Software Development :: Build Tools',
-        'License :: OSI Approved :: GNU Affero General Public License v3 ' + \
-            'or later (AGPLv3+)',
+        'License :: OSI Approved :: Apache Software License'
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: Implementation :: CPython',

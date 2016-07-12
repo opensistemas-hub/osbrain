@@ -74,7 +74,7 @@ class NameServer(multiprocessing.Process):
         if status == 'STARTED':
             return
         raise RuntimeError('An error occured while creating the daemon!' +
-                           '\n===============\n'.join(status))
+                           '\n===============\n'.join(['', status, '']))
 
     def agents(self):
         """

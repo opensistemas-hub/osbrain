@@ -727,7 +727,7 @@ class Agent(multiprocessing.Process):
         if status == 'STARTED':
             return
         raise RuntimeError('An error occured while creating the daemon!' +
-                           '\n===============\n'.join(status))
+                           '\n===============\n'.join(['', status, '']))
 
     def kill(self):
         self.shutdown_event.set()

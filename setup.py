@@ -17,7 +17,7 @@ setup(
     long_description='''A general-purpose multi-agent-system module written
         in Python. It uses ZeroMQ for flexible and efficient communications
         between agents and Pyro4 to ease configuration and deployment.''',
-    url='',  # TODO
+    url='https://github.com/opensistemas-hub/osbrain',
     author='Miguel Sánchez de León Peque',
     author_email='msdeleon@opensistemas.com',
     license='Apache License, Version 2.0',

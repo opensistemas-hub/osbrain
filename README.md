@@ -1,68 +1,65 @@
 # osBrain
 
-osBrain is a general-purpose, distributed, scalable multiagent system.
+osBrain is a **general-purpose multi-agent system module** written in Python.
+Agents run independently as system processes and communicate with each other
+using message passing.
 
-## Setting up the development environment
+osBrain uses [ØMQ](http://zeromq.org/) for efficient and flexible messsage
+passing between agents. It also uses [Pyro4](https://pythonhosted.org/Pyro4/)
+to ease the configuration and deployment of complex systems.
 
-### Clonning the repository
+Please read the
+[osBrain documentation](https://pythonhosted.org/osbrain/introduction.html)
+for a bit more detailed introduction.
 
-    git clone ssh://git@imasd.opensistemas.com/osbrain
+osBrain is licensed under the
+[Apache License](https://pythonhosted.org/osbrain/license.html).
 
-### Creating a Python virtual environment with `pip`
+- [Documentation](https://pypi.python.org/pypi/osbrain>).
+- [osBrain on Pypi](https://pypi.python.org/pypi/osbrain>).
 
-Managing Python virtual environments is easier with `virtualenvwrapper`:
 
-    (for fedora) sudo dnf install python-virtualenvwrapper
-    (for ubuntu) sudo apt-get install virtualenvwrapper
+## Installing osBrain
 
-If you just installed virtualenvwrapper, you might need to execute "source ~/.bashrc"
-to execute the following steps.
+osBrain requires Python 3. Most probably, Python 3 is already packaged for your
+favorite distribution (and maybe even installed by default in your system). If
+you do not have Python 3 available, consider using
+[Conda](http://conda.pydata.org/miniconda.html) to create a virtual environment
+with Python 3.
 
-In order to create a virtual environment to work with osBrain:
+Installing osBrain is very simple with `pip`:
 
-    mkvirtualenv -p /usr/bin/python3 osbrain
+    pip install osbrain
 
-Note that the Python interpreter version used is 3. In your system, `python`
-may be already python 3; make sure you set the proper Python 3 system
-interpreter.
+You should now be able to import `osbrain` from a python console:
 
-The virtualenvironment is automatically activated. In order to deactivate it,
-you must execute `deactivate`. The command `workon` will allow you to activate
-it again in the future:
+    >>> import osbrain
 
-    deactivate
-    workon osbrain
 
-### Installing the dependencies within the virtual environment
+## Code examples
 
-Always make sure to work within the virtual environment:
+If you want to learn how to use osBrain, refer to the
+[tutorial in the documentation](https://pythonhosted.org/osbrain/tutorial.html)
+for a set of step-by-step simple code examples.
 
-    workon osbrain
 
-To be able to compile dependences, it is essential to have the python3-dev
-package installed, as long as all the gcc toolchain.
+## What can you use osBrain for?
 
-    (for ubuntu) sudo apt-get install python3-dev build-essential autoconf libtool pkg-config
+osBrain has been successfully used to develop a real-time automated-trading
+platform in [OpenSistemas](http://www.opensistemas.com), but being a
+general-purpose multi-agent system, it is not limited to this application.
+Other applications include:
 
-First, we should make sure `pip` is updated:
+- Transportation.
+- Logistics.
+- Defense and military applications.
+- Networking.
+- Load balancing.
+- Self-healing networks.
 
-    pip install --upgrade pip
+In general, osBrain can be used whenever a multi-agent system architecture
+fits the application well:
 
-Then we can proceed to install osBrain. Withing the `osbrain` root directory,
-where the `setup.py` file can be found:
-
-    pip install ./
-
-This process may take some time and may require the installation of some
-libraries/packages in our system. Just check for any errors in the process
-and try to solve the required dependencies in order to complete the
-installation.
-
-### Trying out a simple example
-
-If everything is set up correctly, all the tests should pass:
-
-    pip install pytest
-    py.test -s -v -n 4 ./
-
-We can also try any example in the `examples` folder.
+- Autonomy of the agents.
+- Local views.
+- Decentralization.

@@ -33,7 +33,7 @@ Contents
 
    introduction.rst
    install.rst
-   examples.rst
+   tutorial.rst
    security.rst
    api.rst
    changelog.rst

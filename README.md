@@ -1,5 +1,9 @@
 # osBrain
 
+[![Build Status](https://api.travis-ci.org/opensistemas-hub/osbrain.svg?branch=master)](https://travis-ci.org/opensistemas-hub/osbrain)
+[![Latest Version](https://img.shields.io/pypi/v/osbrain.svg)](https://pypi.python.org/pypi/osbrain/)
+[![Downloads](https://img.shields.io/pypi/d/osbrain.svg)](https://pypi.python.org/pypi/osbrain/)
+
 osBrain is a **general-purpose multi-agent system module** written in Python.
 Agents run independently as system processes and communicate with each other
 using message passing.

@@ -69,4 +69,4 @@ fits the application well:
 - Decentralization.
 
 
-[osbrain-logo]: docs/source/_static/osbrain-logo-name.svg
+[osbrain-logo]: https://cdn.rawgit.com/opensistemas-hub/osbrain/master/docs/source/_static/osbrain-logo-name.svg

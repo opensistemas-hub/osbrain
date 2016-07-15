@@ -1,4 +1,4 @@
-# osBrain
+![][osbrain-logo]
 
 [![Build Status](https://api.travis-ci.org/opensistemas-hub/osbrain.svg?branch=master)](https://travis-ci.org/opensistemas-hub/osbrain)
 [![Latest Version](https://img.shields.io/pypi/v/osbrain.svg)](https://pypi.python.org/pypi/osbrain/)
@@ -19,8 +19,8 @@ for a bit more detailed introduction.
 osBrain is licensed under the
 [Apache License](https://pythonhosted.org/osbrain/license.html).
 
-- [Documentation](https://pypi.python.org/pypi/osbrain>).
-- [osBrain on Pypi](https://pypi.python.org/pypi/osbrain>).
+- [Documentation](https://pythonhosted.org/osbrain/).
+- [osBrain on Pypi](https://pypi.python.org/pypi/osbrain).
 
 
 ## Installing osBrain
@@ -67,3 +67,6 @@ fits the application well:
 - Autonomy of the agents.
 - Local views.
 - Decentralization.
+
+
+[osbrain-logo]: docs/source/_static/osbrain-logo-name.svg

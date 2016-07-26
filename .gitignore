@@ -1,3 +1,4 @@
+dist/
 pycache/
 .cache/
 .tox/

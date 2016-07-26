@@ -15,11 +15,11 @@ def log_b(agent, message):
 if __name__ == '__main__':
 
     # System deployment
-    ns = run_nameserver()
-    alice = run_agent('Alice', ns)
-    bob = run_agent('Bob', ns)
-    eve = run_agent('Eve', ns)
-    dave = run_agent('Dave', ns)
+    run_nameserver()
+    alice = run_agent('Alice')
+    bob = run_agent('Bob')
+    eve = run_agent('Eve')
+    dave = run_agent('Dave')
 
     # System configuration
     addr = alice.bind('PUB', alias='main')

@@ -19,9 +19,9 @@ def log_message(agent, message):
 if __name__ == '__main__':
 
     # System deployment
-    ns = run_nameserver()
-    alice = run_agent('Alice', ns, base=Greeter)
-    bob = run_agent('Bob', ns)
+    run_nameserver()
+    alice = run_agent('Alice', base=Greeter)
+    bob = run_agent('Bob')
 
     # System configuration
     bob.connect(alice.addr('main'), handler=log_message)

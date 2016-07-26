@@ -10,9 +10,9 @@ def log_message(agent, message):
 if __name__ == '__main__':
 
     # System deployment
-    ns = run_nameserver()
-    alice = run_agent('Alice', ns)
-    bob = run_agent('Bob', ns)
+    run_nameserver()
+    alice = run_agent('Alice')
+    bob = run_agent('Bob')
 
     # System configuration
     addr = alice.bind('PUSH', alias='main')

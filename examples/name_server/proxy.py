@@ -6,7 +6,10 @@ if __name__ == '__main__':
 
     # System deployment
     ns = run_nameserver()
-    agent = run_agent('Example', ns)
+    run_agent('Agent0', ns)
+    run_agent('Agent1', ns)
+    run_agent('Agent2', ns)
 
-    # Log a message
+    # Create a proxy to Agent1 and log a message
+    agent = ns.proxy('Agent1')
     agent.log_info('Hello world!')

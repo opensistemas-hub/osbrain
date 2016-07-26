@@ -1,24 +1,26 @@
-from osbrain import random_nameserver
+import time
 from osbrain import run_agent
+from osbrain import run_nameserver
 
 
 def log_message(agent, message):
-    agent.log_info('received: %s' % message)
-
-
-def hello_world(agent):
-    agent.log_info('Sending message...')
-    agent.send('pub', 'Hello, world!')
+    agent.log_info('Received: %s' % message)
 
 
 if __name__ == '__main__':
 
     # System deployment
-    ns = random_nameserver()
-    publisher = run_agent('Publisher', nsaddr=ns)
-    subscriber = run_agent('Subscriber', nsaddr=ns)
+    ns = run_nameserver()
+    alice = run_agent('Alice', ns)
+    bob = run_agent('Bob', ns)
+    eve = run_agent('Eve', ns)
 
     # System configuration
-    addr = publisher.bind('PUB', alias='pub')
-    publisher.set_method(iddle=hello_world)
-    subscriber.connect(addr, handler=log_message)
+    addr = alice.bind('PUB', alias='main')
+    bob.connect(addr, handler=log_message)
+    eve.connect(addr, handler=log_message)
+
+    # Send messages
+    while True:
+        time.sleep(1)
+        alice.send('main', 'Hello, all!')

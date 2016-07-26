@@ -1,34 +1,35 @@
+import time
 import random
-from osbrain import random_nameserver
 from osbrain import run_agent
-
-
-def hello_world(agent):
-    topic = random.choice(['a', 'b'])
-    agent.log_info('Sending %s message...' % topic)
-    agent.send('pub', 'Hello, world!', topic=topic)
+from osbrain import run_nameserver
 
 
 def log_a(agent, message):
-    agent.log_info('a: %s' % message)
+    agent.log_info('Log a: %s' % message)
 
 
 def log_b(agent, message):
-    agent.log_info('b: %s' % message)
+    agent.log_info('Log b: %s' % message)
 
 
 if __name__ == '__main__':
 
     # System deployment
-    ns = random_nameserver()
-    publisher = run_agent('Publisher', nsaddr=ns)
-    subscriber0 = run_agent('Subscriber0', nsaddr=ns)
-    subscriber1 = run_agent('Subscriber1', nsaddr=ns)
-    subscriber2 = run_agent('Subscriber2', nsaddr=ns)
+    ns = run_nameserver()
+    alice = run_agent('Alice', ns)
+    bob = run_agent('Bob', ns)
+    eve = run_agent('Eve', ns)
+    dave = run_agent('Dave', ns)
 
     # System configuration
-    addr = publisher.bind('PUB', alias='pub')
-    publisher.set_method(iddle=hello_world)
-    subscriber0.connect(addr, handler={'a': log_a, 'b': log_b})
-    subscriber1.connect(addr, handler={'a': log_a})
-    subscriber2.connect(addr, handler={'b': log_b})
+    addr = alice.bind('PUB', alias='main')
+    bob.connect(addr, handler={'a': log_a, 'b': log_b})
+    eve.connect(addr, handler={'a': log_a})
+    dave.connect(addr, handler={'b': log_b})
+
+    # Send messages
+    while True:
+        time.sleep(1)
+        topic = random.choice(['a', 'b'])
+        message = 'Hello, %s!' % topic
+        alice.send('main', message, topic=topic)

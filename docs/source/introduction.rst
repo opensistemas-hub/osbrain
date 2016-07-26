@@ -101,7 +101,7 @@ Simple Example
 In the following example we run a very simple architecture in three steps:
 
 #. Run a name server, which will register agents running by their alias.
-#. Run an agent with an alias ``Agent0``.
+#. Run an agent with an alias ``Example``.
 #. Log a ``Hello world`` message from the agent.
 
 .. literalinclude:: ../../examples/hello_world/main.py

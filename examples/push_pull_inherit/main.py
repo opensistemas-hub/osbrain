@@ -1,27 +1,32 @@
-from osbrain import random_nameserver
+import time
 from osbrain import run_agent
+from osbrain import run_nameserver
 from osbrain import BaseAgent
 
 
-class Push(BaseAgent):
+class Greeter(BaseAgent):
     def on_init(self):
-        self.bind('PUSH', alias='push')
+        self.bind('PUSH', alias='main')
 
-    def iddle(self):
-        self.log_info('Sending message...')
-        self.send('push', 'Hello, world!')
+    def hello(self, name):
+        self.send('main', 'Hello, %s!' % name)
 
 
 def log_message(agent, message):
-    agent.log_info('received: %s' % message)
+    agent.log_info('Received: %s' % message)
 
 
 if __name__ == '__main__':
 
     # System deployment
-    ns = random_nameserver()
-    pusher = run_agent('Pusher', nsaddr=ns, base=Push)
-    puller = run_agent('Puller', nsaddr=ns)
+    ns = run_nameserver()
+    alice = run_agent('Alice', ns, base=Greeter)
+    bob = run_agent('Bob', ns)
 
     # System configuration
-    puller.connect(pusher.addr('push'), handler=log_message)
+    bob.connect(alice.addr('main'), handler=log_message)
+
+    # Send messages
+    while True:
+        time.sleep(1)
+        alice.hello('Bob')

@@ -1,6 +1,7 @@
 """
 Implementation of name server.
 """
+import os
 import time
 import random
 import traceback
@@ -69,6 +70,7 @@ class NameServer(multiprocessing.Process):
         print("NS shut down.")
 
     def start(self):
+        os.environ['OSBRAIN_NAMESERVER_ADDRESS'] = str(self.addr)
         super().start()
         status = self.queue.get()
         if status == 'STARTED':

@@ -1,6 +1,7 @@
 """
 Implementation of proxy-related features.
 """
+import os
 import sys
 import time
 import Pyro4
@@ -60,6 +61,8 @@ class Proxy(Pyro4.core.Proxy):
     def __init__(self, name, nsaddr=None, timeout=3.):
         nshost, nsport = address_to_host_port(nsaddr)
         # Make sure name server exists
+        if not nsaddr:
+            nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
         locate_ns(nsaddr)
         time0 = time.time()
         while time.time() - time0 < timeout:

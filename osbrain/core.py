@@ -1,6 +1,7 @@
 """
 Core agent classes.
 """
+import os
 import types
 import signal
 import sys
@@ -762,6 +763,8 @@ def run_agent(name, nsaddr=None, addr=None, base=BaseAgent):
     proxy
         A proxy to the new agent.
     """
+    if not nsaddr:
+        nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
     Agent(name, nsaddr=nsaddr, addr=addr, base=base).start()
     proxy = Proxy(name, nsaddr)
     proxy.run()

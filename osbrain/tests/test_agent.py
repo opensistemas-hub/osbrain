@@ -1,6 +1,7 @@
 """
 Test file for agents.
 """
+import os
 import random
 from threading import Timer
 from osbrain.logging import run_logger
@@ -88,6 +89,20 @@ def test_registration(nsaddr):
     """
     run_agent('a0', nsaddr)
     run_agent('a1', nsaddr)
+    # List registered agents
+    agent_list = NSProxy(nsaddr).list()
+    assert 'a0' in agent_list
+    assert 'a1' in agent_list
+
+
+def test_nameserver_environ(nsaddr):
+    """
+    When starting a nameserver, a environment variable should be set to ease
+    the process of running new agents.
+    """
+    assert str(nsaddr) == os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
+    run_agent('a0')
+    run_agent('a1')
     # List registered agents
     agent_list = NSProxy(nsaddr).list()
     assert 'a0' in agent_list

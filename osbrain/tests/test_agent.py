@@ -1,12 +1,8 @@
 """
 Test file for agents.
 """
-import os
-import random
 from threading import Timer
 from osbrain.logging import run_logger
-from osbrain.nameserver import NameServer
-from osbrain.address import SocketAddress
 from osbrain.core import run_agent
 from osbrain.core import BaseAgent
 from osbrain.core import Agent
@@ -14,42 +10,6 @@ from osbrain.proxy import Proxy
 from osbrain.proxy import NSProxy
 
 from common import nsaddr  # pragma: no flakes
-
-
-def test_nameserver(nsaddr):
-    """
-    A simple test that checks the correct creation of a name server.
-    """
-    nsproxy = NSProxy(nsaddr)
-    agents = nsproxy.list()
-    name = 'Pyro.NameServer'
-    assert len(agents) == 1
-    assert list(agents.keys())[0] == name
-    assert agents[name] == 'PYRO:%s@%s' % (name, nsaddr)
-
-
-def test_locate_ns():
-    """
-    Locate nameserver as fast as possible. The function `locate_ns` should
-    have a timeout before raising an error.
-    """
-    while True:
-        try:
-            # Bind to random port
-            host = '127.0.0.1'
-            port = random.randrange(10000, 20000)
-            addr = SocketAddress(host, port)
-            nameserver = NameServer(addr)
-            # Start name server later
-            Timer(1, nameserver.start).start()
-            # Locate name server now
-            pyro_address = NSProxy(addr).addr()
-        except PermissionError:
-            continue
-        break
-    assert pyro_address.host == host
-    assert pyro_address.port == port
-    nameserver.shutdown()
 
 
 def test_early_agent_proxy(nsaddr):
@@ -81,32 +41,6 @@ def test_ping(nsaddr):
     """
     a0 = run_agent('a0', nsaddr)
     assert a0.ping() == 'PONG'
-
-
-def test_registration(nsaddr):
-    """
-    Verify new agents get registered in the nameserver.
-    """
-    run_agent('a0', nsaddr)
-    run_agent('a1', nsaddr)
-    # List registered agents
-    agent_list = NSProxy(nsaddr).list()
-    assert 'a0' in agent_list
-    assert 'a1' in agent_list
-
-
-def test_nameserver_environ(nsaddr):
-    """
-    When starting a nameserver, a environment variable should be set to ease
-    the process of running new agents.
-    """
-    assert str(nsaddr) == os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
-    run_agent('a0')
-    run_agent('a1')
-    # List registered agents
-    agent_list = NSProxy(nsaddr).list()
-    assert 'a0' in agent_list
-    assert 'a1' in agent_list
 
 
 def test_agent_shutdown(nsaddr):

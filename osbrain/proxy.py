@@ -187,3 +187,19 @@ class NSProxy(Pyro4.core.Proxy):
             A proxy to access an agent registered in the name server.
         """
         return Proxy(name, nsaddr=self.addr(), timeout=timeout)
+
+    def shutdown_agents(self):
+        """
+        Shutdown all agents registered in the name server.
+        """
+        super()._pyroInvoke('async_shutdown_agents', (), {}, flags=0)
+        # Wait for all agents to be shutdown (unregistered)
+        while len(self.agents()):
+            time.sleep(0.1)
+
+    def shutdown(self):
+        """
+        Shutdown the name server. All agents will be shutdown as well.
+        """
+        self.shutdown_agents()
+        super()._pyroInvoke('async_shutdown', (), {}, flags=0)

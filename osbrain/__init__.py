@@ -6,10 +6,10 @@ Pyro4.config.SERVERTYPE = 'multiplex'
 # TODO: should we set COMMTIMEOUT as well?
 Pyro4.config.DETAILED_TRACEBACK = True
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 
 from .core import BaseAgent, Agent, run_agent
-from .nameserver import NameServer, random_nameserver, run_nameserver
+from .nameserver import random_nameserver, run_nameserver
 from .proxy import Proxy, NSProxy
 from .address import SocketAddress, AgentAddress
 from .logging import Logger, run_logger

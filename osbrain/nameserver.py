@@ -18,7 +18,47 @@ from .proxy import Proxy
 from .proxy import NSProxy
 
 
-class NameServer(multiprocessing.Process):
+@Pyro4.expose
+class NameServer(Pyro4.naming.NameServer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.shutdown_parent_daemon = False
+
+    def ping(self):
+        """
+        A simple test method to check if the name server is running correctly.
+        """
+        return 'pong'
+
+    def agents(self):
+        """
+        List agents registered in the name server.
+        """
+        agents = self.list()
+        return [name for name in agents if name != 'Pyro.NameServer']
+
+    def async_shutdown_agents(self):
+        """
+        Shutdown all agents registered in the name server.
+        """
+        for name, address in self.list().items():
+            if name == 'Pyro.NameServer':
+                continue
+            agent = Pyro4.core.Proxy(address)
+            agent.shutdown()
+
+    def async_shutdown(self):
+        """
+        Shutdown the name server. All agents will be shutdown as well.
+        """
+        self.async_shutdown_agents()
+        self.shutdown_parent_daemon = True
+
+
+Pyro4.naming.NameServer = NameServer
+
+
+class NameServerProcess(multiprocessing.Process):
     """
     Name server class. Instances of a name server are system processes which
     can be run independently.
@@ -62,7 +102,10 @@ class NameServer(multiprocessing.Process):
         print("NS running on %s (%s)" % (self.daemon.locationStr, hostip))
         print("URI = %s" % self.uri)
         try:
-            self.daemon.requestLoop(lambda: not self.shutdown_event.is_set())
+            self.daemon.requestLoop(
+                lambda: (not self.shutdown_event.is_set() and
+                         not self.daemon.nameserver.shutdown_parent_daemon)
+            )
         finally:
             self.daemon.close()
             if bcserver is not None:
@@ -130,7 +173,7 @@ def random_nameserver():
             host = '127.0.0.1'
             port = random.randrange(10000, 20000)
             addr = SocketAddress(host, port)
-            nameserver = NameServer(addr)
+            nameserver = NameServerProcess(addr)
             nameserver.start()
             return addr
         except NamingError:
@@ -161,5 +204,5 @@ def run_nameserver(addr=None):
     if not addr:
         addr = random_nameserver()
     else:
-        NameServer(addr).start()
+        NameServerProcess(addr).start()
     return NSProxy(addr)

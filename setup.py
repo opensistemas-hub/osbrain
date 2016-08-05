@@ -37,6 +37,6 @@ setup(
     extras_require={
         'dev': ['dill'],
         'test': ['tox'],
-        'docs': ['sphinx', 'numpydoc'],
+        'docs': ['sphinx', 'numpydoc', 'sphinx_rtd_theme'],
     },
 )

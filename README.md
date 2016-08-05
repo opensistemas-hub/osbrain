@@ -2,7 +2,7 @@
 
 [![Build Status](https://api.travis-ci.org/opensistemas-hub/osbrain.svg?branch=master)](https://travis-ci.org/opensistemas-hub/osbrain)
 [![Latest Version](https://img.shields.io/pypi/v/osbrain.svg)](https://pypi.python.org/pypi/osbrain/)
-[![Downloads](https://img.shields.io/pypi/d/osbrain.svg)](https://pypi.python.org/pypi/osbrain/)
+[![Documentation Status](https://readthedocs.org/projects/osbrain/badge/?version=stable)](http://osbrain.readthedocs.io/en/stable/)
 
 osBrain is a **general-purpose multi-agent system module** written in Python.
 Agents run independently as system processes and communicate with each other
@@ -13,13 +13,13 @@ passing between agents. It also uses [Pyro4](https://pythonhosted.org/Pyro4/)
 to ease the configuration and deployment of complex systems.
 
 Please read the
-[osBrain documentation](https://pythonhosted.org/osbrain/introduction.html)
+[osBrain documentation](https://osbrain.readthedocs.io/en/stable/)
 for a bit more detailed introduction.
 
 osBrain is licensed under the
-[Apache License](https://pythonhosted.org/osbrain/license.html).
+[Apache License](https://osbrain.readthedocs.io/en/stable/license.html).
 
-- [Documentation](https://pythonhosted.org/osbrain/).
+- [Documentation](https://osbrain.readthedocs.io/en/stable/).
 - [osBrain on Pypi](https://pypi.python.org/pypi/osbrain).
 
 
@@ -43,7 +43,7 @@ You should now be able to import `osbrain` from a python console:
 ## Code examples
 
 If you want to learn how to use osBrain, refer to the
-[tutorial in the documentation](https://pythonhosted.org/osbrain/tutorial.html)
+[tutorial in the documentation](https://osbrain.readthedocs.io/en/stable/)
 for a set of step-by-step simple code examples.
 
 

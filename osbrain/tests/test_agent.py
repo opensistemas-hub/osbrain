@@ -24,7 +24,6 @@ def test_early_agent_proxy(nsaddr):
     # Locate agent now
     a0 = Proxy('a0', nsaddr)
     assert a0.test() == 'OK'
-    a0.kill()
 
 
 def test_agent_loopback(nsaddr):

@@ -155,15 +155,6 @@ class NSProxy(Pyro4.core.Proxy):
         locate_ns(nsaddr, timeout)
         super().__init__('PYRONAME:Pyro.NameServer@%s:%s' % (nshost, nsport))
 
-    def addr(self):
-        """
-        Returns
-        -------
-        SocketAddress
-            The socket address of the Pyro server.
-        """
-        return SocketAddress(self._pyroUri.host, self._pyroUri.port)
-
     def release(self):
         """
         Release the connection to the Pyro daemon.
@@ -187,6 +178,29 @@ class NSProxy(Pyro4.core.Proxy):
             A proxy to access an agent registered in the name server.
         """
         return Proxy(name, nsaddr=self.addr(), timeout=timeout)
+
+    def addr(self, agent_alias=None, address_alias=None):
+        """
+        Return the name server address or the address of an agent's socket.
+
+        Parameters
+        ----------
+        agent_alias : str, default is None
+            The alias of the agent to retrieve its socket address.
+        address_alias : str, default is None
+            The alias of the socket address to retrieve from the agent.
+
+        Returns
+        -------
+        SocketAddress or AgentAddress
+            The name server or agent's socket address.
+        """
+        if not agent_alias and not address_alias:
+            return SocketAddress(self._pyroUri.host, self._pyroUri.port)
+        agent = self.proxy(agent_alias)
+        addr = agent.addr(address_alias)
+        agent.release()
+        return addr
 
     def shutdown_agents(self):
         """

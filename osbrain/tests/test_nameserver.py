@@ -129,3 +129,16 @@ def test_nameserver_agents(nsproxy):
     assert len(agents) == 2
     assert 'Agent0' in agents
     assert 'Agent1' in agents
+
+
+def test_nameserver_agent_address(nsproxy):
+    """
+    A name server proxy can be used to retrieve an agent's socket address as
+    well, given the agent's alias and the socket's alias.
+    """
+    a0 = run_agent('a0')
+    a1 = run_agent('a1')
+    addr0 = a0.bind('PUB', alias='foo')
+    addr1 = a1.bind('PUSH', alias='bar')
+    assert nsproxy.addr('a0', 'foo') == addr0
+    assert nsproxy.addr('a1', 'bar') == addr1

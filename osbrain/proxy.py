@@ -154,7 +154,8 @@ class NSProxy(Pyro4.core.Proxy):
             nsport = 9090
         # Make sure name server exists
         locate_ns(nsaddr, timeout)
-        super().__init__('PYRONAME:Pyro.NameServer@%s:%s' % (nshost, nsport))
+        ns_name = Pyro4.constants.NAMESERVER_NAME
+        super().__init__('PYRONAME:%s@%s:%d' % (ns_name, nshost, nsport))
 
     def release(self):
         """

@@ -246,7 +246,6 @@ def test_agent_multiproxy(nsproxy):
     assert agent.total() == 2
 
 
-
 def test_logger(nsaddr):
     """
     Test basic logging.

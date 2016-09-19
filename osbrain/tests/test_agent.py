@@ -10,6 +10,7 @@ from osbrain.proxy import Proxy
 from osbrain.proxy import NSProxy
 
 from common import nsaddr  # pragma: no flakes
+from common import nsproxy  # pragma: no flakes
 
 
 def test_early_agent_proxy(nsaddr):
@@ -219,6 +220,31 @@ def test_agent_inheritance(nsaddr):
     # Test the quick `run_agent` function
     a0 = run_agent('a0', nsaddr, base=NewAgent)
     assert a0.the_answer_to_life() == 42
+
+
+def test_agent_multiproxy(nsproxy):
+    """
+    Test agent multiproxy access; all proxies should access the same agent
+    object.
+    """
+    class NewAgent(BaseAgent):
+        def on_init(self):
+            self.count = 0
+
+        def add(self):
+            self.count += 1
+
+        def total(self):
+            return self.count
+
+    agent = run_agent('Counter', base=NewAgent)
+    agent.add()
+    assert agent.total() == 1
+
+    newproxy = nsproxy.proxy('Counter')
+    newproxy.add()
+    assert agent.total() == 2
+
 
 
 def test_logger(nsaddr):

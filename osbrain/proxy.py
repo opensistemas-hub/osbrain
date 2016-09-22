@@ -36,14 +36,15 @@ def locate_ns(nsaddr, timeout=3):
         host = '127.0.0.1'
         port = 9090
     time0 = time.time()
-    while time.time() - time0 < timeout:
+    while True:
         try:
             Pyro4.locateNS(host, port)
             return nsaddr
-        except NamingError:
-            time.sleep(0.01)
-            continue
-    raise NamingError('Could not find name server after timeout!')
+        except NamingError as error:
+            if time.time() - time0 < timeout:
+                time.sleep(0.1)
+                continue
+            raise error
 
 
 class Proxy(Pyro4.core.Proxy):

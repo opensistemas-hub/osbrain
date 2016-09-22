@@ -156,7 +156,9 @@ class BaseAgent():
         loopback = self.context.socket(zmq.REQ)
         loopback.connect('inproc://loopback')
         loopback.send_pyobj((header, data))
-        return loopback.recv_pyobj()
+        response = loopback.recv_pyobj()
+        loopback.close()
+        return response
 
     def safe_ping(self):
         """

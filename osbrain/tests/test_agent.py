@@ -1,6 +1,7 @@
 """
 Test file for agents.
 """
+import time
 from threading import Timer
 from osbrain.logging import run_logger
 from osbrain.core import run_agent
@@ -31,7 +32,7 @@ def test_agent_loopback(nsaddr):
     """
     An agent should always have a loopback inproc socket.
     """
-    a0 = run_agent('a0', nsaddr)
+    a0 = run_agent('a0')
     assert a0.addr('loopback') == 'inproc://loopback'
 
 
@@ -39,7 +40,7 @@ def test_ping(nsaddr):
     """
     Test simple loopback ping.
     """
-    a0 = run_agent('a0', nsaddr)
+    a0 = run_agent('a0')
     assert a0.ping() == 'PONG'
 
 
@@ -76,7 +77,7 @@ def test_set_method(nsaddr):
     """
     Set new methods for the agent.
     """
-    a0 = run_agent('a0', nsaddr)
+    a0 = run_agent('a0')
     # Single method, same name
     a0.set_method(square)
     assert a0.square(3) == 9
@@ -105,7 +106,7 @@ def test_set_and_get_attributes(nsaddr):
     """
     Set and get attributes through the proxy.
     """
-    a0 = run_agent('a0', nsaddr)
+    a0 = run_agent('a0')
     a0.set_method(increment)
     # Single attribute
     a0.zero = 0
@@ -125,7 +126,7 @@ def test_socket_creation(nsaddr):
     """
     Test ZMQ socket creation.
     """
-    a0 = run_agent('a0', nsaddr)
+    a0 = run_agent('a0')
     a0.bind('REQ', 'alias0')
     a0.bind('PUB', 'alias1')
     a0.bind('PUSH', 'alias2')
@@ -153,8 +154,8 @@ def test_reqrep(nsaddr):
     """
     Simple request-reply pattern between two agents.
     """
-    a0 = run_agent('a0', nsaddr)
-    a1 = run_agent('a1', nsaddr)
+    a0 = run_agent('a0')
+    a1 = run_agent('a1')
     addr = a0.bind('REP', 'reply', rep_handler)
     a1.connect(addr, 'request')
     response = a1.send_recv('request', 'Hello world')
@@ -165,43 +166,32 @@ def test_pushpull(nsaddr):
     """
     Simple push-pull pattern test.
     """
-    a0 = run_agent('a0', nsaddr)
-    a1 = run_agent('a1', nsaddr)
-    addr = a1.bind('PULL', handler=redirect)
+    a0 = run_agent('a0')
+    a1 = run_agent('a1')
+    a1.set_attr(received=None)
+    addr = a1.bind('PULL', handler=set_received)
     a0.connect(addr, 'push')
-    # Create a BaseAgent as end-point
-    a2 = BaseAgent('a2')
-    a2.received = ''
-    addr = a2.bind('PULL', handler=set_received)
-    a1.connect(addr, 'push')
-    # Send message (will be passed from a0 to a1 and then to a2)
     message = 'Hello world'
     a0.send('push', message)
-    while not a2.received:
-        a2.iterate()
-    assert a2.received == '%s (redirected)' % message
+    while not a1.get_attr('received'):
+        time.sleep(0.01)
+    assert a1.get_attr('received') == message
 
 
 def test_pubsub(nsaddr):
     """
     Simple publisher-subscriber pattern test.
     """
-    a0 = run_agent('a0', nsaddr)
-    a1 = run_agent('a1', nsaddr)
-    addr = a1.bind('SUB', handler=redirect)
-    a0.connect(addr, 'pub')
-    # Create a BaseAgent as end-point
-    a2 = BaseAgent('a2')
-    a2.received = ''
-    a2.poll_timeout = 200
-    addr = a2.bind('PULL', handler=set_received)
-    a1.connect(addr, 'push')
-    # Send message (will be passed from a0 to a1 and then to a2)
-    while not a2.received:
-        message = 'Hello world'
+    a0 = run_agent('a0')
+    a1 = run_agent('a1')
+    a1.set_attr(received=None)
+    addr = a0.bind('PUB', alias='pub')
+    a1.connect(addr, handler=set_received)
+    message = 'Hello world'
+    while not a1.get_attr('received'):
         a0.send('pub', message)
-        a2.iterate()
-    assert a2.received == '%s (redirected)' % message
+        time.sleep(0.1)
+    assert a1.get_attr('received') == message
 
 
 def test_agent_inheritance(nsaddr):
@@ -250,8 +240,8 @@ def test_logger(nsaddr):
     """
     Test basic logging.
     """
-    logger = run_logger('logger', nsaddr)
-    a0 = run_agent('a0', nsaddr)
+    logger = run_logger('logger')
+    a0 = run_agent('a0')
     a0.set_logger(logger)
     message = 'Hello world'
     while True:
@@ -267,37 +257,33 @@ def test_method_handlers(nsaddr):
     Test handlers which are methods of a custom class.
     """
     class NewAgent(BaseAgent):
+        def on_init(self):
+            self.received = {}
+
         def rep(self, message):
             self.received['rep'] = message
-            self.connect(message, 'endpoint')
             return 'OK'
 
         def pull(self, message):
             self.received['pull'] = message
-            self.send('endpoint', message + ' (redirected)')
 
         def on_init(self):
             self.received = {}
             self.bind('REP', 'rep', handler=self.rep)
             self.bind('PULL', 'pull', handler=self.pull)
 
-    server = run_agent('server', nsaddr, base=NewAgent)
-    client = run_agent('client', nsaddr)
-    # Create a BaseAgent as end-point
-    endpoint = BaseAgent('endpoint')
-    endpoint.received = ''
-    endpoint_addr = endpoint.bind('PULL', handler=set_received)
+    server = run_agent('server', base=NewAgent)
+    client = run_agent('client')
     # Request
     client.connect(server.addr('rep'), 'req')
-    assert client.send_recv('req', endpoint_addr) == 'OK'
-    assert server.get_attr('received')['rep'] == endpoint_addr
+    assert client.send_recv('req', 'This is a request') == 'OK'
+    assert server.get_attr('received')['rep'] == 'This is a request'
     # Push
     client.connect(server.addr('pull'), 'push')
-    client.send('push', 'Hello')
-    while not endpoint.received:
-        endpoint.iterate()
-    assert server.get_attr('received')['pull'] == 'Hello'
-    assert endpoint.received == 'Hello (redirected)'
+    client.send('push', 'Hello world!')
+    while not server.get_attr('received').get('pull'):
+        time.sleep(0.01)
+    assert server.get_attr('received')['pull'] == 'Hello world!'
 
 
 # TODO:

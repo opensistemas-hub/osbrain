@@ -14,6 +14,10 @@ from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
 
 
+def set_received(agent, message, topic=None):
+    agent.received = message
+
+
 def test_early_agent_proxy(nsaddr):
     """
     It must be possible to create a Proxy when the registration of the new
@@ -59,24 +63,19 @@ def test_agent_shutdown(nsaddr):
     assert 'a0' not in ns.list()
 
 
-# TODO: this functions are used just within the scope of the next test.
-#       Remove once Dill is integrated in osbrain.
-def square(agent, x):
-    return x ** 2
-
-
-def one(agent):
-    return 1
-
-
-def two(agent):
-    return 2
-
-
 def test_set_method(nsaddr):
     """
     Set new methods for the agent.
     """
+    def square(agent, x):
+        return x ** 2
+
+    def one(agent):
+        return 1
+
+    def two(agent):
+        return 2
+
     a0 = run_agent('a0')
     # Single method, same name
     a0.set_method(square)
@@ -94,18 +93,24 @@ def test_set_method(nsaddr):
     assert a0.dos() == 2
 
 
-# TODO: this functions are used just within the scope of the next test.
-#       Remove once Dill is integrated in osbrain.
-def increment(agent):
-    agent.zero += 10
-    agent.one += 10
-    agent.two += 10
+def test_set_method_lambda(nsaddr):
+    """
+    Set new methods for the agent using lambda functions.
+    """
+    a0 = run_agent('a0')
+    a0.set_method(square=lambda agent, x: x ** 2)
+    assert a0.square(2) == 4
 
 
 def test_set_and_get_attributes(nsaddr):
     """
     Set and get attributes through the proxy.
     """
+    def increment(agent):
+        agent.zero += 10
+        agent.one += 10
+        agent.two += 10
+
     a0 = run_agent('a0')
     a0.set_method(increment)
     # Single attribute
@@ -136,30 +141,31 @@ def test_socket_creation(nsaddr):
     assert 'alias2' in addresses
 
 
-# TODO: this functions are used just within the scope of the next test.
-#       Remove once Dill is integrated in osbrain.
-def rep_handler(agent, message):
-    return 'OK'
-
-
-def redirect(agent, message):
-    agent.send('push', '%s (redirected)' % message)
-
-
-def set_received(agent, message, topic=None):
-    agent.received = message
-
-
 def test_reqrep(nsaddr):
     """
     Simple request-reply pattern between two agents.
     """
+    def rep_handler(agent, message):
+        return 'OK'
+
     a0 = run_agent('a0')
     a1 = run_agent('a1')
     addr = a0.bind('REP', 'reply', rep_handler)
     a1.connect(addr, 'request')
     response = a1.send_recv('request', 'Hello world')
     assert response == 'OK'
+
+
+def test_reqrep_lambda(nsaddr):
+    """
+    Simple request-reply pattern between two agents using lambda handler.
+    """
+    a0 = run_agent('a0')
+    a1 = run_agent('a1')
+    addr = a0.bind('REP', 'reply', lambda agent, message: 'x' + message)
+    a1.connect(addr, 'request')
+    response = a1.send_recv('request', 'Hello world')
+    assert response == 'xHello world'
 
 
 def test_pushpull(nsaddr):

@@ -20,6 +20,7 @@ from Pyro4.errors import PyroError
 from .common import address_to_host_port
 from .common import unbound_method
 from .common import LogLevel
+from .common import repeat
 from .address import AgentAddress
 from .address import AgentAddressKind
 from .proxy import Proxy
@@ -146,6 +147,30 @@ class BaseAgent():
             Method keyword arguments.
         """
         return self.loopback('EXECUTE_METHOD', (method, args, kwargs))
+
+    def timer(self, method, each=None, args=(), kwargs={}):
+        """
+        Execute a timed action.
+
+        Parameters
+        ----------
+        method
+            Method to be executed by the agent.
+        each : float, default is None
+            If set, the action will be executed periodically and forever,
+            with an interval of `each` seconds between executions.
+        args : tuple, default is ()
+            Parameters to pass for the method execution.
+        kwargs : dict, default is {}
+            Named parameters to pass for the method execution.
+        """
+        if not isinstance(method, str):
+            method = self.set_method(method)
+        if each is not None:
+            repeat(each, self.loopback, args=('EXECUTE_METHOD',
+                                              (method, args, kwargs)))
+        else:
+            assert NotImplementedError()
 
     def loopback(self, header, data=None):
         """
@@ -456,9 +481,6 @@ class BaseAgent():
         # Reset handlers
         self.set_handler(self.socket[alias], handlers)
 
-    def timer(self, timeout, function):
-        raise NotImplementedError('Timers are not implemented yet. (TODO)')
-
     def iddle(self):
         """
         This function is to be executed when the agent is iddle.
@@ -503,6 +525,11 @@ class BaseAgent():
         kwargs : [name, function]
             New methods will be created for each function, taking the name
             specified by the parameter.
+
+        Returns
+        -------
+        str
+            Name of the registered method in the agent.
         """
         for function in args:
             method = types.MethodType(function, self)
@@ -513,6 +540,7 @@ class BaseAgent():
             method = types.MethodType(function, self)
             setattr(self, name, method)
             self.log_info('SET self.%s() = %s' % (name, function))
+        return name
 
     # TODO: remove/deprecate. If an Agent is to be active, then loopback could
     #       be used to send execution orders. E.g.: each second, send function

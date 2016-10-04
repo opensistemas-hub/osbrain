@@ -265,6 +265,8 @@ def test_method_handlers(nsaddr):
     class NewAgent(BaseAgent):
         def on_init(self):
             self.received = {}
+            self.bind('REP', 'rep', handler=self.rep)
+            self.bind('PULL', 'pull', handler=self.pull)
 
         def rep(self, message):
             self.received['rep'] = message
@@ -272,11 +274,6 @@ def test_method_handlers(nsaddr):
 
         def pull(self, message):
             self.received['pull'] = message
-
-        def on_init(self):
-            self.received = {}
-            self.bind('REP', 'rep', handler=self.rep)
-            self.bind('PULL', 'pull', handler=self.pull)
 
     server = run_agent('server', base=NewAgent)
     client = run_agent('client')
@@ -296,3 +293,44 @@ def test_method_handlers(nsaddr):
 #  - Test handler with 2 parameters (agent, message)
 #  - Test handler with 3 parameters (agent, message, topic)
 #  - Test topic is properly filtered (no match, partial match, full match)
+
+
+def test_timer_each(nsaddr):
+    """
+    Test a timer executed periodically.
+    """
+    def tick(agent):
+        agent.send('push', agent.count)
+        agent.count += 1
+
+    sender = run_agent('sender')
+    sender.set_attr(count=0)
+    receiver = run_agent('receiver')
+    addr = sender.bind('PUSH', alias='push')
+    receiver.connect(addr, handler=set_received)
+    # Start timer
+    sender.timer(tick, each=0.1)
+    time.sleep(2)
+    assert abs(receiver.get_attr('received') - 20) <= 1
+
+
+def test_timer_each_oop(nsaddr):
+    """
+    Test a timer executed periodically (using OOP).
+    """
+    class Sender(BaseAgent):
+        def on_init(self):
+            self.count = 0
+            self.bind('PUSH', 'push')
+
+        def tick(self):
+            self.send('push', self.count)
+            self.count += 1
+
+    sender = run_agent('sender', base=Sender)
+    receiver = run_agent('receiver')
+    receiver.connect(sender.addr('push'), handler=set_received)
+    # Start timer
+    sender.timer('tick', each=0.1)
+    time.sleep(2)
+    assert abs(receiver.get_attr('received') - 20) <= 1

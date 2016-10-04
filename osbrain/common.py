@@ -1,6 +1,10 @@
 """
 Miscellaneous utilities.
 """
+import time
+import sched
+import threading
+
 from .address import SocketAddress
 
 
@@ -54,3 +58,56 @@ def unbound_method(method):
         Unbounded function.
     """
     return getattr(method.__self__.__class__, method.__name__)
+
+
+def periodic(scheduler, interval, action, args=()):
+    """
+    Run a scheduler periodically.
+
+    This function will run forever and blocking.
+
+    Parameters
+    ----------
+    scheduler : sched.scheduler
+        Scheduler to run.
+    interval : numeric
+        Delay to apply to the scheduler.
+    action
+        Action to execute by the scheduler.
+    args, default is ()
+        Arguments for the action.
+    """
+    scheduler.enter(interval, 1, periodic,
+                    (scheduler, interval, action, args))
+    action(*args)
+    scheduler.run()
+
+
+def repeat(interval, action, args=()):
+    """
+    Repeat an action forever after a given number of seconds.
+
+    If a sequence of events takes longer to run than the time available
+    before the next event, the repeater will simply fall behind.
+
+    This function is executed in a separate thread.
+
+    Parameters
+    ----------
+    interval : float
+        Number of seconds between executions.
+    action
+        To be taken after the interval.
+    args : tuple, default is ()
+        Arguments for the action.
+
+    Returns
+    -------
+    threading.Thread
+        Thread running the repeat task.
+    """
+    scheduler = sched.scheduler(time.time, time.sleep)
+    t = threading.Thread(target=periodic,
+                         args=(scheduler, interval, action, args))
+    t.start()
+    return t

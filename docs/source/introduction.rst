@@ -130,5 +130,5 @@ always take this into account:
 #. osBrain uses `pickle <https://docs.python.org/library/pickle.html>`_ for
    serialization, which means that the system performance depends on this
    package.
-#. ØMQ sockets use TCP by default. The network may have a great impact on
+#. ØMQ transport is TCP by default. The network may have a great impact on
    performance.

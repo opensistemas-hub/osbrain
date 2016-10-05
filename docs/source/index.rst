@@ -7,7 +7,7 @@ osBrain - |version|
    :alt: osBrain logo
 
 
-.. index:: what is osBrain
+.. index:: abstract
 
 What is osBrain?
 ----------------
@@ -33,7 +33,8 @@ Contents
 
    introduction.rst
    install.rst
-   tutorial.rst
+   tutorial-1.rst
+   tutorial-2.rst
    security.rst
    api.rst
    changelog.rst

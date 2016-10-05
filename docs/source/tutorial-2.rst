@@ -128,3 +128,16 @@ However, an agent can reply earlier if needed::
 
 Note how, in this case, we need to manually send the reply using the
 corresponding socket, though.
+
+
+Shutting down
+=============
+
+Although not covered in the examples until now (because many times you just
+want the multi-agent system to run forever until, perhaps, an event occurs),
+it is possible to actively kill the system using proxies:
+
+.. literalinclude:: ../../examples/shutdown.py
+
+.. note:: Shutting down the nameserver will result in all agents registered in
+   the name server being shut down as well.

@@ -5,17 +5,14 @@ Tutorial - 2
 ************
 
 
-Timers
-======
+Repeated actions
+================
 
 Timers can be used to repeat an action after a period of time. To illustrate
-this, let us modify the :ref:`push_pull` example a bit:
+this, let us modify the :ref:`push_pull` example a bit and make use of the
+``each`` method:
 
-.. literalinclude:: ../../examples/timer/simple.py
-
-Timers also accept parameters that can be used when execution the action:
-
-.. literalinclude:: ../../examples/timer/params.py
+.. literalinclude:: ../../examples/timer/each.py
 
 Note that if an action takes longer to run than the time available before the
 next execution, the timer will simply fall behind.

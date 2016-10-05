@@ -309,7 +309,7 @@ def test_timer_each(nsaddr):
     addr = sender.bind('PUSH', alias='push')
     receiver.connect(addr, handler=set_received)
     # Start timer
-    sender.timer(tick, each=0.1)
+    sender.each(0.1, tick)
     time.sleep(2)
     assert abs(receiver.get_attr('received') - 20) <= 1
 
@@ -331,6 +331,6 @@ def test_timer_each_oop(nsaddr):
     receiver = run_agent('receiver')
     receiver.connect(sender.addr('push'), handler=set_received)
     # Start timer
-    sender.timer('tick', each=0.1)
+    sender.each(0.1, 'tick')
     time.sleep(2)
     assert abs(receiver.get_attr('received') - 20) <= 1

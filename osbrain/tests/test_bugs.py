@@ -20,7 +20,7 @@ def test_timer_recursion(nsproxy):
 
     agent = run_agent('a0')
     agent.set_attr(count=0)
-    agent.timer(inc, 0.0)
+    agent.each(0.0, inc)
     while True:
         count = agent.get_attr('count')
         if count > sys.getrecursionlimit():

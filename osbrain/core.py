@@ -148,29 +148,26 @@ class BaseAgent():
         """
         return self.loopback('EXECUTE_METHOD', (method, args, kwargs))
 
-    def timer(self, method, each=None, args=(), kwargs={}):
+    def each(self, period, method, *args, **kwargs):
         """
-        Execute a timed action.
+        Execute a repeated action with a defined period.
 
         Parameters
         ----------
+        period : float
+            Repeat the action execution with a delay of `period` seconds
+            between executions.
         method
-            Method to be executed by the agent.
-        each : float, default is None
-            If set, the action will be executed periodically and forever,
-            with an interval of `each` seconds between executions.
-        args : tuple, default is ()
+            Method (action) to be executed by the agent.
+        *args : tuple
             Parameters to pass for the method execution.
-        kwargs : dict, default is {}
+        **kwargs : dict
             Named parameters to pass for the method execution.
         """
         if not isinstance(method, str):
             method = self.set_method(method)
-        if each is not None:
-            repeat(each, self.loopback, args=('EXECUTE_METHOD',
-                                              (method, args, kwargs)))
-        else:
-            assert NotImplementedError()
+        repeat(period, self.loopback, args=('EXECUTE_METHOD',
+                                            (method, args, kwargs)))
 
     def loopback(self, header, data=None):
         """

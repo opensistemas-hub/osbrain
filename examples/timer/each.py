@@ -6,7 +6,7 @@ def log_message(agent, message):
     agent.log_info('Received: %s' % message)
 
 
-def greet(agent, say, more=None):
+def annoy(agent, say, more=None):
     message = say if not more else say + ' ' + more + '!'
     agent.send('annoy', message)
 
@@ -20,6 +20,6 @@ if __name__ == '__main__':
     apple.connect(addr, handler=log_message)
 
     # Multiple timers with parameters
-    orange.timer(greet, each=1., args=('Hey', ))
-    orange.timer(greet, each=1.4142, args=('Apple', ))
-    orange.timer(greet, each=3.1415, args=('Hey', ), kwargs=dict(more='Apple'))
+    orange.each(1., annoy, 'Hey')
+    orange.each(1.4142, annoy, 'Apple')
+    orange.each(3.1415, annoy, 'Hey', more='Apple')

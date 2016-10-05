@@ -12,7 +12,7 @@ Timers can be used to repeat an action after a period of time. To illustrate
 this, let us modify the :ref:`push_pull` example a bit and make use of the
 ``each`` method:
 
-.. literalinclude:: ../../examples/timer/each.py
+.. literalinclude:: ../../examples/timer_each.py
 
 Note that if an action takes longer to run than the time available before the
 next execution, the timer will simply fall behind.
@@ -27,7 +27,7 @@ an agent.
 
 This, of course, can be done with osBrain:
 
-.. literalinclude:: ../../examples/push_pull_inherit/main.py
+.. literalinclude:: ../../examples/push_pull_inherit.py
 
 Most of the code is similar to the one presented in the :ref:`push_pull` example,
 however you may notice some differences:
@@ -65,7 +65,7 @@ In the following example we have *Alice* publishing messages using topic
 ``a`` or ``b`` at random. Then we have *Bob* subscribed to both topics, *Eve*
 subscribed to topic ``a`` only and *Dave* subscribed to topic ``b`` only.
 
-.. literalinclude:: ../../examples/pub_sub_filter/main.py
+.. literalinclude:: ../../examples/pub_sub_filter.py
 
 Note how we can specify different handlers for different topics when
 subscribing agents.
@@ -84,7 +84,7 @@ that are then added to the remote agent as new methods.
 In order to add new methods (or change current methods) we only need to call
 ``set_method()`` from the proxy.
 
-.. literalinclude:: ../../examples/add_method/main.py
+.. literalinclude:: ../../examples/add_method.py
 
 Note that ``set_method()`` accepts any number of parameters:
 
@@ -104,7 +104,7 @@ using a proxy.
 In order to further simplify some tasks, lambda functions can be used to
 configure remote agents:
 
-.. literalinclude:: ../../examples/req_rep/lambda.py
+.. literalinclude:: ../../examples/req_rep_lambda.py
 
 See the similarities between this example and the one showed in :ref:`req_rep`.
 In fact, the only difference is the binding from Alice, in which we are using

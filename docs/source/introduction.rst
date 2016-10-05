@@ -104,7 +104,7 @@ In the following example we run a very simple architecture in three steps:
 #. Run an agent with an alias ``Example``.
 #. Log a ``Hello world`` message from the agent.
 
-.. literalinclude:: ../../examples/hello_world/main.py
+.. literalinclude:: ../../examples/hello_world.py
 
 It is important to note that the ``agent`` variable in that example is just
 what is called a proxy to the remote agent so, when ``log_info()`` is called,

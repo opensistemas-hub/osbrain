@@ -36,7 +36,7 @@ are taken here:
 #. Run an agent with an alias ``Example``.
 #. Log a ``Hello world`` message from the agent.
 
-.. literalinclude:: ../../examples/hello_world/main.py
+.. literalinclude:: ../../examples/hello_world.py
 
 Running this example from your terminal should simply show you a log message
 saying `Hello world!` but, what exactly is happening there?
@@ -96,7 +96,7 @@ also get in return a proxy to this name server:
 
 This proxy can be used to list the agents registered in the name server:
 
-.. literalinclude:: ../../examples/name_server/agents.py
+.. literalinclude:: ../../examples/name_server_agents.py
 
 The code above should simply print the aliases of all the agents registered
 in the name server.
@@ -106,7 +106,7 @@ This is specially useful when accessing the multi-agent system from a different
 console or location, as it will reduce the number of addresses that we need
 to remember.
 
-.. literalinclude:: ../../examples/name_server/proxy.py
+.. literalinclude:: ../../examples/name_server_proxy.py
 
 The code above creates (and registers) three different agents in a name server
 and then creates, through the name server proxy, a proxy to one of those agents
@@ -129,7 +129,7 @@ In this first example, we will create two agents: *Alice* and *Bob*, and we
 will make alice send messages to *Bob* using a simple push-pull communication
 pattern.
 
-.. literalinclude:: ../../examples/push_pull/main.py
+.. literalinclude:: ../../examples/push_pull.py
 
 So, in this case, we are doing some more stuff. After we spawn *Alice* and
 *Bob*, we connect them.
@@ -186,7 +186,7 @@ Another common communication patter is the request-reply, in which a requester
 sends a message to the replier and expects always a reply back. It is sometimes
 useful, specially when some kind of synchronization is required.
 
-.. literalinclude:: ../../examples/req_rep/simple.py
+.. literalinclude:: ../../examples/req_rep.py
 
 The main difference with respect to the push-pull pattern is that, in this
 case, Bob must run the ``recv`` method in order to get the reply back from
@@ -211,7 +211,7 @@ Here is an example in which *Alice* is the publisher and *Bob* and *Eve*
 subscribe to *Alice*. This way, when *Alice* sends a message, both *Bob* and
 *Eve* will receive it:
 
-.. literalinclude:: ../../examples/pub_sub/main.py
+.. literalinclude:: ../../examples/pub_sub.py
 
 Note the similarities between this example and the Sender-Receiver example.
 The only differences are that *Alice* is now binding using the ``'PUB'``

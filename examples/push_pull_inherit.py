@@ -1,10 +1,10 @@
 import time
 from osbrain import run_agent
 from osbrain import run_nameserver
-from osbrain import BaseAgent
+from osbrain import Agent
 
 
-class Greeter(BaseAgent):
+class Greeter(Agent):
     def on_init(self):
         self.bind('PUSH', alias='main')
 

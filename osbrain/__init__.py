@@ -10,7 +10,7 @@ Pyro4.config.DETAILED_TRACEBACK = True
 
 __version__ = '0.2.3-devel'
 
-from .core import BaseAgent, Agent, run_agent
+from .core import Agent, AgentProcess, run_agent
 from .nameserver import random_nameserver, run_nameserver
 from .proxy import Proxy, NSProxy
 from .address import SocketAddress, AgentAddress

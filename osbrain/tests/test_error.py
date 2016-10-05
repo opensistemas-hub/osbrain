@@ -1,4 +1,4 @@
-from osbrain import Agent
+from osbrain.core import AgentProcess
 from osbrain.nameserver import NameServerProcess
 
 from common import nsaddr  # pragma: no flakes
@@ -37,7 +37,7 @@ def test_agent_error_os(nsaddr):
     """
     Agent start() should raise an error if address is already in use.
     """
-    agent = Agent('a0', nsaddr, nsaddr)
+    agent = AgentProcess('a0', nsaddr, nsaddr)
     try:
         agent.start()
         assert 0
@@ -51,7 +51,7 @@ def test_agent_error_permission(nsaddr):
     """
     Agent start() should raise an error if it has not sufficient permissions.
     """
-    agent = Agent('a0', nsaddr, '127.0.0.1:22')
+    agent = AgentProcess('a0', nsaddr, '127.0.0.1:22')
     try:
         agent.start()
         assert 0

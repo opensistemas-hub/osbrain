@@ -2,7 +2,7 @@
 Implementation of logging-related features.
 """
 import os
-from .core import BaseAgent
+from .core import Agent
 from .core import run_agent
 
 
@@ -15,9 +15,9 @@ def pyro_log():
     os.environ['PYRO_LOGLEVEL'] = 'DEBUG'
 
 
-class Logger(BaseAgent):
+class Logger(Agent):
     """
-    Specialized BaseAgent for logging. Binds a `SUB` socket and starts
+    Specialized Agent for logging. Binds a `SUB` socket and starts
     logging incoming messages.
     """
     def on_init(self):

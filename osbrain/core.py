@@ -27,17 +27,17 @@ from .proxy import Proxy
 from .proxy import NSProxy
 
 
-class BaseAgent():
+class Agent():
     """
-    A base agent class which is to be served by the Agent process.
+    A base agent class which is to be served by an AgentProcess.
 
-    An agent process runs a Pyro multiplexed server and serves one BaseAgent
+    An AgentProcess runs a Pyro multiplexed server and serves one Agent
     object.
 
     Parameters
     ----------
     name : str, default is None
-        Name of the BaseAgent.
+        Name of the Agent.
     host : str, default is None
         Host address where the agent will bind to. When not set, `'127.0.0.1'`
         (localhost) is used.
@@ -77,7 +77,7 @@ class BaseAgent():
         self.poll_timeout = 1000
         self.keep_alive = True
         self.running = False
-        # Kill parent agent process
+        # Kill parent AgentProcess
         self.kill_agent = False
         self._DEBUG = False
 
@@ -701,12 +701,12 @@ class BaseAgent():
         return 'OK'
 
 
-class Agent(multiprocessing.Process):
+class AgentProcess(multiprocessing.Process):
     """
     Agent class. Instances of an Agent are system processes which
     can be run independently.
     """
-    def __init__(self, name, nsaddr=None, addr=None, base=BaseAgent):
+    def __init__(self, name, nsaddr=None, addr=None, base=Agent):
         super().__init__()
         self.name = name
         self.daemon = None
@@ -769,7 +769,7 @@ class Agent(multiprocessing.Process):
         self.kill()
 
 
-def run_agent(name, nsaddr=None, addr=None, base=BaseAgent):
+def run_agent(name, nsaddr=None, addr=None, base=Agent):
     """
     Ease the agent creation process.
 
@@ -792,7 +792,7 @@ def run_agent(name, nsaddr=None, addr=None, base=BaseAgent):
     """
     if not nsaddr:
         nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
-    Agent(name, nsaddr=nsaddr, addr=addr, base=base).start()
+    AgentProcess(name, nsaddr=nsaddr, addr=addr, base=base).start()
     proxy = Proxy(name, nsaddr)
     proxy.run()
     return proxy

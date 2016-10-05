@@ -2,11 +2,11 @@
 Implementation of FTP-related features.
 """
 import Pyro4
-from .core import BaseAgent
+from .core import Agent
 from .common import address_to_host_port
 
 
-class FTPAgent(BaseAgent):
+class FTPAgent(Agent):
     """
     An agent that provides basic FTP functionality.
     """

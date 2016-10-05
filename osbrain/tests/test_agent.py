@@ -5,8 +5,8 @@ import time
 from threading import Timer
 from osbrain.logging import run_logger
 from osbrain.core import run_agent
-from osbrain.core import BaseAgent
 from osbrain.core import Agent
+from osbrain.core import AgentProcess
 from osbrain.proxy import Proxy
 from osbrain.proxy import NSProxy
 
@@ -24,7 +24,7 @@ def test_early_agent_proxy(nsaddr):
     agent is imminent, even if it has not occured yet. A timeout will occur
     in case the agent could not be located.
     """
-    agent = Agent('a0', nsaddr)
+    agent = AgentProcess('a0', nsaddr)
     # Start agent later
     Timer(1, agent.start).start()
     # Locate agent now
@@ -52,7 +52,7 @@ def test_agent_shutdown(nsaddr):
     """
     An agent must unregister itself before shutting down.
     """
-    agent = Agent('a0', nsaddr)
+    agent = AgentProcess('a0', nsaddr)
     agent.start()
     a0 = Proxy('a0', nsaddr)
     a0.run()
@@ -204,12 +204,12 @@ def test_agent_inheritance(nsaddr):
     """
     Test agent inheritance; agents can be based on a custom class.
     """
-    class NewAgent(BaseAgent):
+    class NewAgent(Agent):
         def the_answer_to_life(self):
             return 42
 
     # Test an Agent based on the new class
-    Agent('new', nsaddr=nsaddr, base=NewAgent).start()
+    AgentProcess('new', nsaddr=nsaddr, base=NewAgent).start()
     new = Proxy('new', nsaddr)
     assert new.the_answer_to_life() == 42
 
@@ -223,7 +223,7 @@ def test_agent_multiproxy(nsproxy):
     Test agent multiproxy access; all proxies should access the same agent
     object.
     """
-    class NewAgent(BaseAgent):
+    class NewAgent(Agent):
         def on_init(self):
             self.count = 0
 
@@ -262,7 +262,7 @@ def test_method_handlers(nsaddr):
     """
     Test handlers which are methods of a custom class.
     """
-    class NewAgent(BaseAgent):
+    class NewAgent(Agent):
         def on_init(self):
             self.received = {}
             self.bind('REP', 'rep', handler=self.rep)
@@ -318,7 +318,7 @@ def test_timer_each_oop(nsaddr):
     """
     Test a timer executed periodically (using OOP).
     """
-    class Sender(BaseAgent):
+    class Sender(Agent):
         def on_init(self):
             self.count = 0
             self.bind('PUSH', 'push')

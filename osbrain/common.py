@@ -80,7 +80,6 @@ def periodic(scheduler, interval, action, args=()):
     scheduler.enter(interval, 1, periodic,
                     (scheduler, interval, action, args))
     action(*args)
-    scheduler.run()
 
 
 def repeat(interval, action, args=()):
@@ -107,7 +106,7 @@ def repeat(interval, action, args=()):
         Thread running the repeat task.
     """
     scheduler = sched.scheduler(time.time, time.sleep)
-    t = threading.Thread(target=periodic,
-                         args=(scheduler, interval, action, args))
+    periodic(scheduler, interval, action, args)
+    t = threading.Thread(target=scheduler.run)
     t.start()
     return t

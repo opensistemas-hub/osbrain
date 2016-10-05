@@ -92,3 +92,39 @@ Note that ``set_method()`` accepts any number of parameters:
   the method names in the remote agent.
 - In case they are named parameters, then the method in the remote agent will
   be named after the parameter name.
+
+
+Lambdas
+=======
+
+osBrain uses dill for serialization when communicating with remote agents
+through a proxy. This means that almost anything can be serialized to an agent
+using a proxy.
+
+In order to further simplify some tasks, lambda functions can be used to
+configure remote agents:
+
+.. literalinclude:: ../../examples/req_rep/lambda.py
+
+See the similarities between this example and the one showed in :ref:`req_rep`.
+In fact, the only difference is the binding from Alice, in which we are using
+a lambda function for the handler.
+
+
+Reply early
+===========
+
+The easiest way to reply to a request is to return a value from the handler,
+as seen in :ref:`req_rep`::
+
+   def reply(agent, message):
+       return 'Received ' + str(message)
+
+However, an agent can reply earlier if needed::
+
+   def reply(agent, message):
+       agent.send('main', 'Received' + str(message))  # Reply now
+       agent.log_info('Already sent a reply back!')   # Do some stuff later
+
+Note how, in this case, we need to manually send the reply using the
+corresponding socket, though.

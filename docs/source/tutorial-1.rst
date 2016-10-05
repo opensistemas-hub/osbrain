@@ -177,6 +177,29 @@ The handler function, in its most basic form, accepts two parameters::
 In the example above, the handler simply logs the message received.
 
 
+.. _req_rep:
+
+Request-Reply
+=============
+
+Another common communication patter is the request-reply, in which a requester
+sends a message to the replier and expects always a reply back. It is sometimes
+useful, specially when some kind of synchronization is required.
+
+.. literalinclude:: ../../examples/req_rep/simple.py
+
+The main difference with respect to the push-pull pattern is that, in this
+case, Bob must run the ``recv`` method in order to get the reply back from
+Alice.
+
+.. note:: Although the requester is not required to immediately await for the
+   reply (i.e.: can do other stuff after sending the request and before receiving
+   the response), it is required to receive a reply back before making another
+   request through the same communication channel. Multiple requests can be made
+   from the same agent as long as it uses different communication channels for
+   each request.
+
+
 Publish-Subscribe
 =================
 

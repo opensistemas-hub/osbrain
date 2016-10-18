@@ -4,7 +4,8 @@
 [![Latest Version](https://img.shields.io/pypi/v/osbrain.svg)](https://pypi.python.org/pypi/osbrain/)
 [![Documentation Status](https://readthedocs.org/projects/osbrain/badge/?version=stable)](http://osbrain.readthedocs.io/en/stable/)
 
-osBrain is a **general-purpose multi-agent system module** written in Python.
+osBrain is a **general-purpose multi-agent system module** written in Python
+and develped by [OpenSistemas](http://www.opensistemas.com).
 Agents run independently as system processes and communicate with each other
 using message passing.
 

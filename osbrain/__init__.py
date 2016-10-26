@@ -8,7 +8,7 @@ Pyro4.config.REQUIRE_EXPOSE = False
 # TODO: should we set COMMTIMEOUT as well?
 Pyro4.config.DETAILED_TRACEBACK = True
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 from .core import Agent, AgentProcess, run_agent
 from .nameserver import random_nameserver, run_nameserver

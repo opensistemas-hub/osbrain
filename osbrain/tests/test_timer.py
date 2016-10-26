@@ -24,10 +24,10 @@ def test_repeat_non_blocking():
         time.sleep(x)
 
     timer = repeat(1., foo, 2.)
-    timer.close()
+    timer.stop()
 
 
-def test_repeat_close():
+def test_repeat_stop():
     """
     Test closing a timer returned by repeat.
     """
@@ -42,7 +42,7 @@ def test_repeat_close():
     timer = repeat(0.1, bar.foo)
     time.sleep(1.)
     assert abs(bar.a - 10) <= 1
-    timer.close()
+    timer.stop()
     time.sleep(1.)
     assert abs(bar.a - 10) <= 1
 
@@ -130,3 +130,73 @@ def test_timer_each_fall_behind(nsaddr):
     sender.each(0., tick)
     time.sleep(2.0)
     assert abs(receiver.get_attr('received') - 10) <= 1
+
+
+def test_timer_each_stop_uuid(nsaddr):
+    """
+    Test a timer executed periodically and stopped by its UUID.
+    """
+    def tick(agent):
+        agent.send('push', agent.count)
+        agent.count += 1
+
+    sender = run_agent('sender')
+    receiver = run_agent('receiver')
+    addr = sender.bind('PUSH', alias='push')
+    receiver.connect(addr, handler=set_received)
+
+    sender.set_attr(count=0)
+    uuid = sender.each(0.1, tick)
+    time.sleep(1)
+    assert abs(receiver.get_attr('received') - 10) <= 1
+    sender.stop_timer(uuid)
+    time.sleep(1)
+    assert abs(receiver.get_attr('received') - 10) <= 1
+    assert uuid not in sender.list_timers()
+
+
+def test_timer_each_stop_alias(nsaddr):
+    """
+    Test a timer executed periodically and stopped by an alias.
+    """
+    def tick(agent):
+        agent.send('push', agent.count)
+        agent.count += 1
+
+    sender = run_agent('sender')
+    receiver = run_agent('receiver')
+    addr = sender.bind('PUSH', alias='push')
+    receiver.connect(addr, handler=set_received)
+
+    sender.set_attr(count=0)
+    sender.each(0.1, tick, alias='aliased_timer')
+    time.sleep(1)
+    assert abs(receiver.get_attr('received') - 10) <= 1
+    sender.stop_timer('aliased_timer')
+    time.sleep(1)
+    assert abs(receiver.get_attr('received') - 10) <= 1
+    assert 'aliased_timer' not in sender.list_timers()
+
+
+def test_stop_all_timers(nsaddr):
+    """
+    Calling `stop_all_timers()` should stop all currently running timers.
+    """
+    def tick(agent):
+        agent.send('push', agent.count)
+        agent.count += 1
+
+    sender = run_agent('sender')
+    receiver = run_agent('receiver')
+    addr = sender.bind('PUSH', alias='push')
+    receiver.connect(addr, handler=set_received)
+
+    sender.set_attr(count=0)
+    sender.each(0.1, tick, alias='timer0')
+    sender.each(0.1, tick, alias='timer1')
+    time.sleep(1)
+    assert abs(receiver.get_attr('received') - 20) <= 1
+    sender.stop_all_timers()
+    time.sleep(1)
+    assert abs(receiver.get_attr('received') - 20) <= 1
+    assert len(sender.list_timers()) == 0

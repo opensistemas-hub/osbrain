@@ -95,17 +95,17 @@ def repeat(interval, action, *args):
     Returns
     -------
     Event
-        A timer object that can be terminated using the `close()` method.
+        A timer object that can be terminated using the `stop()` method.
     """
-    stopped = Event()
+    event = Event()
 
     def loop():
         while True:
             starttime = time.time()
             action(*args)
             delay = interval - (time.time() - starttime)
-            if stopped.wait(delay):
+            if event.wait(delay):
                 break
     Thread(target=loop).start()
-    stopped.close = stopped.set
-    return stopped
+    event.stop = event.set
+    return event

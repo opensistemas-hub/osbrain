@@ -8,6 +8,7 @@ import sys
 import time
 import inspect
 import multiprocessing
+from uuid import uuid4
 from datetime import datetime
 
 import pickle
@@ -74,6 +75,7 @@ class Agent():
         self.socket = {}
         self.address = {}
         self.handler = {}
+        self._timer = {}
         self.poll_timeout = 1000
         self.keep_alive = True
         self.running = False
@@ -148,7 +150,7 @@ class Agent():
         """
         return self.loopback('EXECUTE_METHOD', (method, args, kwargs))
 
-    def each(self, period, method, *args, **kwargs):
+    def each(self, period, method, *args, alias=None, **kwargs):
         """
         Execute a repeated action with a defined period.
 
@@ -159,6 +161,8 @@ class Agent():
             between executions.
         method
             Method (action) to be executed by the agent.
+        alias : str, default is None
+            An alias for the generated timer.
         *args : tuple
             Parameters to pass for the method execution.
         **kwargs : dict
@@ -166,14 +170,45 @@ class Agent():
 
         Returns
         -------
-        Timer
-            The timer running the repeated action.
+        str
+            The timer alias or identifier.
         """
         if not isinstance(method, str):
             method = self.set_method(method)
         timer = repeat(period, self.loopback,
                        'EXECUTE_METHOD', (method, args, kwargs))
-        return timer
+        if not alias:
+            alias = uuid4().hex
+        self._timer[alias] = timer
+        return alias
+
+    def stop_all_timers(self):
+        """
+        Stop all currently running timers.
+        """
+        for alias in list(self._timer.keys()):
+            self.stop_timer(alias)
+
+    def stop_timer(self, alias):
+        """
+        Stop a currently running timer.
+
+        Parameters
+        ----------
+        alias : str
+            The alias or identifier of the timer.
+        """
+        self._timer[alias].stop()
+        del self._timer[alias]
+
+    def list_timers(self):
+        """
+        Returns
+        -------
+        list (str)
+            A list with all the timer aliases currently running.
+        """
+        return list(self._timer.keys())
 
     def loopback(self, header, data=None):
         """

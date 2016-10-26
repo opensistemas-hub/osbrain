@@ -7,7 +7,6 @@ import signal
 import sys
 import time
 import inspect
-import traceback
 import multiprocessing
 from datetime import datetime
 
@@ -18,6 +17,7 @@ import Pyro4
 from Pyro4.errors import PyroError
 
 from .common import address_to_host_port
+from .common import format_exception
 from .common import unbound_method
 from .common import LogLevel
 from .common import repeat
@@ -123,7 +123,7 @@ class Agent():
                 response = getattr(self, method)(*args, **kwargs)
             except Exception as error:
                 message = 'Error executing `%s`! (%s)\n' % (method, error)
-                message += traceback.format_exc()
+                message += format_exception()
                 self.send('loopback', message)
                 raise
             if not response:
@@ -669,7 +669,7 @@ class Agent():
             self.loop()
         except Exception as error:
             msg = 'An exception occured while running! (%s)\n' % error
-            msg += traceback.format_exc()
+            msg += format_exception()
             self.log_error(msg)
             self.running = False
             raise
@@ -726,7 +726,7 @@ class AgentProcess(multiprocessing.Process):
             ns = NSProxy(self.nsaddr)
             self.daemon = Pyro4.Daemon(self.host, self.port)
         except Exception:
-            self.queue.put(traceback.format_exc())
+            self.queue.put(format_exception())
             return
         self.queue.put('STARTED')
 
@@ -743,7 +743,7 @@ class AgentProcess(multiprocessing.Process):
             ns = NSProxy(self.nsaddr)
             ns.remove(self.name)
         except PyroError:
-            sys.stderr.write(traceback.format_exc())
+            sys.stderr.write(format_exception())
             pass
 
         self.agent._killed = True

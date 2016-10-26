@@ -4,13 +4,13 @@ Implementation of name server.
 import os
 import time
 import random
-import traceback
 import multiprocessing
 
 import Pyro4
 from Pyro4.errors import NamingError
 from Pyro4.naming import BroadcastServer
 
+from .common import format_exception
 from .common import address_to_host_port
 from .address import AgentAddress
 from .address import SocketAddress
@@ -77,7 +77,7 @@ class NameServerProcess(multiprocessing.Process):
         try:
             self.daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
         except Exception:
-            self.queue.put(traceback.format_exc())
+            self.queue.put(format_exception())
             return
         self.queue.put('STARTED')
         self.uri = self.daemon.uriFor(self.daemon.nameserver)

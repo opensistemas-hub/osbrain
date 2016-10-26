@@ -4,8 +4,21 @@ Miscellaneous utilities.
 import time
 import sched
 import threading
+import traceback
 
 from .address import SocketAddress
+
+
+def format_exception():
+    """
+    Returns
+    -------
+    str
+        A formatted string conaining an exception traceback information.
+    """
+    begin = '\n|>>>>>>>>'
+    end = '\n|<<<<<<<<'
+    return begin + '\n| '.join(traceback.format_exc().splitlines()) + end
 
 
 class LogLevel(str):

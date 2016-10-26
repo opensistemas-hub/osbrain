@@ -47,6 +47,27 @@ def test_repeat_close():
     assert abs(bar.a - 10) <= 1
 
 
+def test_timer_non_blocking_bug(nsaddr):
+    """
+    A timer call should never block, no matters how long it takes to execute
+    the action.
+    """
+    def long_action(agent):
+        time.sleep(1.)
+        agent.count += 1
+
+    agent = run_agent('agent')
+    agent.set_attr(count=0)
+    # Start timer
+    t0 = time.time()
+    agent.each(0., long_action)
+    t1 = time.time()
+    assert t1 - t0 < 0.1
+    assert agent.get_attr('count') == 0
+    time.sleep(1.5)
+    assert agent.get_attr('count') > 0
+
+
 def test_timer_each(nsaddr):
     """
     Test a timer executed periodically.

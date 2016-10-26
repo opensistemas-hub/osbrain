@@ -2,9 +2,10 @@
 Miscellaneous utilities.
 """
 import time
-import sched
-import threading
+from threading import Event
+from threading import Thread
 import traceback
+
 
 from .address import SocketAddress
 
@@ -73,29 +74,7 @@ def unbound_method(method):
     return getattr(method.__self__.__class__, method.__name__)
 
 
-def periodic(scheduler, interval, action, args=()):
-    """
-    Run a scheduler periodically.
-
-    This function will run forever and blocking.
-
-    Parameters
-    ----------
-    scheduler : sched.scheduler
-        Scheduler to run.
-    interval : numeric
-        Delay to apply to the scheduler.
-    action
-        Action to execute by the scheduler.
-    args, default is ()
-        Arguments for the action.
-    """
-    scheduler.enter(interval, 1, periodic,
-                    (scheduler, interval, action, args))
-    action(*args)
-
-
-def repeat(interval, action, args=()):
+def repeat(interval, action, *args):
     """
     Repeat an action forever after a given number of seconds.
 
@@ -115,11 +94,18 @@ def repeat(interval, action, args=()):
 
     Returns
     -------
-    threading.Thread
-        Thread running the repeat task.
+    Event
+        A timer object that can be terminated using the `close()` method.
     """
-    scheduler = sched.scheduler(time.time, time.sleep)
-    periodic(scheduler, interval, action, args)
-    t = threading.Thread(target=scheduler.run)
-    t.start()
-    return t
+    stopped = Event()
+
+    def loop():
+        while True:
+            starttime = time.time()
+            action(*args)
+            delay = interval - (time.time() - starttime)
+            if stopped.wait(delay):
+                break
+    Thread(target=loop).start()
+    stopped.close = stopped.set
+    return stopped

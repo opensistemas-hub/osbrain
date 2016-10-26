@@ -163,11 +163,17 @@ class Agent():
             Parameters to pass for the method execution.
         **kwargs : dict
             Named parameters to pass for the method execution.
+
+        Returns
+        -------
+        Timer
+            The timer running the repeated action.
         """
         if not isinstance(method, str):
             method = self.set_method(method)
-        repeat(period, self.loopback, args=('EXECUTE_METHOD',
-                                            (method, args, kwargs)))
+        timer = repeat(period, self.loopback,
+                       'EXECUTE_METHOD', (method, args, kwargs))
+        return timer
 
     def loopback(self, header, data=None):
         """

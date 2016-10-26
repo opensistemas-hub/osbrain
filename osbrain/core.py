@@ -785,9 +785,8 @@ class AgentProcess(multiprocessing.Process):
             ns = NSProxy(self.nsaddr, timeout=1.)
             ns.remove(self.name)
         except PyroError:
-            if self.sigint:
-                pass
-            sys.stderr.write(format_exception())
+            if not self.sigint:
+                sys.stderr.write(format_exception())
 
         self.agent._killed = True
         self.daemon.close()

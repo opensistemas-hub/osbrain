@@ -4,6 +4,7 @@ Implementation of name server.
 import os
 import time
 import random
+import signal
 import multiprocessing
 
 import Pyro4
@@ -74,6 +75,9 @@ class NameServerProcess(multiprocessing.Process):
         self.queue = multiprocessing.Queue()
 
     def run(self):
+        # Capture SIGINT
+        signal.signal(signal.SIGINT, self.sigint_handler)
+
         try:
             self.daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
         except Exception:

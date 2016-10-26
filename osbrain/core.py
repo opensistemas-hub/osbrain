@@ -717,6 +717,8 @@ class Agent():
         self.running = False
 
     def shutdown(self):
+        # Stop running timers
+        self.stop_all_timers()
         # Stop the running thread
         if self.running:
             self.loopback('STOP')

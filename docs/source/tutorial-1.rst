@@ -182,7 +182,7 @@ In the example above, the handler simply logs the message received.
 Request-Reply
 =============
 
-Another common communication patter is the request-reply, in which a requester
+Another common communication pattern is the request-reply, in which a requester
 sends a message to the replier and expects always a reply back. It is sometimes
 useful, specially when some kind of synchronization is required.
 

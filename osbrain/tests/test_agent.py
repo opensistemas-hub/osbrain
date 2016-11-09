@@ -304,9 +304,10 @@ def test_running_exception(nsaddr):
     agent = run_agent('crasher')
     agent.set_logger(logger)
     assert agent.get_attr('running') == True
+    # Raise an exception
     agent.safe('raise_exception')
-    assert agent.get_attr('running') == False
     history = []
     while not history:
         history = logger.get_attr('log_history_error')
     assert 'User raised an exception' in history[0]
+    assert agent.get_attr('running') == False

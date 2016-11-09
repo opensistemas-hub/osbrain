@@ -709,10 +709,10 @@ class Agent():
         try:
             self.loop()
         except Exception as error:
+            self.running = False
             msg = 'An exception occured while running! (%s)\n' % error
             msg += format_exception()
             self.log_error(msg)
-            self.running = False
             raise
         self.running = False
 

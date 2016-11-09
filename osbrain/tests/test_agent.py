@@ -293,3 +293,20 @@ def test_method_handlers(nsaddr):
 #  - Test handler with 2 parameters (agent, message)
 #  - Test handler with 3 parameters (agent, message, topic)
 #  - Test topic is properly filtered (no match, partial match, full match)
+
+
+def test_running_exception(nsaddr):
+    """
+    An exception that occurs while the agent is running should stop the
+    agent and log an error message as well.
+    """
+    logger = run_logger('logger')
+    agent = run_agent('crasher')
+    agent.set_logger(logger)
+    assert agent.get_attr('running') == True
+    agent.safe('raise_exception')
+    assert agent.get_attr('running') == False
+    history = []
+    while not history:
+        history = logger.get_attr('log_history_error')
+    assert 'User raised an exception' in history[0]

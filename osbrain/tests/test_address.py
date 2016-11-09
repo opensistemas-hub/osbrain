@@ -41,7 +41,7 @@ def test_kind():
         assert kind.requires_handler() == handler
     # Value error exceptions
     with pytest.raises(ValueError):
-        role = AgentAddressKind('FOO')
+        AgentAddressKind('FOO')
 
 
 def test_role():
@@ -61,9 +61,9 @@ def test_role():
         assert role.twin() == twin
     # Value error exceptions
     with pytest.raises(ValueError):
-        role = AgentAddressRole('foo')
+        AgentAddressRole('foo')
     with pytest.raises(ValueError):
-        role = AgentAddressRole(1)
+        AgentAddressRole(1)
 
 
 def test_socket_address():

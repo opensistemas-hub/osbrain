@@ -1,4 +1,8 @@
 import zmq
+import pytest
+
+from osbrain.address import AgentAddress
+from osbrain.address import SocketAddress
 from osbrain.address import AgentAddressKind
 from osbrain.address import AgentAddressRole
 
@@ -35,6 +39,9 @@ def test_kind():
         assert isinstance(kind.twin(), AgentAddressKind)
         assert kind.twin() == strtwin
         assert kind.requires_handler() == handler
+    # Value error exceptions
+    with pytest.raises(ValueError):
+        role = AgentAddressKind('FOO')
 
 
 def test_role():
@@ -52,3 +59,36 @@ def test_role():
         # Basic methods
         assert isinstance(role.twin(), AgentAddressRole)
         assert role.twin() == twin
+    # Value error exceptions
+    with pytest.raises(ValueError):
+        role = AgentAddressRole('foo')
+    with pytest.raises(ValueError):
+        role = AgentAddressRole(1)
+
+
+def test_socket_address():
+    """
+    Test basic SocketAddress operations: initialization and equivalence.
+    """
+    address = SocketAddress('127.0.0.1', 1234)
+    # Equivalence
+    assert address == SocketAddress('127.0.0.1', 1234)
+    assert address != SocketAddress('127.0.0.0', 1234)
+    assert address != SocketAddress('127.0.0.1', 1230)
+    assert not address == 'foo'
+    assert address != 'foo'
+
+
+def test_agent_address():
+    """
+    Test basic AgentAddress operations: initialization, equivalence and
+    basic methods.
+    """
+    address = AgentAddress('127.0.0.1', 1234, 'PUSH', 'server')
+    # Equivalence
+    assert address == AgentAddress('127.0.0.1', 1234, 'PUSH', 'server')
+    assert not address == 'foo'
+    assert address != 'foo'
+    # Basic methods
+    assert address.socket_addr() == SocketAddress('127.0.0.1', 1234)
+    assert address.twin() == AgentAddress('127.0.0.1', 1234, 'PULL', 'client')

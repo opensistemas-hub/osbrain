@@ -10,7 +10,7 @@ class AgentAddressRole(str):
     """
     def __new__(cls, value):
         if value not in ['server', 'client']:
-            raise ValueError('Incorrect value "%s" for `value`!' % value)
+            raise ValueError('Invalid address role "%s"!' % value)
         return super().__new__(cls, value)
 
     def twin(self):
@@ -56,18 +56,11 @@ class AgentAddressKind(int):
         ZMQ_STR_CONVERSION[ZMQ_STR_CONVERSION[key]] = key
 
     def __new__(cls, kind):
+        if kind not in cls.ZMQ_STR_CONVERSION:
+            raise ValueError('Invalid address kind "%s"!' % kind)
         if isinstance(kind, str):
-            assert kind in cls.ZMQ_STR_CONVERSION, \
-                'Incorrect parameter kind `%s`!' % kind
-            int_kind = cls.ZMQ_STR_CONVERSION[kind]
-        elif isinstance(kind, int):
-            assert kind in cls.ZMQ_STR_CONVERSION, \
-                'Incorrect parameter kind `%s`!' % kind
-            int_kind = kind
-        else:
-            raise ValueError('Incorrect parameter `kind` of type %s!' %
-                             type(kind))
-        return super().__new__(cls, int_kind)
+            kind = cls.ZMQ_STR_CONVERSION[kind]
+        return super().__new__(cls, kind)
 
     def __eq__(self, other):
         if isinstance(other, int):

@@ -1,6 +1,6 @@
 |Logo with Name|
 
-|Build Status| |Latest Version| |Documentation Status|
+|Build Status| |Latest Version| |Documentation Status| |Code Coverage|
 
 osBrain is a **general-purpose multi-agent system module** written in
 Python and develped by `OpenSistemas <http://www.opensistemas.com>`__.
@@ -83,3 +83,5 @@ fits the application well:
    :target: https://pypi.python.org/pypi/osbrain/
 .. |Documentation Status| image:: https://readthedocs.org/projects/osbrain/badge/?version=stable
    :target: http://osbrain.readthedocs.io/en/stable/
+.. |Code Coverage| image:: https://codecov.io/github/opensistemas-hub/osbrain/coverage.svg?branch=master
+   :target: https://codecov.io/github/opensistemas-hub/osbrain

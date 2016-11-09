@@ -1,0 +1,15 @@
+[run]
+branch = True
+source = osbrain
+
+[report]
+show_missing = True
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if .debug:
+    raise NotImplementedError
+    if __name__ == .__main__.:
+omit =
+    setup.py
+    osbrain/tests/*

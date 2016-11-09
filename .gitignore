@@ -4,5 +4,6 @@ pycache/
 .tox/
 *.egg-info/
 pyro_osbrain.log
+.coverage
 *.pyc
 *.swp

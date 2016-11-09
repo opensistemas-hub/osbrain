@@ -303,11 +303,11 @@ def test_running_exception(nsaddr):
     logger = run_logger('logger')
     agent = run_agent('crasher')
     agent.set_logger(logger)
-    assert agent.get_attr('running') == True
+    assert agent.get_attr('running')
     # Raise an exception
     agent.safe('raise_exception')
     history = []
     while not history:
         history = logger.get_attr('log_history_error')
     assert 'User raised an exception' in history[0]
-    assert agent.get_attr('running') == False
+    assert not agent.get_attr('running')

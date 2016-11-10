@@ -10,9 +10,9 @@ from .common import address_to_host_port
 from .address import SocketAddress
 
 
-def locate_ns(nsaddr, timeout=3):
+def locate_ns(nsaddr, timeout=3.):
     """
-    Locate a name server (ping) to ensure it actually exists.
+    Locate a name server to ensure it actually exists.
 
     Parameters
     ----------
@@ -32,19 +32,16 @@ def locate_ns(nsaddr, timeout=3):
         If the name server could not be located.
     """
     host, port = address_to_host_port(nsaddr)
-    if nsaddr is None:
-        host = '127.0.0.1'
-        port = 9090
     time0 = time.time()
     while True:
         try:
             Pyro4.locateNS(host, port)
             return nsaddr
-        except NamingError as error:
+        except NamingError:
             if time.time() - time0 < timeout:
                 time.sleep(0.1)
                 continue
-            raise error
+            raise TimeoutError('Could not locate the name server!')
 
 
 class Proxy(Pyro4.core.Proxy):
@@ -61,34 +58,21 @@ class Proxy(Pyro4.core.Proxy):
         Timeout, in seconds, to wait until the agent is discovered.
     """
     def __init__(self, name, nsaddr=None, timeout=3.):
-        nshost, nsport = address_to_host_port(nsaddr)
-        # Make sure name server exists
         if not nsaddr:
             nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
+        nshost, nsport = address_to_host_port(nsaddr)
+        # Make sure name server exists
         locate_ns(nsaddr)
         time0 = time.time()
-        while time.time() - time0 < timeout:
-            try:
-                if nshost is None and nsport is None:
-                    super().__init__('PYRONAME:%s' % name)
-                elif nsport is None:
-                    super().__init__('PYRONAME:%s@%s' % (name, nshost))
-                else:
-                    super().__init__(
-                        'PYRONAME:%s@%s:%s' % (name, nshost, nsport))
-            except NamingError:
-                continue
-            break
-        else:
-            raise NamingError('Could not find agent after timeout!')
-        while time.time() - time0 < timeout:
+        super().__init__('PYRONAME:%s@%s:%s' % (name, nshost, nsport))
+        while True:
             try:
                 self.test()
-            except NamingError:
-                continue
+            except Exception:
+                if time.time() - time0 < timeout:
+                    continue
+                raise
             break
-        else:
-            raise NamingError('Could not test agent!')
 
     def release(self):
         """
@@ -150,9 +134,6 @@ class NSProxy(Pyro4.core.Proxy):
     """
     def __init__(self, nsaddr=None, timeout=3):
         nshost, nsport = address_to_host_port(nsaddr)
-        if nsaddr is None:
-            nshost = '127.0.0.1'
-            nsport = 9090
         # Make sure name server exists
         locate_ns(nsaddr, timeout)
         ns_name = Pyro4.constants.NAMESERVER_NAME

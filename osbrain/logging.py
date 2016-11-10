@@ -38,14 +38,14 @@ class Logger(Agent):
         """
         Handle incoming log messages.
         """
-        if topic == 'INFO':
-            self.log_history_info.append(message)
+        if topic == 'ERROR':
+            self.log_history_error.append(message)
         elif topic == 'WARNING':
             self.log_history_warning.append(message)
-        elif topic == 'ERROR':
-            self.log_history_error.append(message)
         elif topic == 'DEBUG':
             self.log_history_debug.append(message)
+        else:
+            self.log_history_info.append(message)
         self.log_history.append(message)
 
 

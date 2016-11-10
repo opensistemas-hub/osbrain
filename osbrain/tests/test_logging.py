@@ -2,6 +2,7 @@
 Logging module tests.
 """
 import os
+import time
 
 from osbrain import run_agent
 from osbrain import run_logger
@@ -19,23 +20,30 @@ def test_logging_level(nsproxy):
     agent.set_attr(_DEBUG=True)
     logger = run_logger('logger')
     agent.set_logger(logger)
+    i = 0
+    while not len(logger.get_attr('log_history')):
+        i += 1
+        agent.log_info(i)
+    while not '): %s' % i in logger.get_attr('log_history')[0]:
+        time.sleep(0.01)
+    before = len(logger.get_attr('log_history'))
     agent.log_info('some information')
     agent.log_warning('some warning')
     agent.log_error('some error')
     agent.log_debug('some debug')
-    history = []
-    while not len(history) == 4:
-        history = logger.get_attr('log_history')
+    after = before
+    while not after - before == 4:
+        after = len(logger.get_attr('log_history'))
     # Log size
-    assert len(logger.get_attr('log_history_info')) == 1
+    assert len(logger.get_attr('log_history_info')) == 1 + before
     assert len(logger.get_attr('log_history_warning')) == 1
     assert len(logger.get_attr('log_history_error')) == 1
     assert len(logger.get_attr('log_history_debug')) == 1
     # Log message
-    assert 'some information' in logger.get_attr('log_history_info')[0]
-    assert 'some warning' in logger.get_attr('log_history_warning')[0]
-    assert 'some error' in logger.get_attr('log_history_error')[0]
-    assert 'some debug' in logger.get_attr('log_history_debug')[0]
+    assert 'some information' in logger.get_attr('log_history_info')[-1]
+    assert 'some warning' in logger.get_attr('log_history_warning')[-1]
+    assert 'some error' in logger.get_attr('log_history_error')[-1]
+    assert 'some debug' in logger.get_attr('log_history_debug')[-1]
 
 
 def test_pyro_log():

@@ -7,7 +7,6 @@ import random
 import multiprocessing
 
 import Pyro4
-from Pyro4.errors import NamingError
 from Pyro4.naming import BroadcastServer
 
 from .common import format_exception
@@ -87,20 +86,12 @@ class NameServerProcess(multiprocessing.Process):
         self.port = self.uri.port
         self.addr = AgentAddress(self.host, self.port)
         internal_uri = self.daemon.uriFor(self.daemon.nameserver, nat=False)
-        enable_broadcast = True
         bcserver = None
         hostip = self.daemon.sock.getsockname()[0]
-        if hostip.startswith("127."):
-            print("Not starting broadcast server for localhost.")
-            enable_broadcast = False
-        if enable_broadcast:
-            # Make sure to pass the internal uri to the broadcast
-            # responder. It is almost always useless to let it return
-            # the external uri, because external systems won't be able
-            # to talk to this thing anyway.
-            bcserver = BroadcastServer(internal_uri)
-            print("Broadcast server running on %s" % bcserver.locationStr)
-            bcserver.runInThread()
+        # Start broadcast responder
+        bcserver = BroadcastServer(internal_uri)
+        print("Broadcast server running on %s" % bcserver.locationStr)
+        bcserver.runInThread()
         print("NS running on %s (%s)" % (self.daemon.locationStr, hostip))
         print("URI = %s" % self.uri)
         try:
@@ -154,30 +145,39 @@ class NameServerProcess(multiprocessing.Process):
         self.join()
 
 
-def random_nameserver():
+def random_nameserver(host='127.0.0.1', port_start=10000, port_stop=20000,
+                      timeout=3.):
     """
     Start a random name server.
+
+    Parameters
+    ----------
+    host : str, default is '127.0.0.1'
+        Host address where the name server will bind to.
+    port_start : int
+        Lowest port number allowed.
+    port_stop : int
+        Highest port number allowed.
 
     Returns
     -------
     SocketAddress
         The name server address.
     """
+    t0 = time.time()
+    exception = TimeoutError('Name server starting timed out!')
     while True:
         try:
             # Bind to random port
-            host = '127.0.0.1'
-            port = random.randrange(10000, 20000)
+            port = random.randrange(port_start, port_stop + 1)
             addr = SocketAddress(host, port)
             nameserver = NameServerProcess(addr)
             nameserver.start()
             return addr
-        except NamingError:
-            continue
-        except PermissionError:
-            continue
-        except:
-            raise
+        except RuntimeError as error:
+            exception = error
+        if time.time() - t0 > timeout:
+            raise exception
 
 
 def run_nameserver(addr=None):

@@ -4,10 +4,14 @@ Test file for nameserver.
 import os
 import random
 from threading import Timer
+
+import pytest
+
 from osbrain.nameserver import NameServerProcess
 from osbrain.address import SocketAddress
 from osbrain import run_agent
 from osbrain import run_nameserver
+from osbrain import random_nameserver
 from osbrain import NSProxy
 
 from common import nsaddr  # pragma: no flakes
@@ -142,3 +146,42 @@ def test_nameserver_agent_address(nsproxy):
     addr1 = a1.bind('PUSH', alias='bar')
     assert nsproxy.addr('a0', 'foo') == addr0
     assert nsproxy.addr('a1', 'bar') == addr1
+
+
+def test_random_nameserver():
+    """
+    Basic random_nameserver function tests: port range and exceptions.
+    """
+    # Port range
+    port_start = 11000
+    port_stop = port_start + 100
+    address = random_nameserver(port_start=port_start, port_stop=port_stop)
+    assert port_start <= address.port <= port_stop
+    ns = NSProxy(address)
+    ns.shutdown()
+    # Raising exceptions
+    with pytest.raises(ValueError):
+        random_nameserver(port_start=-1, port_stop=-2)
+    with pytest.raises(RuntimeError):
+        random_nameserver(port_start=22, port_stop=22, timeout=0.5)
+
+
+def test_nameserver_oserror(nsaddr):
+    """
+    Name server start() should raise an error if address is already in use.
+    """
+    ns = NameServerProcess(nsaddr)
+    with pytest.raises(RuntimeError) as error:
+        ns.start()
+    assert 'OSError' in str(error.value)
+
+
+def test_nameserver_permissionerror():
+    """
+    Name server start() should raise an error if it has not sufficient
+    permissions.
+    """
+    ns = NameServerProcess('127.0.0.1:22')
+    with pytest.raises(RuntimeError) as error:
+        ns.start()
+    assert 'PermissionError' in str(error.value)

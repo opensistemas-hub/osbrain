@@ -316,7 +316,7 @@ def test_running_exception(nsaddr):
     assert not agent.get_attr('running')
 
 
-def test_agent_error_os(nsaddr):
+def test_agent_error_address_already_in_use(nsaddr):
     """
     Running an agent should raise an error if address is already in use.
     """
@@ -326,7 +326,7 @@ def test_agent_error_os(nsaddr):
     assert 'Address already in use' in str(error.value)
 
 
-def test_agent_error_permission(nsaddr):
+def test_agent_error_permission_denied(nsaddr):
     """
     Running an agent should raise an error if it has not sufficient
     permissions for binding to the address.

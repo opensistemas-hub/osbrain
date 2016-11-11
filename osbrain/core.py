@@ -580,23 +580,8 @@ class Agent():
             self.log_info('SET self.%s() = %s' % (name, function))
         return name
 
-    # TODO: remove/deprecate. If an Agent is to be active, then loopback could
-    #       be used to send execution orders. E.g.: each second, send function
-    #       over loopback and let it be executed by the main thread.
-    def set_loop(self, loop):
-        self.loop = types.MethodType(loop, self)
-
     def execute(self, function, *args, **kwargs):
         return function(args, kwargs)
-
-    def self_execute(self, function, *args, **kwargs):
-        if args and kwargs:
-            return function(self, args, kwargs)
-        if args:
-            return function(self, args)
-        if kwargs:
-            return function(self, kwargs)
-        return function(self)
 
     def loop(self):
         """

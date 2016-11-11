@@ -101,6 +101,15 @@ def test_nameserver_proxy_timeout():
     nameserver.shutdown()
 
 
+def test_nameserver_process_default_host():
+    """
+    A name server process should default to localhost (127.0.0.1).
+    """
+    ns = NameServerProcess(1234)
+    assert ns.port == 1234
+    assert ns.host == '127.0.0.1'
+
+
 def test_nameserver_environ(nsproxy):
     """
     When starting a nameserver, a environment variable should be set to ease
@@ -170,9 +179,8 @@ def test_nameserver_oserror(nsaddr):
     """
     Name server start() should raise an error if address is already in use.
     """
-    ns = NameServerProcess(nsaddr)
     with pytest.raises(RuntimeError) as error:
-        ns.start()
+        run_nameserver(nsaddr)
     assert 'OSError' in str(error.value)
 
 
@@ -181,7 +189,6 @@ def test_nameserver_permissionerror():
     Name server start() should raise an error if it has not sufficient
     permissions.
     """
-    ns = NameServerProcess('127.0.0.1:22')
     with pytest.raises(RuntimeError) as error:
-        ns.start()
+        run_nameserver('127.0.0.1:22')
     assert 'PermissionError' in str(error.value)

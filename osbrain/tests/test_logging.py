@@ -24,7 +24,7 @@ def test_logging_level(nsproxy):
     while not len(logger.get_attr('log_history')):
         i += 1
         agent.log_info(i)
-    while not '): %s' % i in logger.get_attr('log_history')[0]:
+    while not '): %s' % i in logger.get_attr('log_history')[-1]:
         time.sleep(0.01)
     before = len(logger.get_attr('log_history'))
     agent.log_info('some information')

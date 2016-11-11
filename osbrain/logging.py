@@ -2,8 +2,8 @@
 Implementation of logging-related features.
 """
 import os
-from .core import Agent
-from .core import run_agent
+from . import Agent
+from . import run_agent
 
 
 def pyro_log():

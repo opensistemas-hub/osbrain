@@ -1,4 +1,7 @@
-from osbrain.core import AgentProcess
+"""
+Logging module tests.
+"""
+from osbrain import AgentProcess
 
 from common import nsaddr  # pragma: no flakes
 

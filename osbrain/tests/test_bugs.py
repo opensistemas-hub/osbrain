@@ -4,7 +4,7 @@ Test file for bugs found in osbrain.
 import sys
 import time
 
-from osbrain.core import run_agent
+from osbrain import run_agent
 
 from common import nsproxy  # pragma: no flakes
 

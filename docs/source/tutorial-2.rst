@@ -33,7 +33,7 @@ Most of the code is similar to the one presented in the :ref:`push_pull` example
 however you may notice some differences:
 
 #. When runing *Alice*, a new parameter ``base`` is passed to the
-   :func:`osbrain.core.run_agent` function. This means that, instead of
+   :func:`osbrain.run_agent` function. This means that, instead of
    running the default agent class, the user-defined agent class will be used
    instead. In this case, this class is named ``Greeter``.
 #. The ``Greeter`` class implements two methods:

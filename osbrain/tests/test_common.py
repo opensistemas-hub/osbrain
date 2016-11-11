@@ -1,7 +1,10 @@
+"""
+Test file for common module.
+"""
 import pytest
 
-from osbrain.address import AgentAddress
-from osbrain.address import SocketAddress
+from osbrain import AgentAddress
+from osbrain import SocketAddress
 from osbrain.common import LogLevel
 from osbrain.common import address_to_host_port
 

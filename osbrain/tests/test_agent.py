@@ -3,12 +3,15 @@ Test file for agents.
 """
 import time
 from threading import Timer
-from osbrain.logging import run_logger
-from osbrain.core import run_agent
-from osbrain.core import Agent
-from osbrain.core import AgentProcess
-from osbrain.proxy import Proxy
-from osbrain.proxy import NSProxy
+
+import pytest
+
+from osbrain import run_logger
+from osbrain import run_agent
+from osbrain import Agent
+from osbrain import AgentProcess
+from osbrain import Proxy
+from osbrain import NSProxy
 
 from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
@@ -311,3 +314,24 @@ def test_running_exception(nsaddr):
         history = logger.get_attr('log_history_error')
     assert 'User raised an exception' in history[0]
     assert not agent.get_attr('running')
+
+
+def test_agent_error_os(nsaddr):
+    """
+    Running an agent should raise an error if address is already in use.
+    """
+    with pytest.raises(RuntimeError) as error:
+        run_agent('a0', nsaddr=nsaddr, addr=nsaddr)
+    assert 'OSError' in str(error.value)
+    assert 'Address already in use' in str(error.value)
+
+
+def test_agent_error_permission(nsaddr):
+    """
+    Running an agent should raise an error if it has not sufficient
+    permissions for binding to the address.
+    """
+    with pytest.raises(RuntimeError) as error:
+        run_agent('a0', nsaddr=nsaddr, addr='127.0.0.1:22')
+    assert 'PermissionError' in str(error.value)
+    assert 'Permission denied' in str(error.value)

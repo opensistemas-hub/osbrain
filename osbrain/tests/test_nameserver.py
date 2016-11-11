@@ -7,12 +7,12 @@ from threading import Timer
 
 import pytest
 
-from osbrain.nameserver import NameServerProcess
-from osbrain.address import SocketAddress
+from osbrain import SocketAddress
 from osbrain import run_agent
 from osbrain import run_nameserver
-from osbrain import random_nameserver
 from osbrain import NSProxy
+from osbrain.nameserver import NameServerProcess
+from osbrain.nameserver import random_nameserver
 
 from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
@@ -182,6 +182,7 @@ def test_nameserver_oserror(nsaddr):
     with pytest.raises(RuntimeError) as error:
         run_nameserver(nsaddr)
     assert 'OSError' in str(error.value)
+    assert 'Address already in use' in str(error.value)
 
 
 def test_nameserver_permissionerror():
@@ -192,3 +193,4 @@ def test_nameserver_permissionerror():
     with pytest.raises(RuntimeError) as error:
         run_nameserver('127.0.0.1:22')
     assert 'PermissionError' in str(error.value)
+    assert 'Permission denied' in str(error.value)

@@ -4,7 +4,7 @@ Proxy module tests.
 import pytest
 
 from osbrain import run_agent
-from osbrain.proxy import Proxy
+from osbrain import Proxy
 from osbrain.proxy import locate_ns
 
 from common import nsproxy  # pragma: no flakes

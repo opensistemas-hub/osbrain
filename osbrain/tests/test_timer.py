@@ -3,8 +3,8 @@ Test file for timers.
 """
 import time
 import pytest
-from osbrain.core import Agent
-from osbrain.core import run_agent
+from osbrain import Agent
+from osbrain import run_agent
 from osbrain.common import repeat
 
 from common import nsaddr  # pragma: no flakes

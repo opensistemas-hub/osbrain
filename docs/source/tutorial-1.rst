@@ -52,12 +52,12 @@ as in the `Hello world!` example, makes little or no sense. Agents in a
 multi-agent system start to make sense when connected to each other.
 
 The easiest way to run an agent in an osBrain architecture is by calling the
-function :func:`osbrain.core.run_agent`:
+function :func:`osbrain.run_agent`:
 
 >>> agent = run_agent(...)
 
 This function will spawn a new agent and will return a
-:class:`osbrain.core.Proxy` to it.
+:class:`osbrain.Proxy` to it.
 
 Proxies are simply local objects that allow us to easily have access to the
 remote agent. The fact that agents are run independently from each other
@@ -68,7 +68,7 @@ a very convenient way. See for example the previous call:
 
 >>> agent.log_info('Hello world')
 
-The method ``log_info()`` is implemented in :class:`osbrain.core.Agent` so,
+The method ``log_info()`` is implemented in :class:`osbrain.Agent` so,
 when this method is called from the proxy, this call is actually being
 serialized to the remote running agent and gets executed there. The return
 value, if any, is then serialized back and returned by the proxy. So basically
@@ -85,11 +85,11 @@ other agents can be run in the system and can be registered in the name server
 using a human-readable alias. Aliases help us accessing these agents easily
 even from remote locations.
 
-Note that when calling the :func:`osbrain.core.run_agent` function, we are
+Note that when calling the :func:`osbrain.run_agent` function, we are
 passing a string parameter. This parameter is the alias the agent will use to
 register itself in the name server.
 
-When we run a name server calling the :func:`osbrain.core.run_nameserver`, we
+When we run a name server calling the :func:`osbrain.run_nameserver`, we
 also get in return a proxy to this name server:
 
 >>> ns = run_nameserver()

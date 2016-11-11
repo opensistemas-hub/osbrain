@@ -271,9 +271,6 @@ class Agent():
             Alias of the logger.
         """
         level = LogLevel(level)
-        # Ignore DEBUG logs if not `self._DEBUG`
-        if level == 'DEBUG' and not self._DEBUG:
-            return
         message = '[%s] (%s): %s' % (datetime.utcnow(), self.name, message)
         if self.registered(logger):
             logger_kind = AgentAddressKind(self.socket[logger].socket_type)

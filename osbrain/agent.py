@@ -91,7 +91,7 @@ class Agent():
         socket = self.context.socket(zmq.REP)
         address = 'inproc://loopback'
         socket.bind(address)
-        self.register(socket, address, 'loopback', self.handle_loopback)
+        self.register(socket, address, 'loopback', self._handle_loopback)
 
         self.on_init()
 
@@ -101,13 +101,11 @@ class Agent():
         """
         pass
 
-    def handle_loopback(self, message):
+    def _handle_loopback(self, message):
         """
         Handle incoming messages in the loopback socket.
         """
         header, data = message
-        if header == 'PING':
-            return 'PONG'
         if header == 'STOP':
             self.log_info('Stopping...')
             self.keep_alive = False
@@ -124,7 +122,9 @@ class Agent():
             if not response:
                 return True
             return response
-        self.log_error('Unrecognized message: %s %s' % (header, data))
+        error = 'Unrecognized loopback message: {} {}'.format(header, data)
+        self.log_error(error)
+        return error
 
     def safe(self, method, *args, **kwargs):
         """
@@ -141,7 +141,7 @@ class Agent():
         *kwargs : keyword arguments
             Method keyword arguments.
         """
-        return self.loopback('EXECUTE_METHOD', (method, args, kwargs))
+        return self._loopback('EXECUTE_METHOD', (method, args, kwargs))
 
     def each(self, period, method, *args, alias=None, **kwargs):
         """
@@ -168,7 +168,7 @@ class Agent():
         """
         if not isinstance(method, str):
             method = self.set_method(method)
-        timer = repeat(period, self.loopback,
+        timer = repeat(period, self._loopback,
                        'EXECUTE_METHOD', (method, args, kwargs))
         if not alias:
             alias = uuid4().hex
@@ -203,7 +203,7 @@ class Agent():
         """
         return list(self._timer.keys())
 
-    def loopback(self, header, data=None):
+    def _loopback(self, header, data=None):
         """
         Send a message to the loopback socket.
         """
@@ -220,7 +220,7 @@ class Agent():
         """
         A simple loopback ping for testing purposes.
         """
-        return self.loopback('PING')
+        return self._loopback('PING')
 
     def ping(self):
         """
@@ -238,7 +238,7 @@ class Agent():
         """
         Stop the agent. Agent will stop running.
         """
-        return self.loopback('STOP')
+        return self._loopback('STOP')
 
     def set_logger(self, logger, alias='_logger'):
         """
@@ -696,7 +696,7 @@ class Agent():
         self.stop_all_timers()
         # Stop the running thread
         if self.running:
-            self.loopback('STOP')
+            self._loopback('STOP')
         while self.running:
             time.sleep(0.1)
         # Kill the agent

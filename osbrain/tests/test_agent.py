@@ -339,3 +339,32 @@ def test_agent_error_permission_denied(nsaddr):
         run_agent('a0', nsaddr=nsaddr, addr='127.0.0.1:22')
     assert 'PermissionError' in str(error.value)
     assert 'Permission denied' in str(error.value)
+
+
+def test_agent_loopback_header_unknown(nsaddr):
+    """
+    Test an unknown header on loopback.
+    """
+    logger = run_logger('logger')
+    agent = run_agent('a0')
+    agent.set_logger(logger)
+    # Make sure agent and logger are connected
+    while not len(logger.get_attr('log_history_info')):
+        agent.log_info('foo')
+        time.sleep(0.01)
+    agent.set_method(loopback_unknown=lambda a: a._loopback('UNKNOWN_HEADER'))
+    response = agent.loopback_unknown()
+    history = []
+    while not history:
+        print('a')
+        history = logger.get_attr('log_history_error')
+    assert 'Unrecognized loopback message' in history[-1]
+    assert 'Unrecognized loopback message' in response
+
+
+def test_agent_safe_ping(nsaddr):
+    """
+    Execute `ping()` method safely through inproc.
+    """
+    agent = run_agent('a0')
+    assert agent.safe('ping') == 'PONG'

@@ -89,7 +89,7 @@ def test_nameserverprocess_shutdown():
             nameserver = NameServerProcess(addr)
             nameserver.start()
             break
-        except RuntimeError as error:
+        except RuntimeError:
             pass
     nsaddr = nameserver.addr
     run_agent('a0', nsaddr=nsaddr)

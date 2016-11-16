@@ -69,12 +69,37 @@ def test_nameserver_proxy_shutdown_agents(nsproxy):
 
 def test_nameserver_proxy_shutdown_with_agents():
     """
-    Shutdown agents registered in a name server from a name server proxy.
+    Shutdown a name server from a name server proxy.
     """
     ns = run_nameserver()
     run_agent('Agent0', nsaddr=ns.addr())
     run_agent('Agent1', nsaddr=ns.addr())
     ns.shutdown()
+
+
+def test_nameserverprocess_shutdown():
+    """
+    Name server shutdown can be called directly from the name server process.
+    """
+    while True:
+        try:
+            # Bind to random port
+            port = random.randrange(10000, 20000)
+            addr = SocketAddress('127.0.0.1', port)
+            nameserver = NameServerProcess(addr)
+            nameserver.start()
+            break
+        except RuntimeError as error:
+            pass
+    nsaddr = nameserver.addr
+    run_agent('a0', nsaddr=nsaddr)
+    run_agent('a1', nsaddr=nsaddr)
+    while not len(nameserver.agents()) == 2:
+        continue
+    assert 'a0' in nameserver.agents()
+    assert 'a1' in nameserver.agents()
+    nameserver.shutdown()
+    assert not nameserver.is_alive()
 
 
 def test_nameserver_proxy_timeout():

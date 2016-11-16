@@ -456,7 +456,7 @@ class Agent():
 
     def _connect_old(self, client_address, alias=None, handler=None):
         if handler is not None:
-            raise NotImplementedError('Undefined behavior! (TODO)')
+            raise NotImplementedError('Undefined behavior!')
         self.socket[alias] = self.socket[client_address]
         self.address[alias] = client_address
         return client_address
@@ -626,8 +626,6 @@ class Agent():
                 handlers = self.handler[socket]
                 if not isinstance(handlers, list):
                     handlers = [handlers]
-                # TODO: test (allow multiple handlers, which get executed in
-                #       order)
                 for handler in handlers:
                     handler_return = handler(self, message)
             if socket_kind == 'REP':

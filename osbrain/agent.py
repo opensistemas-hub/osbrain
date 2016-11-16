@@ -455,8 +455,8 @@ class Agent():
             self.subscribe(alias, handler)
 
     def _connect_old(self, client_address, alias=None, handler=None):
-        assert handler is None, \
-            'Undefined behavior when a new handler is given! (TODO)'
+        if handler is not None:
+            raise NotImplementedError('Undefined behavior! (TODO)')
         self.socket[alias] = self.socket[client_address]
         self.address[alias] = client_address
         return client_address

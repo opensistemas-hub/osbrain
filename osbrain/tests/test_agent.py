@@ -272,6 +272,41 @@ def test_set_logger_wrong(nsaddr):
         a0.set_logger(1.4142)
 
 
+def test_agent_connect_repeat(nsaddr):
+    """
+    Test connecting from an agent to the same address that the agent
+    connected to just before. When no new handler is given, the agent simply
+    adds a new alias. Both aliases should work as expected.
+    """
+    def rep_handler(agent, message):
+        return 'OK'
+
+    server = run_agent('a0')
+    client = run_agent('a1')
+    addr = server.bind('REP', 'reply', rep_handler)
+    client.connect(addr, alias='request0')
+    client.connect(addr, alias='request1')
+    assert client.send_recv('request0', 'Hello world') == 'OK'
+    assert client.send_recv('request1', 'Hello world') == 'OK'
+
+
+def test_agent_connect_repeat_new_handler(nsaddr):
+    """
+    Test connecting from an agent to the same address that the agent
+    connected to just before. When a new handler is given, the result is
+    an exception (not implemented).
+    """
+    def rep_handler(agent, message):
+        return 'OK'
+
+    sender = run_agent('a0')
+    receiver = run_agent('a1')
+    addr = sender.bind('PUSH', alias='push')
+    receiver.connect(addr, alias='pull0', handler=set_received)
+    with pytest.raises(NotImplementedError):
+        receiver.connect(addr, alias='pull1', handler=set_received)
+
+
 def test_method_handlers(nsaddr):
     """
     Test handlers which are methods of a custom class.

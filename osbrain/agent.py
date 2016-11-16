@@ -83,12 +83,9 @@ class Agent():
         self.kill_agent = False
         self._DEBUG = False
 
-        try:
-            self.context = zmq.Context()
-            self.poller = zmq.Poller()
-        except zmq.ZMQError as error:
-            self.log_error('Initialization failed: %s' % error)
-            raise
+        self.context = zmq.Context()
+        self.poller = zmq.Poller()
+
         # This in-process socket could, eventually, handle safe access to
         # memory from other threads (i.e. when using Pyro proxies).
         socket = self.context.socket(zmq.REP)

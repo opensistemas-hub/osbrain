@@ -216,12 +216,6 @@ class Agent():
         loopback.close()
         return response
 
-    def safe_ping(self):
-        """
-        A simple loopback ping for testing purposes.
-        """
-        return self._loopback('PING')
-
     def ping(self):
         """
         A simple ping method testing purposes.

@@ -1,7 +1,8 @@
-|Logo with Name|
+|logo|
 
-|Build Status| |Latest Version| |Documentation Status|
-|Code Climate| |Code Coverage - codecov| |Code Coverage - coveralls|
+|build| |version| |documentation|
+|codeclimate| |codecov| |coveralls|
+|requirements|
 
 osBrain is a **general-purpose multi-agent system module** written in
 Python and develped by `OpenSistemas <http://www.opensistemas.com>`__.
@@ -77,16 +78,25 @@ fits the application well:
 -  Decentralization.
 
 
-.. |Logo with Name| image:: https://cdn.rawgit.com/opensistemas-hub/osbrain/master/docs/source/_static/osbrain-logo-name.svg
-.. |Build Status| image:: https://api.travis-ci.org/opensistemas-hub/osbrain.svg?branch=master
+.. |logo| image:: https://cdn.rawgit.com/opensistemas-hub/osbrain/master/docs/source/_static/osbrain-logo-name.svg
+.. |build| image:: https://api.travis-ci.org/opensistemas-hub/osbrain.svg?branch=master
    :target: https://travis-ci.org/opensistemas-hub/osbrain
-.. |Latest Version| image:: https://img.shields.io/pypi/v/osbrain.svg
+   :alt: Build status badge
+.. |version| image:: https://img.shields.io/pypi/v/osbrain.svg
    :target: https://pypi.python.org/pypi/osbrain/
-.. |Documentation Status| image:: https://readthedocs.org/projects/osbrain/badge/?version=stable
+   :alt: Latest version badge
+.. |documentation| image:: https://readthedocs.org/projects/osbrain/badge/?version=stable
    :target: http://osbrain.readthedocs.io/en/stable/
-.. |Code Climate| image:: https://codeclimate.com/github/opensistemas-hub/osbrain/badges/gpa.svg
+   :alt: Documentation badge
+.. |codeclimate| image:: https://codeclimate.com/github/opensistemas-hub/osbrain/badges/gpa.svg
    :target: https://codeclimate.com/github/opensistemas-hub/osbrain
-.. |Code Coverage - codecov| image:: https://codecov.io/github/opensistemas-hub/osbrain/coverage.svg?branch=master
+   :alt: Code Climate badge
+.. |codecov| image:: https://codecov.io/github/opensistemas-hub/osbrain/coverage.svg?branch=master
    :target: https://codecov.io/github/opensistemas-hub/osbrain
-.. |Code Coverage - coveralls| image:: https://coveralls.io/repos/github/opensistemas-hub/osbrain/badge.svg
+   :alt: Coverage (codecov) badge
+.. |coveralls| image:: https://coveralls.io/repos/github/opensistemas-hub/osbrain/badge.svg
    :target: https://coveralls.io/github/opensistemas-hub/osbrain
+   :alt: Coverage (coveralls) badge
+.. |Requirements| image:: https://requires.io/github/opensistemas-hub/osbrain/requirements.svg
+   :target: https://requires.io/github/opensistemas-hub/osbrain/requirements/
+   :alt: Requirements badge

@@ -112,10 +112,6 @@ class Agent():
             self.log_info('Stopping...')
             self.keep_alive = False
             return 'OK'
-        if header == 'CLOSE':
-            self.log_info('Closing sockets...')
-            self.close_sockets()
-            return 'OK'
         if header == 'EXECUTE_METHOD':
             method, args, kwargs = data
             try:

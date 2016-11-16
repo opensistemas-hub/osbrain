@@ -552,7 +552,10 @@ class Agent():
             self.log_info('SET self.%s() = %s' % (name, function))
         return name
 
-    def execute(self, function, *args, **kwargs):
+    def execute_function(self, function, *args, **kwargs):
+        """
+        Execute a function passed as parameter.
+        """
         return function(args, kwargs)
 
     def loop(self):
@@ -588,10 +591,9 @@ class Agent():
             events = dict(self.poller.poll(self.poll_timeout))
         except zmq.ZMQError as error:
             # Raise the exception in case it is not due to SIGINT
-            if error.errno != errno.EINTR:
-                raise
-            else:
+            if error.errno == errno.EINTR:
                 return 1
+            raise
 
         if not events:
             # Agent is iddle
@@ -607,12 +609,7 @@ class Agent():
                 handlers = self.handler[socket]
                 sepp = serialized.index(b'\x80')
                 data = serialized[sepp:]
-                try:
-                    message = pickle.loads(data)
-                except ValueError:
-                    error = 'Could not load pickle stream! %s' % data
-                    self.log_error(error)
-                    continue
+                message = pickle.loads(data)
                 for str_topic in handlers:
                     btopic = self.str2bytes(str_topic)
                     if not serialized.startswith(btopic):

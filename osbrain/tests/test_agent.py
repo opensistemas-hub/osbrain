@@ -245,9 +245,10 @@ def test_agent_multiproxy(nsproxy):
     assert agent.total() == 2
 
 
-def test_logger(nsaddr):
+def test_set_logger(nsaddr):
     """
-    Test basic logging.
+    Setting an agent's logger should result in the agnet actually sending
+    log messages to the logger.
     """
     logger = run_logger('logger')
     a0 = run_agent('a0')
@@ -259,6 +260,16 @@ def test_logger(nsaddr):
         if len(history):
             break
     assert message in history[0]
+
+
+def test_set_logger_wrong(nsaddr):
+    """
+    Setting an agent's logger incorrectly should result in an exception
+    being raised.
+    """
+    a0 = run_agent('a0')
+    with pytest.raises(ValueError):
+        a0.set_logger(1.4142)
 
 
 def test_method_handlers(nsaddr):

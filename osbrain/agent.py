@@ -354,11 +354,7 @@ class Agent():
         self.socket[address] = socket
         self.address[alias] = address
         if handler is not None:
-            try:
-                self.poller.register(socket, zmq.POLLIN)
-            except zmq.ZMQError as error:
-                self.log_error('Error registering socket: %s' % error)
-                raise
+            self.poller.register(socket, zmq.POLLIN)
             self.set_handler(socket, handler)
 
     def set_handler(self, socket, handler):
@@ -417,16 +413,12 @@ class Agent():
             'This socket requires a handler!'
         if not host:
             host = self.host
-        try:
-            socket = self.context.socket(kind)
-            if not port:
-                uri = 'tcp://%s' % host
-                port = socket.bind_to_random_port(uri)
-            else:
-                socket.bind('tcp://%s:%s' % (host, port))
-        except zmq.ZMQError as error:
-            self.log_error('Socket creation failed: %s' % error)
-            raise
+        socket = self.context.socket(kind)
+        if not port:
+            uri = 'tcp://%s' % host
+            port = socket.bind_to_random_port(uri)
+        else:
+            socket.bind('tcp://%s:%s' % (host, port))
         server_address = AgentAddress(host, port, kind, 'server')
         self.register(socket, server_address, alias, handler)
         # SUB sockets are a special case
@@ -470,13 +462,9 @@ class Agent():
         return client_address
 
     def _connect_new(self, client_address, alias=None, handler=None):
-        try:
-            socket = self.context.socket(client_address.kind)
-            socket.connect('tcp://%s:%s' % (client_address.host,
-                                            client_address.port))
-        except zmq.ZMQError as error:
-            self.log_error('Could not connect: %s' % error)
-            raise
+        socket = self.context.socket(client_address.kind)
+        socket.connect('tcp://%s:%s' % (client_address.host,
+                                        client_address.port))
         self.register(socket, client_address, alias, handler)
         return client_address
 

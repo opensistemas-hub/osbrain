@@ -292,6 +292,37 @@ def test_method_handlers(nsaddr):
     assert server.get_attr('received')['pull'] == 'Hello world!'
 
 
+def test_list_of_handlers(nsaddr):
+    """
+    An agent should accept a list of handlers. These handlers should be
+    executed in strict order.
+    """
+    class NewAgent(Agent):
+        def on_init(self):
+            self.received = None
+            self.second = None
+            self.third = None
+            self.bind('PULL', 'pull', handler=[set_received, self.pull0,
+                                               self.pull1])
+
+        def pull0(self, message):
+            self.second = '0' + str(self.received)
+
+        def pull1(self, message):
+            self.third = '1' + str(self.second)
+
+    sender = run_agent('sender')
+    receiver = run_agent('receiver', base=NewAgent)
+    sender.connect(receiver.addr('pull'), 'push')
+    message = 'Hello world'
+    sender.send('push', message)
+    while not receiver.get_attr('third'):
+        time.sleep(0.01)
+    assert receiver.get_attr('received') == message
+    assert receiver.get_attr('second') == '0' + message
+    assert receiver.get_attr('third') == '10' + message
+
+
 # TODO:
 #  - Test handler with 2 parameters (agent, message)
 #  - Test handler with 3 parameters (agent, message, topic)

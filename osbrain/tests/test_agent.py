@@ -296,9 +296,6 @@ def test_agent_connect_repeat_new_handler(nsaddr):
     connected to just before. When a new handler is given, the result is
     an exception (not implemented).
     """
-    def rep_handler(agent, message):
-        return 'OK'
-
     sender = run_agent('a0')
     receiver = run_agent('a1')
     addr = sender.bind('PUSH', alias='push')

@@ -368,3 +368,16 @@ def test_agent_safe_ping(nsaddr):
     """
     agent = run_agent('a0')
     assert agent.safe('ping') == 'PONG'
+
+
+def test_agent_stop(nsaddr):
+    """
+    An agent will stop running when the `stop()` method is executed.
+    """
+    agent = run_agent('a0')
+    assert agent.get_attr('running')
+    agent.stop()
+    assert not agent.get_attr('keep_alive')
+    while agent.get_attr('running'):
+        time.sleep(0.01)
+    assert not agent.get_attr('running')

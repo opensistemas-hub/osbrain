@@ -361,6 +361,9 @@ class Agent():
         if isinstance(handler, types.FunctionType):
             self.handler[socket] = handler
             return
+        if isinstance(handler, types.BuiltinFunctionType):
+            self.handler[socket] = handler
+            return
         if isinstance(handler, types.MethodType):
             self.handler[socket] = unbound_method(handler)
             return

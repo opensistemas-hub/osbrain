@@ -7,9 +7,6 @@ from threading import Thread
 import traceback
 
 
-from .address import SocketAddress
-
-
 def format_exception():
     """
     Represent a traceback exception as a string in which all lines start
@@ -36,41 +33,6 @@ class LogLevel(str):
         if value not in ['ERROR', 'WARNING', 'INFO', 'DEBUG']:
             raise ValueError('Incorrect value "%s"!' % value)
         return super().__new__(cls, value)
-
-
-def address_to_host_port(addr=None):
-    """
-    Try to convert a string or SocketAddress to a (host, port) tuple.
-
-    Parameters
-    ----------
-    addr : str, SocketAddress
-
-    Returns
-    -------
-    tuple
-        A (host, port) tuple formed with the corresponding data.
-    """
-    if addr is None:
-        return (None, None)
-    if isinstance(addr, SocketAddress):
-        return (addr.host, addr.port)
-    if isinstance(addr, str):
-        aux = addr.split(':')
-        if len(aux) == 1:
-            port = None
-        else:
-            port = int(aux[-1])
-        host = aux[0]
-        return (host, port)
-    # Try to do something anyway
-    if hasattr(addr, 'host') and hasattr(addr, 'port'):
-        return (addr.host, addr.port)
-    try:
-        addr = addr.addr()
-        return (addr.host, addr.port)
-    except:
-        raise ValueError('Unsupported address type "%s"!' % type(addr))
 
 
 def unbound_method(method):

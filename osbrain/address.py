@@ -1,7 +1,56 @@
 """
 Implementation of address-related features.
 """
+from ipaddress import ip_address
+
 import zmq
+
+
+def address_to_host_port(addr=None):
+    """
+    Try to convert a string or SocketAddress to a (host, port) tuple.
+
+    Parameters
+    ----------
+    addr : str, SocketAddress
+
+    Returns
+    -------
+    tuple
+        A (host, port) tuple formed with the corresponding data.
+    """
+    if addr is None:
+        return (None, None)
+    if isinstance(addr, SocketAddress):
+        return (addr.host, addr.port)
+    if isinstance(addr, AgentAddress):
+        return (addr.address.host, addr.address.port)
+    if isinstance(addr, str):
+        aux = addr.split(':')
+        if len(aux) == 1:
+            port = None
+        else:
+            port = int(aux[-1])
+        host = aux[0]
+        return (host, port)
+    # Try to do something anyway
+    if hasattr(addr, 'host') and hasattr(addr, 'port'):
+        return (addr.host, addr.port)
+    try:
+        addr = addr.addr()
+        return (addr.host, addr.port)
+    except:
+        raise ValueError('Unsupported address type "%s"!' % type(addr))
+
+
+class AgentAddressTransport(str):
+    """
+    Agent's address transport class. It can be 'tcp', 'ipc' or 'inproc'.
+    """
+    def __new__(cls, value):
+        if value not in ['tcp', 'ipc', 'inproc']:
+            raise ValueError('Invalid address transport "%s"!' % value)
+        return super().__new__(cls, value)
 
 
 class AgentAddressRole(str):
@@ -110,24 +159,22 @@ class SocketAddress(object):
 
     Parameters
     ----------
-    host : str
-        Agent host.
+    host : str, ipaddress.IPv4Address
+        IP address.
     port : int
-        Agent port.
+        Port number.
 
     Attributes
     ----------
-    host : str
-        Agent host.
+    host : ipaddress.IPv4Address
+        IP address.
     port : int
-        Agent port.
+        Port number.
     """
     def __init__(self, host, port):
-        assert isinstance(host, str), \
-            'Incorrect parameter host on AgentAddress; expecting type str.'
         assert isinstance(port, int), \
-            'Incorrect parameter port on AgentAddress; expecting type int.'
-        self.host = host
+            'Incorrect parameter port on SocketAddress; expecting type int.'
+        self.host = str(ip_address(host))
         self.port = port
 
     def __repr__(self):
@@ -149,42 +196,38 @@ class SocketAddress(object):
         return self.host == other.host and self.port == other.port
 
 
-class AgentAddress(SocketAddress):
+class AgentAddress():
     """
-    Agent address information consisting on the host, port, kind and role.
+    Agent address information consisting on the transport protocol, address,
+    kind and role.
 
     Parameters
     ----------
-    host : str
-        Agent host.
-    port : int
-        Agent port.
-    kind : int, str, AgentAddressKind
+    transport : str, AgentAddressTransport
+        Agent transport protocol.
+    addr : str
+        Agent address.
+    kind : str, AgentAddressKind
         Agent kind.
     role : str, AgentAddressRole
         Agent role.
 
     Attributes
     ----------
-    host : str
-        Agent host.
-    port : int
-        Agent port.
+    addr : int
+        Agent address.
     kind : AgentAddressKind
         Agent kind.
     role : AgentAddressRole
         Agent role.
     """
-    def __init__(self, host, port, kind=None, role=None):
-        super().__init__(host, port)
-        if kind is not None:
-            self.kind = AgentAddressKind(kind)
-        else:
-            self.kind = kind
-        if role is not None:
-            self.role = AgentAddressRole(role)
-        else:
-            self.role = role
+    def __init__(self, transport, address, kind, role):
+        if transport == 'tcp':
+            address = SocketAddress(*address_to_host_port(address))
+        self.transport = AgentAddressTransport(transport)
+        self.address = address
+        self.kind = AgentAddressKind(kind)
+        self.role = AgentAddressRole(role)
 
     def __repr__(self):
         """
@@ -194,17 +237,20 @@ class AgentAddress(SocketAddress):
         -------
         representation : str
         """
-        return '%s:%s (%s %s)' % (self.host, self.port, self.kind, self.role)
+        return 'AgentAddress(%s, %s, %s, %s)' % \
+            (self.transport, self.address, self.kind, self.role)
 
     def __hash__(self):
-        return hash(self.host) ^ hash(self.port) ^ \
-                hash(self.role) ^ hash(self.kind)
+        return hash(self.transport) ^ hash(self.address) ^ \
+            hash(self.kind) ^ hash(self.role)
 
     def __eq__(self, other):
         if not isinstance(other, AgentAddress):
             return False
-        return self.host == other.host and self.port == other.port and \
-            self.role == other.role and self.kind == other.kind
+        return self.transport == other.transport \
+            and self.address == other.address \
+            and self.kind == other.kind \
+            and self.role == other.role
 
     def twin(self):
         """
@@ -216,18 +262,6 @@ class AgentAddress(SocketAddress):
             corresponding twins, according to the rules defined in the
             respective classes.
         """
-        host = self.host
-        port = self.port
         kind = self.kind.twin()
         role = self.role.twin()
-        return self.__class__(host, port, kind, role)
-
-    def socket_addr(self):
-        """
-        Returns
-        -------
-        SocketAddress
-            Agent address as a SocketAddress object. This means `kind` and
-            `role` information are lost.
-        """
-        return SocketAddress(self.host, self.port)
+        return self.__class__(self.transport, self.address, kind, role)

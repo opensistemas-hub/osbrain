@@ -10,8 +10,7 @@ import Pyro4
 from Pyro4.naming import BroadcastServer
 
 from .common import format_exception
-from .common import address_to_host_port
-from .address import AgentAddress
+from .address import address_to_host_port
 from .address import SocketAddress
 from .proxy import Proxy
 from .proxy import NSProxy
@@ -84,7 +83,7 @@ class NameServerProcess(multiprocessing.Process):
         self.uri = self.daemon.uriFor(self.daemon.nameserver)
         self.host = self.uri.host
         self.port = self.uri.port
-        self.addr = AgentAddress(self.host, self.port)
+        self.addr = SocketAddress(self.host, self.port)
         internal_uri = self.daemon.uriFor(self.daemon.nameserver, nat=False)
         bcserver = None
         hostip = self.daemon.sock.getsockname()[0]

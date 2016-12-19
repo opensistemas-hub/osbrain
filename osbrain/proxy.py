@@ -6,7 +6,7 @@ import sys
 import time
 import Pyro4
 from Pyro4.errors import NamingError
-from .common import address_to_host_port
+from .address import address_to_host_port
 from .address import SocketAddress
 
 

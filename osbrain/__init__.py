@@ -1,3 +1,4 @@
+import os
 import Pyro4
 Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
 Pyro4.config.SERIALIZERS_ACCEPTED.add('dill')
@@ -7,6 +8,7 @@ Pyro4.config.SERVERTYPE = 'multiplex'
 Pyro4.config.REQUIRE_EXPOSE = False
 # TODO: should we set COMMTIMEOUT as well?
 Pyro4.config.DETAILED_TRACEBACK = True
+os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'ipc'
 
 __version__ = '0.3.1'
 

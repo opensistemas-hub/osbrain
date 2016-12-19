@@ -17,13 +17,13 @@ import zmq
 import Pyro4
 from Pyro4.errors import PyroError
 
-from .common import address_to_host_port
 from .common import format_exception
 from .common import unbound_method
 from .common import LogLevel
 from .common import repeat
 from .address import AgentAddress
 from .address import AgentAddressKind
+from .address import address_to_host_port
 from .proxy import Proxy
 from .proxy import NSProxy
 
@@ -388,7 +388,7 @@ class Agent():
     def registered(self, address):
         return address in self.socket
 
-    def bind(self, kind, alias=None, handler=None, host=None, port=None):
+    def bind(self, kind, alias=None, handler=None, addr=None, transport=None):
         """
         Bind to an agent address.
 
@@ -401,25 +401,28 @@ class Agent():
         handler, default is None
             If the socket receives input messages, the handler/s is/are to
             be set with this parameter.
-        host : str, default is None
-            The host to bind to, when not given `self.host` is taken as
-            default.
-        port : int, default is None
-            An optional port number. If not set, a random port is used for
-            binding.
+        addr : str, default is None
+            The address to bind to.
+        transport : str, AgentAddressTransport, default is None
+            Transport protocol.
         """
         kind = AgentAddressKind(kind)
         assert not kind.requires_handler() or handler is not None, \
             'This socket requires a handler!'
-        if not host:
-            host = self.host
         socket = self.context.socket(kind)
-        if not port:
-            uri = 'tcp://%s' % host
-            port = socket.bind_to_random_port(uri)
+        transport = transport or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
+        if transport == 'tcp':
+            if not addr:
+                uri = 'tcp://%s' % self.host
+                port = socket.bind_to_random_port(uri)
+                addr = self.host + ':' + str(port)
+            else:
+                socket.bind('tcp://%s' % (addr))
         else:
-            socket.bind('tcp://%s:%s' % (host, port))
-        server_address = AgentAddress(host, port, kind, 'server')
+            if not addr:
+                addr = str(uuid4())
+            socket.bind('%s://%s' % (transport, addr))
+        server_address = AgentAddress(transport, addr, kind, 'server')
         self.register(socket, server_address, alias, handler)
         # SUB sockets are a special case
         if kind == 'SUB':
@@ -463,8 +466,8 @@ class Agent():
 
     def _connect_new(self, client_address, alias=None, handler=None):
         socket = self.context.socket(client_address.kind)
-        socket.connect('tcp://%s:%s' % (client_address.host,
-                                        client_address.port))
+        socket.connect('%s://%s' % (client_address.transport,
+                                    client_address.address))
         self.register(socket, client_address, alias, handler)
         return client_address
 

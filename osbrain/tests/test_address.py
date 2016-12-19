@@ -4,10 +4,28 @@ Test file for address module.
 import zmq
 import pytest
 
-from osbrain.address import AgentAddress
+from osbrain.address import address_to_host_port
 from osbrain.address import SocketAddress
+from osbrain.address import AgentAddress
 from osbrain.address import AgentAddressKind
 from osbrain.address import AgentAddressRole
+from osbrain.address import AgentAddressTransport
+
+
+class DummyAddress():
+    """
+    A dummy class which has `host` and `port` attributes set.
+    """
+    host = '127.0.0.1'
+    port = 123
+
+
+class DummyAddressMethod():
+    """
+    A dummy class which has an `addr` method that returns a dummy address.
+    """
+    def addr(self):
+        return DummyAddress()
 
 
 def twin_list(elements):
@@ -15,6 +33,42 @@ def twin_list(elements):
     result[1::2] = elements[::2]
     result[::2] = elements[1::2]
     return result
+
+
+def test_invalid_address_to_host_port():
+    """
+    Test conversion of a wrong type to its corresponding host+port tuple.
+    This conversion should cause an exception raising.
+    """
+    with pytest.raises(ValueError):
+        address_to_host_port(1.234)
+
+
+@pytest.mark.parametrize(('address', 'host', 'port'), [
+    (AgentAddress('tcp', '127.0.0.1:123', 'PUSH', 'server'), '127.0.0.1', 123),
+    (SocketAddress('127.0.0.1', 123), '127.0.0.1', 123),
+    ('127.0.0.1:123', '127.0.0.1', 123),
+    ('127.0.0.1', '127.0.0.1', None),
+    (DummyAddress(), '127.0.0.1', 123),
+    (DummyAddressMethod(), '127.0.0.1', 123),
+])
+def test_valid_address_to_host_port(address, host, port):
+    """
+    Test conversion of an address to its corresponding host+port tuple.
+    """
+    assert address_to_host_port(address) == (host, port)
+
+
+def test_transport():
+    """
+    This test aims to cover basic AgentAddressTransport initialization and
+    equivalence.
+    """
+    assert AgentAddressTransport('tcp') == 'tcp'
+    assert AgentAddressTransport('ipc') == 'ipc'
+    assert AgentAddressTransport('inproc') == 'inproc'
+    with pytest.raises(ValueError):
+        AgentAddressTransport('foo')
 
 
 def test_kind():
@@ -87,11 +141,18 @@ def test_agent_address():
     Test basic AgentAddress operations: initialization, equivalence and
     basic methods.
     """
-    address = AgentAddress('127.0.0.1', 1234, 'PUSH', 'server')
+    address = AgentAddress('ipc', 'addr', 'PUSH', 'server')
     # Equivalence
-    assert address == AgentAddress('127.0.0.1', 1234, 'PUSH', 'server')
+    assert address == AgentAddress('ipc', 'addr', 'PUSH', 'server')
     assert not address == 'foo'
     assert address != 'foo'
     # Basic methods
-    assert address.socket_addr() == SocketAddress('127.0.0.1', 1234)
-    assert address.twin() == AgentAddress('127.0.0.1', 1234, 'PULL', 'client')
+    assert address.twin() == AgentAddress('ipc', 'addr', 'PULL', 'client')
+
+
+def test_agent_address_to_host_port():
+    """
+    An agent address should be convertible to host+port if TCP is used.
+    """
+    address = AgentAddress('tcp', '127.0.0.1:1234', 'PUSH', 'server')
+    assert address_to_host_port(address) == ('127.0.0.1', 1234)

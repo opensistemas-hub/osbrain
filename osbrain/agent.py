@@ -1,21 +1,21 @@
 """
 Core agent classes.
 """
+from datetime import datetime
+import errno
+import inspect
+import multiprocessing
 import os
-import types
+import pickle
 import signal
 import sys
 import time
-import inspect
-import multiprocessing
+import types
 from uuid import uuid4
-from datetime import datetime
 
-import pickle
-import errno
-import zmq
 import Pyro4
 from Pyro4.errors import PyroError
+import zmq
 
 from .common import format_exception
 from .common import unbound_method

@@ -72,8 +72,7 @@ class AgentAddressRole(str):
         """
         if self == 'server':
             return self.__class__('client')
-        if self == 'client':
-            return self.__class__('server')
+        return self.__class__('server')
 
 
 class AgentAddressKind(int):
@@ -136,10 +135,9 @@ class AgentAddressKind(int):
             A socket which processes incoming messages would require a
             handler (i.e. 'REP', 'PULL', 'SUB'...).
         """
-        if self.ZMQ_STR_CONVERSION[self] in ('REP', 'PULL', 'SUB'):
-            return True
         if self.ZMQ_STR_CONVERSION[self] in ('REQ', 'PUSH', 'PUB'):
             return False
+        return True
 
     def twin(self):
         """

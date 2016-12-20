@@ -27,13 +27,13 @@ def sync_agent_logger(agent, logger):
         message = str(uuid4())
         agent.log_info(message)
         time.sleep(0.01)
-    while not message in logger.get_attr('log_history_info')[-1]:
+    while message not in logger.get_attr('log_history_info')[-1]:
         time.sleep(0.01)
 
 
 def logger_received(logger, log, message, timeout=1.):
     t0 = time.time()
-    while not message in logger.get_attr(log)[-1]:
+    while message not in logger.get_attr(log)[-1]:
         time.sleep(0.01)
         if timeout and time.time() - t0 > timeout:
             return False

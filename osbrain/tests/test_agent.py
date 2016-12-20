@@ -1,6 +1,7 @@
 """
 Test file for agents.
 """
+import os
 import time
 from uuid import uuid4
 from threading import Timer
@@ -506,3 +507,25 @@ def test_agent_stop(nsaddr):
     while agent.get_attr('running'):
         time.sleep(0.01)
     assert not agent.get_attr('running')
+
+
+def test_agent_bind_transport(nsaddr):
+    """
+    Test agent binding using TCP and IPC transport layers.
+    """
+    agent = run_agent('a0')
+    # Default transport
+    address = agent.bind('PUSH')
+    assert address.transport == 'ipc'
+    # Force IPC and TCP
+    address = agent.bind('PUSH', transport='ipc')
+    assert address.transport == 'ipc'
+    address = agent.bind('PUSH', transport='tcp')
+    assert address.transport == 'tcp'
+    # Set IPC and TCP through environment variable
+    os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'tcp'
+    address = agent.bind('PUSH', transport='tcp')
+    assert address.transport == 'tcp'
+    os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'ipc'
+    address = agent.bind('PUSH', transport='ipc')
+    assert address.transport == 'ipc'

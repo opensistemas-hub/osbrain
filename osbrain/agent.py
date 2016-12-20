@@ -13,6 +13,7 @@ import time
 import types
 from uuid import uuid4
 
+import dill
 import Pyro4
 from Pyro4.errors import PyroError
 import zmq
@@ -107,8 +108,11 @@ class Agent():
         Handle incoming messages in the loopback socket.
         """
         header, data = message
-        if header == 'EXECUTE_METHOD':
-            method, args, kwargs = data
+        if header.endswith('EXECUTE_METHOD'):
+            if header == 'SAFE_EXECUTE_METHOD':
+                method, args, kwargs = dill.loads(data)
+            else:
+                method, args, kwargs = data
             try:
                 response = getattr(self, method)(*args, **kwargs)
             except Exception as error:
@@ -141,7 +145,8 @@ class Agent():
         *kwargs : keyword arguments
             Method keyword arguments.
         """
-        return self._loopback('EXECUTE_METHOD', (method, args, kwargs))
+        data = dill.dumps((method, args, kwargs))
+        return self._loopback('SAFE_EXECUTE_METHOD', data)
 
     def each(self, period, method, *args, alias=None, **kwargs):
         """

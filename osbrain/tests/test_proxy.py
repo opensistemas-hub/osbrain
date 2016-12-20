@@ -7,6 +7,7 @@ import pytest
 
 from osbrain import run_agent
 from osbrain import Proxy
+from osbrain import NSProxy
 from osbrain.proxy import locate_ns
 
 from common import nsproxy  # pragma: no flakes
@@ -45,16 +46,31 @@ def test_agent_proxy_remote_exceptions(nsproxy):
         assert 'User raised an exception' in str(error.value)
 
 
-def test_initialization_timeout(nsproxy):
+def test_agent_proxy_initialization_timeout(nsproxy):
     """
-    A proxy should raise a TimeoutError at initialization if it can not test
-    the connection within a number of seconds.
+    An agent proxy should raise a TimeoutError at initialization if it cannot
+    test the connection within a number of seconds.
     """
-    class TestTimeoutProxy(Proxy):
+    class InitTimeoutProxy(Proxy):
         def test(self):
             time.sleep(0.1)
             raise TimeoutError()
 
     run_agent('foo')
     with pytest.raises(TimeoutError):
-        TestTimeoutProxy('foo', timeout=1.)
+        InitTimeoutProxy('foo', timeout=1.)
+
+
+def test_nameserver_shutdown_timeout(nsproxy):
+    """
+    A NSProxy should raise a TimeoutError if all agents were not shutted
+    down and unregistered after a number of seconds.
+    """
+    class ShutdownTimeoutNSProxy(NSProxy):
+        def agents(self):
+            return ['foo', 'bar']
+
+    run_agent('foo')
+    with pytest.raises(TimeoutError):
+        timeoutproxy = ShutdownTimeoutNSProxy(nsproxy.addr())
+        timeoutproxy.shutdown(timeout=1.)

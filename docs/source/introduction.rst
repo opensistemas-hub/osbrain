@@ -130,5 +130,7 @@ always take this into account:
 #. osBrain uses `pickle <https://docs.python.org/library/pickle.html>`_ for
    serialization, which means that the system performance depends on this
    package.
-#. ØMQ transport is TCP by default. The network may have a great impact on
-   performance.
+#. ØMQ transport is IPC by default. It can be changed to TCP globally or
+   configured specifically for each bind. Note, however, that in this case
+   the network may have a great impact on performance. TCP must be used, of
+   course, for distributed systems.

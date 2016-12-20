@@ -2,6 +2,7 @@
 Test file for agents.
 """
 import time
+from uuid import uuid4
 from threading import Timer
 
 import pytest
@@ -19,6 +20,24 @@ from common import nsproxy  # pragma: no flakes
 
 def set_received(agent, message, topic=None):
     agent.received = message
+
+
+def sync_agent_logger(agent, logger):
+    while not len(logger.get_attr('log_history_info')):
+        message = str(uuid4())
+        agent.log_info(message)
+        time.sleep(0.01)
+    while not message in logger.get_attr('log_history_info')[-1]:
+        time.sleep(0.01)
+
+
+def logger_received(logger, log, message, timeout=1.):
+    t0 = time.time()
+    while not message in logger.get_attr(log)[-1]:
+        time.sleep(0.01)
+        if timeout and time.time() - t0 > timeout:
+            return False
+    return True
 
 
 def test_early_agent_proxy(nsaddr):
@@ -370,6 +389,42 @@ def test_list_of_handlers(nsaddr):
 #  - Test handler with 2 parameters (agent, message)
 #  - Test handler with 3 parameters (agent, message, topic)
 #  - Test topic is properly filtered (no match, partial match, full match)
+
+
+def test_log_levels(nsaddr):
+    """
+    Test different log levels: info, warning, error and debug. Debug messages
+    are only to be logged if `_DEBUG` attribute is set in the agent.
+    """
+    logger = run_logger('logger')
+    agent = run_agent('a0')
+    agent.set_logger(logger)
+    sync_agent_logger(agent, logger)
+    # Log info
+    message = str(uuid4())
+    agent.log_info(message)
+    assert logger_received(logger, 'log_history_info', message)
+    # Log warning
+    message = str(uuid4())
+    agent.log_warning(message)
+    assert logger_received(logger, 'log_history_warning', message)
+    # Log error
+    message = str(uuid4())
+    agent.log_error(message)
+    assert logger_received(logger, 'log_history_error', message)
+    # Log debug
+    message = str(uuid4())
+    agent.set_attr(_DEBUG=True)
+    agent.log_debug(message)
+    assert logger_received(logger, 'log_history_debug', message)
+    message = str(uuid4())
+    agent.set_attr(_DEBUG=False)
+    agent.log_debug(message)
+    assert not logger_received(logger, 'log_history_debug', message)
+    message = str(uuid4())
+    agent.set_attr(_DEBUG=True)
+    agent.log_debug(message)
+    assert logger_received(logger, 'log_history_debug', message)
 
 
 def test_running_exception(nsaddr):

@@ -612,7 +612,7 @@ class Agent():
             if socket_kind == 'SUB':
                 handlers = self.handler[socket]
                 sepp = serialized.index(b'\x80')
-                data = serialized[sepp:]
+                data = memoryview(serialized)[sepp:]
                 message = pickle.loads(data)
                 for str_topic in handlers:
                     btopic = self.str2bytes(str_topic)

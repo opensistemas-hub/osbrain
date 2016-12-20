@@ -78,6 +78,7 @@ class Agent():
         self._timer = {}
         self.poll_timeout = 1000
         self.keep_alive = True
+        self._shutdown_now = False
         self.running = False
         # Kill parent AgentProcess
         self.kill_agent = False
@@ -674,6 +675,9 @@ class Agent():
             self.log_error(msg)
             raise
         self.running = False
+        if self._shutdown_now:
+            # Kill the agent
+            self.kill()
 
     def shutdown(self):
         # Stop running timers
@@ -682,10 +686,7 @@ class Agent():
         if self.running:
             self.log_info('Stopping...')
             self.keep_alive = False
-        while self.running:
-            time.sleep(0.1)
-        # Kill the agent
-        self.kill()
+            self._shutdown_now = True
 
     def kill(self):
         self.close_sockets()

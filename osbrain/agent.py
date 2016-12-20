@@ -106,10 +106,6 @@ class Agent():
         Handle incoming messages in the loopback socket.
         """
         header, data = message
-        if header == 'STOP':
-            self.log_info('Stopping...')
-            self.keep_alive = False
-            return 'OK'
         if header == 'EXECUTE_METHOD':
             method, args, kwargs = data
             try:
@@ -232,7 +228,9 @@ class Agent():
         """
         Stop the agent. Agent will stop running.
         """
-        return self._loopback('STOP')
+        self.log_info('Stopping...')
+        self.keep_alive = False
+        return 'OK'
 
     def set_logger(self, logger, alias='_logger'):
         """
@@ -679,13 +677,15 @@ class Agent():
         self.stop_all_timers()
         # Stop the running thread
         if self.running:
-            self._loopback('STOP')
+            self.log_info('Stopping...')
+            self.keep_alive = False
         while self.running:
             time.sleep(0.1)
         # Kill the agent
         self.kill()
 
     def kill(self):
+        self.close_sockets()
         self.kill_agent = True
 
     def close_sockets(self):

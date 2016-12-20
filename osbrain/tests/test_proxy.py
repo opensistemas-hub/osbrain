@@ -1,6 +1,8 @@
 """
 Proxy module tests.
 """
+import time
+
 import pytest
 
 from osbrain import run_agent
@@ -41,3 +43,18 @@ def test_agent_proxy_remote_exceptions(nsproxy):
     with pytest.raises(RuntimeError) as error:
         agent.raise_exception()
         assert 'User raised an exception' in str(error.value)
+
+
+def test_initialization_timeout(nsproxy):
+    """
+    A proxy should raise a TimeoutError at initialization if it can not test
+    the connection within a number of seconds.
+    """
+    class TestTimeoutProxy(Proxy):
+        def test(self):
+            time.sleep(0.1)
+            raise TimeoutError()
+
+    run_agent('foo')
+    with pytest.raises(TimeoutError):
+        TestTimeoutProxy('foo', timeout=1.)

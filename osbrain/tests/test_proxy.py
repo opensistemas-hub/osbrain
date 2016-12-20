@@ -61,7 +61,7 @@ def test_agent_proxy_initialization_timeout(nsproxy):
         InitTimeoutProxy('foo', timeout=1.)
 
 
-def test_nameserver_shutdown_timeout(nsproxy):
+def test_nameserver_proxy_shutdown_timeout(nsproxy):
     """
     A NSProxy should raise a TimeoutError if all agents were not shutted
     down and unregistered after a number of seconds.
@@ -74,3 +74,11 @@ def test_nameserver_shutdown_timeout(nsproxy):
     with pytest.raises(TimeoutError):
         timeoutproxy = ShutdownTimeoutNSProxy(nsproxy.addr())
         timeoutproxy.shutdown(timeout=1.)
+
+
+def test_agent_proxy_nameserver_address(nsproxy):
+    """
+    Agent proxies should be able to return the name server address.
+    """
+    agent = run_agent('foo')
+    assert agent.nsaddr() == nsproxy.addr()

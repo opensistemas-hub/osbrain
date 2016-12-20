@@ -80,12 +80,12 @@ class Proxy(Pyro4.core.Proxy):
         """
         self._pyroRelease()
 
-    def pyro_addr(self):
+    def nsaddr(self):
         """
         Returns
         -------
         SocketAddress
-            The socket address of the Pyro server.
+            The socket address of the name server.
         """
         return SocketAddress(self._pyroUri.host, self._pyroUri.port)
 

@@ -112,8 +112,11 @@ class Agent():
                 response = getattr(self, method)(*args, **kwargs)
             except Exception as error:
                 message = 'Error executing `%s`! (%s)\n' % (method, error)
+                message += '\n> method: %s\n> args: %s\n> kwargs: %s\n' % \
+                    (str(method), str(args), str(kwargs))
                 message += format_exception()
-                self.send('loopback', message)
+                aux = type(error)(message)
+                self.send('loopback', aux)
                 raise
             if not response:
                 return True

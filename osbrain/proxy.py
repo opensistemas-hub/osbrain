@@ -91,8 +91,17 @@ class Proxy(Pyro4.core.Proxy):
 
     def _pyroInvoke(self, methodname, args, kwargs, flags=0, objectId=None):
         try:
-            result = super()._pyroInvoke(
-                methodname, args, kwargs, flags=flags, objectId=objectId)
+            if methodname in self._pyroMethods and \
+                    not methodname.startswith('_') and methodname != 'test' \
+                    and methodname != 'run':
+                safe_args = [methodname] + list(args)
+                result = super()._pyroInvoke(
+                    'safe', safe_args, kwargs, flags=flags, objectId=objectId)
+                if isinstance(result, Exception):
+                    raise result
+            else:
+                result = super()._pyroInvoke(
+                    methodname, args, kwargs, flags=flags, objectId=objectId)
         except:
             sys.stdout.write(''.join(Pyro4.util.getPyroTraceback()))
             sys.stdout.flush()

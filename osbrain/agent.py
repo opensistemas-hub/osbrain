@@ -168,7 +168,8 @@ class Agent():
             Method keyword arguments.
         """
         if not self.running:
-            raise NotImplementedError()
+            raise RuntimeError(
+                'Agent must be running to safely execute methods!')
         data = dill.dumps((method, args, kwargs))
         loopback = self.context.socket(zmq.REQ)
         loopback.connect('inproc://_loopback_safe')

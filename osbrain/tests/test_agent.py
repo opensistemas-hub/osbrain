@@ -238,6 +238,7 @@ def test_agent_inheritance(nsaddr):
     # Test an Agent based on the new class
     AgentProcess('new', nsaddr=nsaddr, base=NewAgent).start()
     new = Proxy('new', nsaddr)
+    new.run()
     assert new.the_answer_to_life() == 42
 
     # Test the quick `run_agent` function

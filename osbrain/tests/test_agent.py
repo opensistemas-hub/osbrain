@@ -43,14 +43,6 @@ def logger_received(logger, log, message, timeout=1.):
     return True
 
 
-def test_ping(nsaddr):
-    """
-    Test simple agent ping.
-    """
-    a0 = run_agent('a0')
-    assert a0.ping() == 'pong'
-
-
 def test_early_agent_proxy(nsaddr):
     """
     It must be possible to create a Proxy when the registration of the new
@@ -62,17 +54,24 @@ def test_early_agent_proxy(nsaddr):
     Timer(2, agent.start).start()
     # Locate agent now
     a0 = Proxy('a0', timeout=3.)
-    # Just check proxy is properly set up
-    a0.run()
-    assert a0.ping() == 'pong'
+    # Just check agent is ready
+    assert a0.ready() == 'OK'
 
 
 def test_agent_loopback(nsaddr):
     """
-    An agent should always have a loopback inproc socket.
+    An agent should always have a _loopback_safe inproc socket.
     """
     a0 = run_agent('a0')
-    assert a0.addr('loopback') == 'inproc://loopback'
+    assert a0.addr('_loopback_safe') == 'inproc://_loopback_safe'
+
+
+def test_ping(nsaddr):
+    """
+    Test simple agent ping.
+    """
+    a0 = run_agent('a0')
+    assert a0.ping() == 'pong'
 
 
 def test_agent_shutdown(nsaddr):
@@ -287,7 +286,7 @@ def test_set_logger(nsaddr):
     assert message in history[0]
 
 
-def test_set_logger_wrong(nsaddr):
+def test_set_logger_wrong(nsproxy):
     """
     Setting an agent's logger incorrectly should result in an exception
     being raised.
@@ -445,7 +444,8 @@ def test_running_exception(nsaddr):
     # Make sure agent and logger are connected
     sync_agent_logger(agent, logger)
     # Raise an exception
-    agent.safe('raise_exception')
+    with pytest.raises(RuntimeError):
+        agent.raise_exception()
     message = 'User raised an exception'
     assert logger_received(logger, 'log_history_error', message)
     assert not agent.get_attr('running')

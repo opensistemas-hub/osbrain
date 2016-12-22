@@ -92,8 +92,9 @@ class Proxy(Pyro4.core.Proxy):
     def _pyroInvoke(self, methodname, args, kwargs, flags=0, objectId=None):
         try:
             if methodname in self._pyroMethods and \
-                    not methodname.startswith('_') and methodname != 'test' \
-                    and methodname != 'run':
+                    not methodname.startswith('_') \
+                    and methodname not in \
+                    ('test', 'run', 'get_attr'):
                 safe_args = [methodname] + list(args)
                 result = super()._pyroInvoke(
                     'safe', safe_args, kwargs, flags=flags, objectId=objectId)

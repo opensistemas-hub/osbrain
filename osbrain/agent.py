@@ -95,6 +95,14 @@ class Agent():
         socket.bind(address)
         self.register(socket, address, 'loopback', self._handle_loopback)
 
+        # This in-process socket handles safe access to
+        # memory from other threads (i.e. when using Pyro proxies).
+        socket = self.context.socket(zmq.REP)
+        address = 'inproc://_loopback_safe'
+        socket.bind(address)
+        self.register(socket, address, '_loopback_safe',
+                      self._handle_loopback_safe)
+
         self.on_init()
 
     def on_init(self):
@@ -108,11 +116,8 @@ class Agent():
         Handle incoming messages in the loopback socket.
         """
         header, data = message
-        if header.endswith('EXECUTE_METHOD'):
-            if header == 'SAFE_EXECUTE_METHOD':
-                method, args, kwargs = dill.loads(data)
-            else:
-                method, args, kwargs = data
+        if header == 'EXECUTE_METHOD':
+            method, args, kwargs = data
             try:
                 response = getattr(self, method)(*args, **kwargs)
             except Exception as error:
@@ -130,6 +135,23 @@ class Agent():
         self.log_error(error)
         return error
 
+    def _handle_loopback_safe(self, data):
+        """
+        Handle incoming messages in the _loopback_safe socket.
+        """
+        method, args, kwargs = dill.loads(data)
+        try:
+            response = getattr(self, method)(*args, **kwargs)
+        except Exception as error:
+            message = 'Error executing `%s`! (%s)\n' % (method, error)
+            message += '\n> method: %s\n> args: %s\n> kwargs: %s\n' % \
+                (str(method), str(args), str(kwargs))
+            message += format_exception()
+            aux = type(error)(message)
+            self.send('_loopback_safe', aux)
+            raise
+        self.send('_loopback_safe', response)
+
     def safe(self, method, *args, **kwargs):
         """
         A safe call to a method.
@@ -145,8 +167,16 @@ class Agent():
         *kwargs : keyword arguments
             Method keyword arguments.
         """
+        if not self.running:
+            raise NotImplementedError()
         data = dill.dumps((method, args, kwargs))
-        return self._loopback('SAFE_EXECUTE_METHOD', data)
+        loopback = self.context.socket(zmq.REQ)
+        loopback.connect('inproc://_loopback_safe')
+        loopback.send_pyobj(data)
+        response = loopback.recv_pyobj()
+        loopback.close()
+        return response
+
 
     def each(self, period, method, *args, alias=None, **kwargs):
         """
@@ -699,7 +729,7 @@ class Agent():
 
     def close_sockets(self):
         for address in self.socket:
-            if address in ('loopback', 'inproc://loopback'):
+            if address in ('loopback', 'inproc://loopback', 'inproc://_loopback_safe'):
                 continue
             self.socket[address].close()
 

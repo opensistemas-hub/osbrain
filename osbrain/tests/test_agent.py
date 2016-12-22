@@ -474,7 +474,7 @@ def test_agent_error_permission_denied(nsaddr):
 
 def test_agent_loopback_header_unknown(nsaddr):
     """
-    Test an unknown header on loopback.
+    Test an unknown header on loopback handler.
     """
     logger = run_logger('logger')
     agent = run_agent('a0')
@@ -483,11 +483,11 @@ def test_agent_loopback_header_unknown(nsaddr):
     while not len(logger.get_attr('log_history_info')):
         agent.log_info('foo')
         time.sleep(0.01)
-    agent.set_method(loopback_unknown=lambda a: a._loopback('UNKNOWN_HEADER'))
+    agent.set_method(
+        loopback_unknown=lambda a: a._handle_loopback(('UNKNOWN_HEADER', 1)))
     response = agent.loopback_unknown()
     history = []
     while not history:
-        print('a')
         history = logger.get_attr('log_history_error')
     assert 'Unrecognized loopback message' in history[-1]
     assert 'Unrecognized loopback message' in response

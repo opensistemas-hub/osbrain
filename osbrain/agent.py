@@ -730,7 +730,8 @@ class Agent():
 
     def close_sockets(self):
         for address in self.socket:
-            if address in ('loopback', 'inproc://loopback', 'inproc://_loopback_safe'):
+            if address in ('loopback', '_loopback_safe',
+                           'inproc://loopback', 'inproc://_loopback_safe'):
                 continue
             self.socket[address].close()
 

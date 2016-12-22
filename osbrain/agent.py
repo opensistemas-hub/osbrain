@@ -255,7 +255,7 @@ class Agent():
         """
         A simple ping method testing purposes.
         """
-        return 'PONG'
+        return 'pong'
 
     def raise_exception(self):
         """

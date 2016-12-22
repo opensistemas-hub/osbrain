@@ -49,12 +49,14 @@ def test_early_agent_proxy(nsaddr):
     agent is imminent, even if it has not occured yet. A timeout will occur
     in case the agent could not be located.
     """
-    agent = AgentProcess('a0', nsaddr)
+    agent = AgentProcess('a0')
     # Start agent later
-    Timer(1, agent.start).start()
+    Timer(2, agent.start).start()
     # Locate agent now
-    a0 = Proxy('a0', nsaddr)
-    assert a0.test() == 'OK'
+    a0 = Proxy('a0', timeout=3.)
+    # Just check proxy is properly set up
+    a0.run()
+    assert a0.ping() == 'pong'
 
 
 def test_agent_loopback(nsaddr):

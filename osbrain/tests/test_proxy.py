@@ -37,13 +37,14 @@ def test_agent_proxy_remote_exceptions(nsproxy):
     Remote exceptions on method executions should be raised locally by the
     proxy with information on what did go wrong remotely.
     """
-    agent = run_agent('a0')
+    a0 = run_agent('a0')
+    a1 = run_agent('a1')
     with pytest.raises(TypeError) as error:
-        agent.addr('asdf', 'qwer', 'foo', 'bar')
-        assert 'positional arguments but 5 were given' in str(error.value)
+        a0.addr('asdf', 'qwer', 'foo', 'bar')
+    assert 'positional arguments but 5 were given' in str(error.value)
     with pytest.raises(RuntimeError) as error:
-        agent.raise_exception()
-        assert 'User raised an exception' in str(error.value)
+        a1.raise_exception()
+    assert 'User raised an exception' in str(error.value)
 
 
 def test_agent_proxy_initialization_timeout(nsproxy):
@@ -68,11 +69,10 @@ def test_nameserver_proxy_shutdown_timeout(nsproxy):
     """
     class ShutdownTimeoutNSProxy(NSProxy):
         def agents(self):
-            return ['foo', 'bar']
+            return ['agent_foo']
 
-    run_agent('foo')
+    timeoutproxy = ShutdownTimeoutNSProxy(nsproxy.addr())
     with pytest.raises(TimeoutError):
-        timeoutproxy = ShutdownTimeoutNSProxy(nsproxy.addr())
         timeoutproxy.shutdown(timeout=1.)
 
 

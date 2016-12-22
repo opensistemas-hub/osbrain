@@ -734,7 +734,7 @@ class Agent():
                 continue
             self.socket[address].close()
 
-    def test(self):
+    def ready(self):
         """
         A test method to check the readiness of the agent. Used for testing
         purposes, where timing is very important. Do not remove.

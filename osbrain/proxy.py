@@ -67,7 +67,7 @@ class Proxy(Pyro4.core.Proxy):
         super().__init__('PYRONAME:%s@%s:%s' % (name, nshost, nsport))
         while True:
             try:
-                self.test()
+                self.ready()
             except Exception:
                 if time.time() - time0 < timeout:
                     continue
@@ -94,7 +94,7 @@ class Proxy(Pyro4.core.Proxy):
             if methodname in self._pyroMethods and \
                     not methodname.startswith('_') \
                     and methodname not in \
-                    ('test', 'run', 'get_attr', 'kill'):
+                    ('ready', 'run', 'get_attr', 'kill'):
                 safe_args = [methodname] + list(args)
                 result = super()._pyroInvoke(
                     'safe', safe_args, kwargs, flags=flags, objectId=objectId)

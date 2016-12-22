@@ -787,9 +787,10 @@ class AgentProcess(multiprocessing.Process):
         except PyroError:
             if not self.sigint:
                 sys.stderr.write(format_exception())
-
-        self.agent._killed = True
-        self.daemon.close()
+                raise
+        finally:
+            self.agent._killed = True
+            self.daemon.close()
 
     def start(self):
         super().start()

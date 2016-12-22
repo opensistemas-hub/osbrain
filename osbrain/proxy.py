@@ -143,6 +143,8 @@ class NSProxy(Pyro4.core.Proxy):
         Timeout, in seconds, to wait until the name server is discovered.
     """
     def __init__(self, nsaddr=None, timeout=3):
+        if not nsaddr:
+            nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
         nshost, nsport = address_to_host_port(nsaddr)
         # Make sure name server exists
         locate_ns(nsaddr, timeout)

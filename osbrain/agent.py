@@ -9,7 +9,6 @@ import os
 import pickle
 import signal
 import sys
-import time
 import types
 from uuid import uuid4
 

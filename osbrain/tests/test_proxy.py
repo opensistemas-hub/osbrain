@@ -48,11 +48,11 @@ def test_agent_proxy_remote_exceptions(nsproxy):
 
 def test_agent_proxy_initialization_timeout(nsproxy):
     """
-    An agent proxy should raise a TimeoutError at initialization if it cannot
-    test the connection within a number of seconds.
+    An agent proxy should raise a TimeoutError at initialization if the agent
+    is not ready after a number of seconds.
     """
     class InitTimeoutProxy(Proxy):
-        def test(self):
+        def ready(self):
             time.sleep(0.1)
             raise TimeoutError()
 

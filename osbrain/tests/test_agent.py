@@ -43,6 +43,14 @@ def logger_received(logger, log, message, timeout=1.):
     return True
 
 
+def test_ping(nsaddr):
+    """
+    Test simple agent ping.
+    """
+    a0 = run_agent('a0')
+    assert a0.ping() == 'pong'
+
+
 def test_early_agent_proxy(nsaddr):
     """
     It must be possible to create a Proxy when the registration of the new
@@ -65,14 +73,6 @@ def test_agent_loopback(nsaddr):
     """
     a0 = run_agent('a0')
     assert a0.addr('loopback') == 'inproc://loopback'
-
-
-def test_ping(nsaddr):
-    """
-    Test simple loopback ping.
-    """
-    a0 = run_agent('a0')
-    assert a0.ping() == 'PONG'
 
 
 def test_agent_shutdown(nsaddr):
@@ -490,14 +490,6 @@ def test_agent_loopback_header_unknown(nsaddr):
         history = logger.get_attr('log_history_error')
     assert 'Unrecognized loopback message' in history[-1]
     assert 'Unrecognized loopback message' in response
-
-
-def test_agent_safe_ping(nsaddr):
-    """
-    Execute `ping()` method safely through inproc.
-    """
-    agent = run_agent('a0')
-    assert agent.safe('ping') == 'PONG'
 
 
 def test_agent_stop(nsaddr):

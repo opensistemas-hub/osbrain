@@ -178,7 +178,6 @@ class Agent():
         loopback.close()
         return response
 
-
     def each(self, period, method, *args, alias=None, **kwargs):
         """
         Execute a repeated action with a defined period.

@@ -102,10 +102,6 @@ class Proxy(Pyro4.core.Proxy):
         return self.set_attr(**kwargs)
 
     def __getattr__(self, name):
-        if name == '_safe':
-            return self.__dict__['_safe']
-        if name == '_default_safe':
-            return self.__dict__['_default_safe']
         if name in self._pyroAttrs:
             return self.get_attr(name)
         return super().__getattr__(name)

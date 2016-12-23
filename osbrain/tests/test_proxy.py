@@ -147,7 +147,7 @@ def test_agent_proxy_safe_and_unsafe_property(nsproxy):
     Using the safe/unsafe property from a proxy should allow us to
     override the environment global configuration.
     """
-    agent = run_agent('foo', base=DelayAgent)
+    run_agent('foo', base=DelayAgent)
     # Safe environment
     os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'
     proxy = Proxy('foo')

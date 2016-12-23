@@ -33,7 +33,7 @@ setup(
     ],
     keywords='osbrain multi-agent system',
     packages=['osbrain'],
-    install_requires=['Pyro4>=4.40', 'pyzmq>=15.2.0', 'dill>=0.2.0'],
+    install_requires=['Pyro4>=4.42', 'pyzmq>=15.2.0', 'dill>=0.2.0'],
     extras_require={
         'dev': [],
         'test': ['tox'],

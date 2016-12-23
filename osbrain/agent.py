@@ -151,7 +151,7 @@ class Agent():
             raise
         self.send('_loopback_safe', response)
 
-    def safe(self, method, *args, **kwargs):
+    def safe_call(self, method, *args, **kwargs):
         """
         A safe call to a method.
 

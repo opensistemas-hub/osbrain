@@ -56,8 +56,11 @@ class Proxy(Pyro4.core.Proxy):
         Name server address.
     timeout : float
         Timeout, in seconds, to wait until the agent is discovered.
+    safe : bool, default is None
+        Use safe calls by default. When not set, environment's
+        OSBRAIN_DEFAULT_SAFE is used.
     """
-    def __init__(self, name, nsaddr=None, timeout=3.):
+    def __init__(self, name, nsaddr=None, timeout=3., safe=None):
         if not nsaddr:
             nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
         nshost, nsport = address_to_host_port(nsaddr)
@@ -65,6 +68,14 @@ class Proxy(Pyro4.core.Proxy):
         locate_ns(nsaddr)
         time0 = time.time()
         super().__init__('PYRONAME:%s@%s:%s' % (name, nshost, nsport))
+        if safe is not None:
+            self._default_safe = safe
+        else:
+            self._default_safe = \
+                False \
+                if os.environ['OSBRAIN_DEFAULT_SAFE'].lower() == 'false' \
+                else True
+        self._safe = self._default_safe
         while True:
             try:
                 self.ready()
@@ -73,6 +84,31 @@ class Proxy(Pyro4.core.Proxy):
                     continue
                 raise
             break
+
+    def __getstate__(self):
+        return super().__getstate__() + (self._default_safe, self._safe)
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self._default_safe = state[-2]
+        self._safe = state[-1]
+
+    def __setattr__(self, name, value):
+        if name in ('_safe', '_default_safe'):
+            return super(Pyro4.core.Proxy, self).__setattr__(name, value)
+        if name.startswith('_'):
+            return super().__setattr__(name, value)
+        kwargs = {name: value}
+        return self.set_attr(**kwargs)
+
+    def __getattr__(self, name):
+        if name == '_safe':
+            return self.__dict__['_safe']
+        if name == '_default_safe':
+            return self.__dict__['_default_safe']
+        if name in self._pyroAttrs:
+            return self.get_attr(name)
+        return super().__getattr__(name)
 
     def release(self):
         """
@@ -89,15 +125,28 @@ class Proxy(Pyro4.core.Proxy):
         """
         return SocketAddress(self._pyroUri.host, self._pyroUri.port)
 
+    @property
+    def safe(self):
+        self._safe = True
+        return self
+
+    @property
+    def unsafe(self):
+        self._safe = False
+        return self
+
     def _pyroInvoke(self, methodname, args, kwargs, flags=0, objectId=None):
         try:
-            if methodname in self._pyroMethods and \
-                    not methodname.startswith('_') \
+            if self._safe \
+                    and methodname in self._pyroMethods \
+                    and not methodname.startswith('_') \
                     and methodname not in \
-                    ('ready', 'run', 'get_attr', 'kill'):
+                    ('ready', 'run', 'get_attr', 'kill',
+                     'safe_call'):
                 safe_args = [methodname] + list(args)
                 result = super()._pyroInvoke(
-                    'safe', safe_args, kwargs, flags=flags, objectId=objectId)
+                    'safe_call', safe_args, kwargs,
+                    flags=flags, objectId=objectId)
                 if isinstance(result, Exception):
                     raise result
             else:
@@ -107,6 +156,8 @@ class Proxy(Pyro4.core.Proxy):
             sys.stdout.write(''.join(Pyro4.util.getPyroTraceback()))
             sys.stdout.flush()
             raise
+        finally:
+            self._safe = self._default_safe
         if methodname == 'set_method':
             for method in args:
                 self._pyroMethods.add(method.__name__)
@@ -116,19 +167,6 @@ class Proxy(Pyro4.core.Proxy):
             for name in kwargs:
                 self._pyroAttrs.add(name)
         return result
-
-    def __getattr__(self, name):
-        if name in self._pyroAttrs:
-            return self.get_attr(name)
-        else:
-            return super().__getattr__(name)
-
-    def __setattr__(self, name, value):
-        if name.startswith('_'):
-            return super().__setattr__(name, value)
-        else:
-            kwargs = {name: value}
-            return self.set_attr(**kwargs)
 
 
 class NSProxy(Pyro4.core.Proxy):

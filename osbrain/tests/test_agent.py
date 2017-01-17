@@ -335,8 +335,10 @@ def test_method_handlers(nsaddr):
     class NewAgent(Agent):
         def on_init(self):
             self.received = {}
+            # Set a handler with a method type
             self.bind('REP', 'rep', handler=self.rep)
-            self.bind('PULL', 'pull', handler=self.pull)
+            # Set a handler with a string type
+            self.bind('PULL', 'pull', handler='pull')
 
         def rep(self, message):
             self.received['rep'] = message
@@ -369,8 +371,9 @@ def test_list_of_handlers(nsaddr):
             self.received = None
             self.second = None
             self.third = None
+            # Set handlers using a function, a method type and a string type
             self.bind('PULL', 'pull', handler=[set_received, self.pull0,
-                                               self.pull1])
+                                               'pull1'])
 
         def pull0(self, message):
             self.second = '0' + str(self.received)

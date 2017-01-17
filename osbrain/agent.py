@@ -391,9 +391,9 @@ class Agent():
         self.address[alias] = address
         if handler is not None:
             self.poller.register(socket, zmq.POLLIN)
-            self.set_handler(socket, handler)
+            self._set_handler(socket, handler)
 
-    def set_handler(self, socket, handler):
+    def _set_handler(self, socket, handlers):
         """
         Set the socket handler(s).
 
@@ -401,41 +401,31 @@ class Agent():
         ----------
         socket : zmq.Socket
             Socket to set its handler(s).
-        handler : function(s)
+        handlers : function(s)
             Handler(s) for the socket. This can be a list or a dictionary too.
         """
-        if isinstance(handler, types.FunctionType):
-            pass
-        elif isinstance(handler, types.BuiltinFunctionType):
-            pass
-        elif isinstance(handler, types.MethodType):
-            handler = unbound_method(handler)
-        elif isinstance(handler, list):
-            handler = self._handlers_list(handler)
-        elif isinstance(handler, dict):
-            handler = self._handlers_dict(handler)
-        # TODO: allow `str` (method name)
-        else:
-            raise NotImplementedError('Only functions/methods are allowed!')
-        self.handler[socket] = handler
+        if not isinstance(handlers, (list, dict, tuple)):
+            handlers = [handlers]
+        self.handler[socket] = self._curated_handlers(handlers)
 
-    def _handlers_list(self, handler):
-        handlers = []
-        for h in handler:
-            if isinstance(h, types.FunctionType):
-                handlers.append(h)
-            elif isinstance(h, types.MethodType):
-                handlers.append(unbound_method(h))
-        return handlers
+    def _curated_handlers(self, handlers):
+        if isinstance(handlers, (list, tuple)):
+            return [self._curate_handler(h) for h in handlers]
+        if isinstance(handlers, dict):
+            return dict((k, self._curate_handler(v))
+                        for k, v in handlers.items())
+        raise TypeError('Invalid handlers type "%s"' % type(handlers))
 
-    def _handlers_dict(self, handler):
-        handlers = {}
-        for key in handler:
-            if isinstance(handler[key], types.FunctionType):
-                handlers[key] = handler[key]
-            elif isinstance(handler[key], types.MethodType):
-                handlers[key] = unbound_method(handler[key])
-        return handlers
+    def _curate_handler(self, handler):
+        if isinstance(handler, str):
+            handler = getattr(self, handler)
+        function_type = (types.FunctionType, types.BuiltinFunctionType)
+        if isinstance(handler, function_type):
+            return handler
+        method_type = (types.MethodType, types.BuiltinMethodType)
+        if isinstance(handler, method_type):
+            return unbound_method(handler)
+        raise TypeError('Unknow handler type "%s"' % type(handler))
 
     def registered(self, address):
         return address in self.socket
@@ -544,7 +534,7 @@ class Agent():
             topic = self.str2bytes(topic)
             self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
         # Reset handlers
-        self.set_handler(self.socket[alias], handlers)
+        self._set_handler(self.socket[alias], handlers)
 
     def iddle(self):
         """

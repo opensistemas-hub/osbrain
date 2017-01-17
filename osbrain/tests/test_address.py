@@ -1,6 +1,8 @@
 """
 Test file for address module.
 """
+from collections import namedtuple
+
 import zmq
 import pytest
 
@@ -10,22 +12,6 @@ from osbrain.address import AgentAddress
 from osbrain.address import AgentAddressKind
 from osbrain.address import AgentAddressRole
 from osbrain.address import AgentAddressTransport
-
-
-class DummyAddress():
-    """
-    A dummy class which has `host` and `port` attributes set.
-    """
-    host = '127.0.0.1'
-    port = 123
-
-
-class DummyAddressMethod():
-    """
-    A dummy class which has an `addr` method that returns a dummy address.
-    """
-    def addr(self):
-        return DummyAddress()
 
 
 def twin_list(elements):
@@ -45,12 +31,12 @@ def test_invalid_address_to_host_port():
 
 
 @pytest.mark.parametrize(('address', 'host', 'port'), [
+    (None, None, None),
     (AgentAddress('tcp', '127.0.0.1:123', 'PUSH', 'server'), '127.0.0.1', 123),
     (SocketAddress('127.0.0.1', 123), '127.0.0.1', 123),
     ('127.0.0.1:123', '127.0.0.1', 123),
     ('127.0.0.1', '127.0.0.1', None),
-    (DummyAddress(), '127.0.0.1', 123),
-    (DummyAddressMethod(), '127.0.0.1', 123),
+    (namedtuple('Foo', ['host', 'port'])('127.0.0.1', 123), '127.0.0.1', 123),
 ])
 def test_valid_address_to_host_port(address, host, port):
     """

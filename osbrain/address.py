@@ -6,7 +6,7 @@ from ipaddress import ip_address
 import zmq
 
 
-def address_to_host_port(addr=None):
+def address_to_host_port(addr):
     """
     Try to convert a string or SocketAddress to a (host, port) tuple.
 
@@ -36,11 +36,7 @@ def address_to_host_port(addr=None):
     # Try to do something anyway
     if hasattr(addr, 'host') and hasattr(addr, 'port'):
         return (addr.host, addr.port)
-    try:
-        addr = addr.addr()
-        return (addr.host, addr.port)
-    except:
-        raise ValueError('Unsupported address type "%s"!' % type(addr))
+    raise ValueError('Unsupported address type "%s"!' % type(addr))
 
 
 class AgentAddressTransport(str):

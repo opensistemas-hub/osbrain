@@ -138,7 +138,7 @@ class Proxy(Pyro4.core.Proxy):
                     and not methodname.startswith('_') \
                     and methodname not in \
                     ('ready', 'run', 'get_attr', 'kill',
-                     'safe_call'):
+                     'safe_call', 'unsafe_call'):
                 safe_args = [methodname] + list(args)
                 result = super()._pyroInvoke(
                     'safe_call', safe_args, kwargs,
@@ -154,15 +154,25 @@ class Proxy(Pyro4.core.Proxy):
             raise
         finally:
             self._safe = self._default_safe
+        self._post_invoke(methodname, args, kwargs)
+        return result
+
+    def _post_invoke(self, methodname, args, kwargs):
+        """
+        After invoking a call, check if the proxy must be modified.
+
+        This could happen if the `set_method` or `set_attr` have been invoked.
+        In that case, the method(s) or attribute(s) are added to the proxy's
+        available method(s)/attributes(s).
+        """
         if methodname == 'set_method':
             for method in args:
                 self._pyroMethods.add(method.__name__)
             for name, method in kwargs.items():
                 self._pyroMethods.add(name)
-        if methodname == 'set_attr':
+        elif methodname == 'set_attr':
             for name in kwargs:
                 self._pyroAttrs.add(name)
-        return result
 
 
 class NSProxy(Pyro4.core.Proxy):

@@ -177,6 +177,10 @@ class Agent():
         loopback.close()
         return response
 
+    def unsafe_call(self, method, *args, **kwargs):
+        # TODO
+        pass
+
     def each(self, period, method, *args, alias=None, **kwargs):
         """
         Execute a repeated action with a defined period.
@@ -394,35 +398,48 @@ class Agent():
             self.set_handler(socket, handler)
 
     def set_handler(self, socket, handler):
+        """
+        Set the socket handler(s).
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket to set its handler(s).
+        handler : function(s)
+            Handler(s) for the socket. This can be a list or a dictionary too.
+        """
         if isinstance(handler, types.FunctionType):
-            self.handler[socket] = handler
-            return
-        if isinstance(handler, types.BuiltinFunctionType):
-            self.handler[socket] = handler
-            return
-        if isinstance(handler, types.MethodType):
-            self.handler[socket] = unbound_method(handler)
-            return
-        if isinstance(handler, list):
-            handlers = []
-            for h in handler:
-                if isinstance(h, types.FunctionType):
-                    handlers.append(h)
-                elif isinstance(h, types.MethodType):
-                    handlers.append(unbound_method(h))
-            self.handler[socket] = handlers
-            return
-        if isinstance(handler, dict):
-            handlers = {}
-            for key in handler:
-                if isinstance(handler[key], types.FunctionType):
-                    handlers[key] = handler[key]
-                elif isinstance(handler[key], types.MethodType):
-                    handlers[key] = unbound_method(handler[key])
-            self.handler[socket] = handlers
-            return
+            pass
+        elif isinstance(handler, types.BuiltinFunctionType):
+            pass
+        elif isinstance(handler, types.MethodType):
+            handler = unbound_method(handler)
+        elif isinstance(handler, list):
+            handler = self._handlers_list(handler)
+        elif isinstance(handler, dict):
+            handler = self._handlers_dict(handler)
         # TODO: allow `str` (method name)
-        raise NotImplementedError('Only functions/methods are allowed!')
+        else:
+            raise NotImplementedError('Only functions/methods are allowed!')
+        self.handler[socket] = handler
+
+    def _handlers_list(self, handler):
+        handlers = []
+        for h in handler:
+            if isinstance(h, types.FunctionType):
+                handlers.append(h)
+            elif isinstance(h, types.MethodType):
+                handlers.append(unbound_method(h))
+        return handlers
+
+    def _handlers_dict(self, handler):
+        handlers = {}
+        for key in handler:
+            if isinstance(handler[key], types.FunctionType):
+                handlers[key] = handler[key]
+            elif isinstance(handler[key], types.MethodType):
+                handlers[key] = unbound_method(handler[key])
+        return handlers
 
     def registered(self, address):
         return address in self.socket
@@ -644,37 +661,59 @@ class Agent():
 
         for socket in events:
             if events[socket] != zmq.POLLIN:
-                continue
-            serialized = socket.recv()
-            socket_kind = AgentAddressKind(socket.socket_type)
-            if socket_kind == 'SUB':
-                handlers = self.handler[socket]
-                sepp = serialized.index(b'\x80')
-                data = memoryview(serialized)[sepp:]
-                message = pickle.loads(data)
-                for str_topic in handlers:
-                    btopic = self.str2bytes(str_topic)
-                    if not serialized.startswith(btopic):
-                        continue
-                    # Call the handler (with or without the topic)
-                    handler = handlers[str_topic]
-                    nparams = len(inspect.signature(handler).parameters)
-                    if nparams == 2:
-                        handler(self, message)
-                    elif nparams == 3:
-                        handler(self, message, str_topic)
-            else:
-                message = pickle.loads(serialized)
-                handlers = self.handler[socket]
-                if not isinstance(handlers, list):
-                    handlers = [handlers]
-                for handler in handlers:
-                    handler_return = handler(self, message)
-            if socket_kind == 'REP':
-                if handler_return is not None:
-                    socket.send_pyobj(handler_return)
+                return
+            self._process_event(socket)
 
         return 0
+
+    def _process_event(self, socket):
+        """
+        Process a socket's event.
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket that generated the event.
+        """
+        serialized = socket.recv()
+        socket_kind = AgentAddressKind(socket.socket_type)
+        if socket_kind == 'SUB':
+            self._process_sub_event(socket, serialized)
+            return
+        message = pickle.loads(serialized)
+        handlers = self.handler[socket]
+        if not isinstance(handlers, list):
+            handlers = [handlers]
+        for handler in handlers:
+            handler_return = handler(self, message)
+        if socket_kind == 'REP':
+            if handler_return is not None:
+                socket.send_pyobj(handler_return)
+
+    def _process_sub_event(self, socket, serialized):
+        """
+        Process a SUB socket's event.
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket that generated the event.
+        """
+        handlers = self.handler[socket]
+        sepp = serialized.index(b'\x80')
+        data = memoryview(serialized)[sepp:]
+        message = pickle.loads(data)
+        for str_topic in handlers:
+            btopic = self.str2bytes(str_topic)
+            if not serialized.startswith(btopic):
+                continue
+            # Call the handler (with or without the topic)
+            handler = handlers[str_topic]
+            nparams = len(inspect.signature(handler).parameters)
+            if nparams == 2:
+                handler(self, message)
+            elif nparams == 3:
+                handler(self, message, str_topic)
 
     def str2bytes(self, message):
         return message.encode('ascii')

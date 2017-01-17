@@ -8,7 +8,7 @@ import zmq
 
 def address_to_host_port(addr):
     """
-    Try to convert a string or SocketAddress to a (host, port) tuple.
+    Try to convert an address to a (host, port) tuple.
 
     Parameters
     ----------
@@ -21,6 +21,33 @@ def address_to_host_port(addr):
     """
     if addr is None:
         return (None, None)
+    # Try the most common case (well-defined types)
+    try:
+        return _common_address_to_host_port(addr)
+    except TypeError:
+        pass
+    # Try to do something anyway
+    if hasattr(addr, 'host') and hasattr(addr, 'port'):
+        return (addr.host, addr.port)
+    raise ValueError('Unsupported address type "%s"!' % type(addr))
+
+
+def _common_address_to_host_port(addr):
+    """
+    Try to convert an address to a (host, port) tuple.
+
+    This function is meant to be used with well-known types. For a more
+    general case, use the `address_to_host_port` function instead.
+
+    Parameters
+    ----------
+    addr : str, SocketAddress, AgentAddress
+
+    Returns
+    -------
+    tuple
+        A (host, port) tuple formed with the corresponding data.
+    """
     if isinstance(addr, SocketAddress):
         return (addr.host, addr.port)
     if isinstance(addr, AgentAddress):
@@ -33,10 +60,7 @@ def address_to_host_port(addr):
             port = int(aux[-1])
         host = aux[0]
         return (host, port)
-    # Try to do something anyway
-    if hasattr(addr, 'host') and hasattr(addr, 'port'):
-        return (addr.host, addr.port)
-    raise ValueError('Unsupported address type "%s"!' % type(addr))
+    raise TypeError('Unsupported address type "%s"!' % type(addr))
 
 
 class AgentAddressTransport(str):

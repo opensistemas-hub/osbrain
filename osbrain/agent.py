@@ -414,7 +414,6 @@ class Agent():
         if isinstance(handlers, dict):
             return dict((k, self._curate_handler(v))
                         for k, v in handlers.items())
-        raise TypeError('Invalid handlers type "%s"' % type(handlers))
 
     def _curate_handler(self, handler):
         if isinstance(handler, str):

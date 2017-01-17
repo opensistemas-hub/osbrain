@@ -393,6 +393,15 @@ def test_list_of_handlers(nsaddr):
     assert receiver.get_attr('third') == '10' + message
 
 
+def test_invalid_handlers(nsaddr):
+    """
+    Invalid handlers should raise a TypeError.
+    """
+    agent = run_agent('test')
+    with pytest.raises(TypeError):
+        agent.bind('REP', handler=1.234)
+
+
 # TODO:
 #  - Test handler with 2 parameters (agent, message)
 #  - Test handler with 3 parameters (agent, message, topic)

@@ -177,10 +177,6 @@ class Agent():
         loopback.close()
         return response
 
-    def unsafe_call(self, method, *args, **kwargs):
-        # TODO
-        pass
-
     def each(self, period, method, *args, alias=None, **kwargs):
         """
         Execute a repeated action with a defined period.

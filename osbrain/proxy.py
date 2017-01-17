@@ -76,14 +76,28 @@ class Proxy(Pyro4.core.Proxy):
                 if os.environ['OSBRAIN_DEFAULT_SAFE'].lower() == 'false' \
                 else True
         self._safe = self._default_safe
-        while True:
-            try:
-                self.ready()
-            except Exception:
-                if time.time() - time0 < timeout:
-                    continue
-                raise
-            break
+        while not self._ready_or_timeout(time0, timeout):
+            continue
+
+    def _ready_or_timeout(self, time0, timeout):
+        """
+        Check if the proxy is ready or raise after a timeout.
+
+        Parameters
+        ----------
+        time0 : float
+            Timestamp (in seconds) to take as the initial time.
+        timeout : float
+            Time (in seconds) allowed after `time0` before raising an
+            exception.
+        """
+        try:
+            self.ready()
+        except Exception:
+            if time.time() - time0 < timeout:
+                return False
+            raise
+        return True
 
     def __getstate__(self):
         return super().__getstate__() + (self._default_safe, self._safe)
@@ -133,21 +147,8 @@ class Proxy(Pyro4.core.Proxy):
 
     def _pyroInvoke(self, methodname, args, kwargs, flags=0, objectId=None):
         try:
-            if self._safe \
-                    and methodname in self._pyroMethods \
-                    and not methodname.startswith('_') \
-                    and methodname not in \
-                    ('ready', 'run', 'get_attr', 'kill',
-                     'safe_call'):
-                safe_args = [methodname] + list(args)
-                result = super()._pyroInvoke(
-                    'safe_call', safe_args, kwargs,
-                    flags=flags, objectId=objectId)
-                if isinstance(result, Exception):
-                    raise result
-            else:
-                result = super()._pyroInvoke(
-                    methodname, args, kwargs, flags=flags, objectId=objectId)
+            result = self._remote_call(
+                methodname, args, kwargs, flags, objectId)
         except:
             sys.stdout.write(''.join(Pyro4.util.getPyroTraceback()))
             sys.stdout.flush()
@@ -155,6 +156,27 @@ class Proxy(Pyro4.core.Proxy):
         finally:
             self._safe = self._default_safe
         self._post_invoke(methodname, args, kwargs)
+        return result
+
+    def _remote_call(self, methodname, args, kwargs, flags, objectId):
+        """
+        Call a remote method from the proxy.
+        """
+        if self._safe \
+                and methodname in self._pyroMethods \
+                and not methodname.startswith('_') \
+                and methodname not in \
+                ('ready', 'run', 'get_attr', 'kill',
+                 'safe_call'):
+            safe_args = [methodname] + list(args)
+            result = super()._pyroInvoke(
+                'safe_call', safe_args, kwargs,
+                flags=flags, objectId=objectId)
+            if isinstance(result, Exception):
+                raise result
+        else:
+            result = super()._pyroInvoke(
+                methodname, args, kwargs, flags=flags, objectId=objectId)
         return result
 
     def _post_invoke(self, methodname, args, kwargs):
@@ -166,13 +188,37 @@ class Proxy(Pyro4.core.Proxy):
         available method(s)/attributes(s).
         """
         if methodname == 'set_method':
-            for method in args:
-                self._pyroMethods.add(method.__name__)
-            for name, method in kwargs.items():
-                self._pyroMethods.add(name)
+            self._set_new_available_methods(args, kwargs)
         elif methodname == 'set_attr':
-            for name in kwargs:
-                self._pyroAttrs.add(name)
+            self._set_new_available_attributes(kwargs)
+
+    def _set_new_available_methods(self, args, kwargs):
+        """
+        Set new methods available from the proxy.
+
+        Parameters
+        ----------
+        args : list
+            A list of new methods to be made available from the proxy.
+        kwargs : dict
+            A dictionary with the methods' names and their values.
+        """
+        for method in args:
+            self._pyroMethods.add(method.__name__)
+        for name, method in kwargs.items():
+            self._pyroMethods.add(name)
+
+    def _set_new_available_attributes(self, kwargs):
+        """
+        Set new attributes available from the proxy.
+
+        Parameters
+        ----------
+        kwargs : dict
+            A dictionary with the attributes' names and their values.
+        """
+        for name in kwargs:
+            self._pyroAttrs.add(name)
 
 
 class NSProxy(Pyro4.core.Proxy):

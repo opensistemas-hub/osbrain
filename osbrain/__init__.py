@@ -6,7 +6,7 @@ Pyro4.config.SERIALIZER = 'dill'
 Pyro4.config.THREADPOOL_SIZE = 16
 Pyro4.config.SERVERTYPE = 'multiplex'
 Pyro4.config.REQUIRE_EXPOSE = False
-# TODO: should we set COMMTIMEOUT as well?
+Pyro4.config.COMMTIMEOUT = 0.
 Pyro4.config.DETAILED_TRACEBACK = True
 os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'ipc'
 os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'

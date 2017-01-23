@@ -446,12 +446,43 @@ class Agent():
             The address to bind to.
         transport : str, AgentAddressTransport, default is None
             Transport protocol.
+
+        Returns
+        -------
+        AgentAddress
+            The address where the agent binded to.
         """
         kind = AgentAddressKind(kind)
         assert not kind.requires_handler() or handler is not None, \
             'This socket requires a handler!'
         socket = self.context.socket(kind)
         transport = transport or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
+        addr = self._bind_socket(socket, addr=addr, transport=transport)
+        server_address = AgentAddress(transport, addr, kind, 'server')
+        self.register(socket, server_address, alias, handler)
+        # SUB sockets are a special case
+        if kind == 'SUB':
+            self.subscribe(server_address, handler)
+        return server_address
+
+    def _bind_socket(self, socket, addr=None, transport=None):
+        """
+        Bind a socket using the corresponding transport and address.
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket to bind.
+        addr : str, default is None
+            The address to bind to.
+        transport : str, AgentAddressTransport, default is None
+            Transport protocol.
+
+        Returns
+        -------
+        addr : str
+            The address where the socket binded to.
+        """
         if transport == 'tcp':
             if not addr:
                 uri = 'tcp://%s' % self.host
@@ -463,12 +494,7 @@ class Agent():
             if not addr:
                 addr = str(uuid4())
             socket.bind('%s://%s' % (transport, addr))
-        server_address = AgentAddress(transport, addr, kind, 'server')
-        self.register(socket, server_address, alias, handler)
-        # SUB sockets are a special case
-        if kind == 'SUB':
-            self.subscribe(server_address, handler)
-        return server_address
+        return addr
 
     def connect(self, server_address, alias=None, handler=None):
         """

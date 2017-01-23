@@ -158,16 +158,30 @@ class Proxy(Pyro4.core.Proxy):
         self._post_invoke(methodname, args, kwargs)
         return result
 
+    def _is_safe_method(self, methodname):
+        """
+        Check if a remote method can be called safely.
+
+        Parameters
+        ----------
+        methodname : str
+            The name of the method to evaluate.
+
+        Returns
+        -------
+        bool
+            Whether the method can be safely called.
+        """
+        return (methodname in self._pyroMethods
+                and not methodname.startswith('_')
+                and methodname not in ('ready', 'run', 'get_attr', 'kill',
+                                       'safe_call'))
+
     def _remote_call(self, methodname, args, kwargs, flags, objectId):
         """
         Call a remote method from the proxy.
         """
-        if self._safe \
-                and methodname in self._pyroMethods \
-                and not methodname.startswith('_') \
-                and methodname not in \
-                ('ready', 'run', 'get_attr', 'kill',
-                 'safe_call'):
+        if self._safe and self._is_safe_method(methodname):
             safe_args = [methodname] + list(args)
             result = super()._pyroInvoke(
                 'safe_call', safe_args, kwargs,

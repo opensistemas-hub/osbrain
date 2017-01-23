@@ -172,10 +172,10 @@ class Proxy(Pyro4.core.Proxy):
         bool
             Whether the method can be safely called.
         """
-        return (methodname in self._pyroMethods
-                and not methodname.startswith('_')
-                and methodname not in ('ready', 'run', 'get_attr', 'kill',
-                                       'safe_call'))
+        return (methodname in self._pyroMethods and
+                not methodname.startswith('_') and
+                methodname not in ('ready', 'run', 'get_attr', 'kill',
+                                   'safe_call'))
 
     def _remote_call(self, methodname, args, kwargs, flags, objectId):
         """

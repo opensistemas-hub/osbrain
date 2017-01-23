@@ -644,14 +644,25 @@ class Agent():
             self.iddle()
             return 0
 
-        for socket in events:
-            if events[socket] != zmq.POLLIN:
-                return
-            self._process_event(socket)
+        self._process_events(events)
 
         return 0
 
-    def _process_event(self, socket):
+    def _process_events(self, events):
+        """
+        Process a socket's event.
+
+        Parameters
+        ----------
+        events : dict
+            Events to be processed.
+        """
+        for socket in events:
+            if events[socket] != zmq.POLLIN:
+                continue
+            self._process_socket_event(socket)
+
+    def _process_socket_event(self, socket):
         """
         Process a socket's event.
 
@@ -664,7 +675,22 @@ class Agent():
         socket_kind = AgentAddressKind(socket.socket_type)
         if socket_kind == 'SUB':
             self._process_sub_event(socket, serialized)
-            return
+        else:
+            self._process_nonsub_event(socket_kind, socket, serialized)
+
+    def _process_nonsub_event(self, socket_kind, socket, serialized):
+        """
+        Process a non-SUB socket's event.
+
+        Parameters
+        ----------
+        socket_kind : str
+            The socket kind (i.e.: REP or PULL).
+        socket : zmq.Socket
+            Socket that generated the event.
+        serialized : bytes
+            Data received on the socket.
+        """
         message = pickle.loads(serialized)
         handlers = self.handler[socket]
         if not isinstance(handlers, list):
@@ -683,6 +709,8 @@ class Agent():
         ----------
         socket : zmq.Socket
             Socket that generated the event.
+        serialized : bytes
+            Data received on the socket.
         """
         handlers = self.handler[socket]
         sepp = serialized.index(b'\x80')

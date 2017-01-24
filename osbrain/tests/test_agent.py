@@ -402,12 +402,6 @@ def test_invalid_handlers(nsaddr):
         agent.bind('REP', handler=1.234)
 
 
-# TODO:
-#  - Test handler with 2 parameters (agent, message)
-#  - Test handler with 3 parameters (agent, message, topic)
-#  - Test topic is properly filtered (no match, partial match, full match)
-
-
 def test_log_levels(nsaddr):
     """
     Test different log levels: info, warning, error and debug. Debug messages

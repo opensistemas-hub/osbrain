@@ -590,9 +590,6 @@ class Agent():
     def get_attr(self, name):
         return getattr(self, name)
 
-    # TODO: merge set_method() and set_attr() into set()? or rather make
-    #       the proxy able to set attributes and methods automatically with
-    #       `proxy.x = y`?
     def set_method(self, *args, **kwargs):
         """
         Set object methods.

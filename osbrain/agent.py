@@ -858,6 +858,12 @@ class AgentProcess(multiprocessing.Process):
                                          not self.agent.kill_agent))
         self.daemon.unregister(self.agent)
 
+        self._teardown()
+
+    def _teardown(self):
+        """
+        Remove self from the name server address book, close daemon and die.
+        """
         try:
             ns = NSProxy(self.nsaddr, timeout=1.)
             ns.remove(self.name)

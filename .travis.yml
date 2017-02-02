@@ -9,7 +9,7 @@ install:
 script:
   - tox
 
-after_success:
+after_script:
   - pip install codecov coveralls
   - codecov
   - coveralls

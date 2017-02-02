@@ -32,7 +32,8 @@ def test_invalid_address_to_host_port():
 
 @pytest.mark.parametrize(('address', 'host', 'port'), [
     (None, None, None),
-    (AgentAddress('tcp', '127.0.0.1:123', 'PUSH', 'server', 'pickle'), '127.0.0.1', 123),
+    (AgentAddress('tcp', '127.0.0.1:123', 'PUSH', 'server', 'pickle'),
+     '127.0.0.1', 123),
     (SocketAddress('127.0.0.1', 123), '127.0.0.1', 123),
     ('127.0.0.1:123', '127.0.0.1', 123),
     ('127.0.0.1', '127.0.0.1', None),
@@ -127,13 +128,14 @@ def test_agent_address():
     Test basic AgentAddress operations: initialization, equivalence and
     basic methods.
     """
-    address = AgentAddress('ipc', 'addr', 'PUSH', 'server')
+    address = AgentAddress('ipc', 'addr', 'PUSH', 'server', 'pickle')
     # Equivalence
-    assert address == AgentAddress('ipc', 'addr', 'PUSH', 'server')
+    assert address == AgentAddress('ipc', 'addr', 'PUSH', 'server', 'pickle')
     assert not address == 'foo'
     assert address != 'foo'
     # Basic methods
-    assert address.twin() == AgentAddress('ipc', 'addr', 'PULL', 'client')
+    assert address.twin() == AgentAddress('ipc', 'addr', 'PULL', 'client',
+                                          'pickle')
 
 
 def test_agent_address_explicit_serializer():
@@ -157,5 +159,5 @@ def test_agent_address_to_host_port():
     """
     An agent address should be convertible to host+port if TCP is used.
     """
-    address = AgentAddress('tcp', '127.0.0.1:1234', 'PUSH', 'server')
+    address = AgentAddress('tcp', '127.0.0.1:1234', 'PUSH', 'server', 'pickle')
     assert address_to_host_port(address) == ('127.0.0.1', 1234)

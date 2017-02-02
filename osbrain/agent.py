@@ -781,16 +781,27 @@ class Agent():
     def str2bytes(self, message):
         return message.encode('ascii')
 
+    def _is_address_internal(self, address):
+        """
+        TODO Perhaps we want to manually create inprocess addresses.
+            - Keep a variable for each one specifying whether it was internal,
+              regardless of type?
+
+        Returns
+        -------
+        bool
+            Whether the address is used for internal communication.
+        """
+        return address in ('loopback', '_loopback_safe', 'inproc://loopback',
+                           'inproc://_loopback_safe')
+
     def send(self, address, message, topic=''):
         """
         TODO
         """
         assert isinstance(topic, str), 'Topic must be of `str` type!'
         # Check if socket is for internal use
-        if self.address[address] in ('loopback',
-                                     '_loopback_safe',
-                                     'inproc://loopback',
-                                     'inproc://_loopback_safe'):
+        if self._is_address_internal(self.address[address]):
             serialized = pickle.dumps(message, -1)
         else:
             serializer = self.address[address].serializer
@@ -807,10 +818,7 @@ class Agent():
         """
         serialized = self.socket[address].recv()
         # Check if socket is for internal use
-        if self.address[address] in ('loopback',
-                                     '_loopback_safe',
-                                     'inproc://loopback',
-                                     'inproc://_loopback_safe'):
+        if self._is_address_internal(self.address[address]):
             deserialized = pickle.loads(serialized)
         else:
             serializer = self.address[address].serializer
@@ -858,8 +866,7 @@ class Agent():
 
     def close_sockets(self):
         for address in self.socket:
-            if address in ('loopback', '_loopback_safe',
-                           'inproc://loopback', 'inproc://_loopback_safe'):
+            if self._is_address_internal(address):
                 continue
             self.socket[address].close()
 

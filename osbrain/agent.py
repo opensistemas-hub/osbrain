@@ -54,8 +54,8 @@ class Agent():
         A dictionary in which the key is the address or the alias and the
         value is the actual socket.
     adddress : dict
-        A dictionary in which the key is the alias and the value is the
-        actual address.
+        A dictionary in which the key is the address or the alias and the
+        value is the actual address.
     handler : dict
         A dictionary in which the key is the socket and the values are the
         handlers for each socket.
@@ -390,6 +390,7 @@ class Agent():
         self.socket[alias] = socket
         self.socket[address] = socket
         self.address[alias] = address
+        self.address[address] = address
         if handler is not None:
             self.poller.register(socket, zmq.POLLIN)
             self._set_handler(socket, handler)
@@ -793,7 +794,10 @@ class Agent():
         if self._is_address_internal(agent_address):
             serializer = AgentAddressSerializer('pickle')
         else:
-            serializer = agent_address.serializer
+            if isinstance(agent_address, str):
+                serializer = self.address[agent_address].serializer
+            else:
+                serializer = agent_address.serializer
 
         return serializer
 

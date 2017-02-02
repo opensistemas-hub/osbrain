@@ -23,6 +23,7 @@ from .common import LogLevel
 from .common import repeat
 from .address import AgentAddress
 from .address import AgentAddressKind
+from .address import AgentAddressSerializer
 from .address import address_to_host_port
 from .proxy import Proxy
 from .proxy import NSProxy
@@ -718,16 +719,7 @@ class Agent():
         serialized : bytes
             Data received on the socket.
         """
-        agent_address = None
-        for k, v in self.socket.items():
-            if v is socket:
-                agent_address = k
-
-        serializer = None
-        if self._is_address_internal(agent_address):
-            serializer = 'pickle'
-        else:
-            serializer = agent_address.serializer
+        serializer = self._get_serialization_from_socket(socket)
 
         if serializer == 'pickle':
             message = pickle.loads(serialized)
@@ -759,16 +751,7 @@ class Agent():
         """
         handlers = self.handler[socket]
 
-        agent_address = None
-        for k, v in self.socket.items():
-            if v is socket:
-                agent_address = k
-
-        serializer = None
-        if self._is_address_internal(agent_address):
-            serializer = 'pickle'
-        else:
-            serializer = agent_address.serializer
+        serializer = self._get_serialization_from_socket(socket)
 
         if serializer == 'pickle':
             sepp = serialized.index(b'\x80')
@@ -788,6 +771,31 @@ class Agent():
                 handler(self, message)
             elif nparams == 3:
                 handler(self, message, str_topic)
+
+    def _get_serialization_from_socket(self, socket):
+        """
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket which we want to know the type of serialization from.
+
+        Return
+        ------
+        AgentAddressSerializer
+            The serializer type for that socket.
+        """
+        agent_address = None
+        for k, v in self.socket.items():
+            if v is socket:
+                agent_address = k
+
+        serializer = None
+        if self._is_address_internal(agent_address):
+            serializer = AgentAddressSerializer('pickle')
+        else:
+            serializer = agent_address.serializer
+
+        return serializer
 
     def str2bytes(self, message):
         return message.encode('ascii')

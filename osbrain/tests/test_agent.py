@@ -34,10 +34,13 @@ def sync_agent_logger(agent, logger):
         time.sleep(0.01)
 
 
-def logger_received(logger, log, message, timeout=1.):
+def logger_received(logger, log_name, message, timeout=1.):
     t0 = time.time()
-    while message not in logger.get_attr(log)[-1]:
+    while True:
         time.sleep(0.01)
+        log_history = logger.get_attr(log_name)
+        if len(log_history) and message in log_history[-1]:
+            break
         if timeout and time.time() - t0 > timeout:
             return False
     return True

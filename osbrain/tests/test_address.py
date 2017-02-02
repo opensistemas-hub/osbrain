@@ -32,7 +32,7 @@ def test_invalid_address_to_host_port():
 
 @pytest.mark.parametrize(('address', 'host', 'port'), [
     (None, None, None),
-    (AgentAddress('tcp', '127.0.0.1:123', 'PUSH', 'server'), '127.0.0.1', 123),
+    (AgentAddress('tcp', '127.0.0.1:123', 'PUSH', 'server', 'pickle'), '127.0.0.1', 123),
     (SocketAddress('127.0.0.1', 123), '127.0.0.1', 123),
     ('127.0.0.1:123', '127.0.0.1', 123),
     ('127.0.0.1', '127.0.0.1', None),

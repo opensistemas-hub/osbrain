@@ -1,8 +1,6 @@
 """
 Implementation of address-related features.
 """
-import os
-
 from ipaddress import ip_address
 
 import zmq
@@ -173,7 +171,7 @@ class AgentAddressKind(int):
         return self.__class__(self.ZMQ_KIND_TWIN[self])
 
 
-class AgentAddressSerializer():
+class AgentAddressSerializer(str):
     """
     Agent's address serializer class.
 
@@ -187,21 +185,10 @@ class AgentAddressSerializer():
     serializer_type : str
         Serializer type (i.e.: 'raw', 'pickle'...).
     """
-    def __init__(self, serializer_type=None):
-        self.serializer_type = serializer_type
-        if not self.serializer_type:
-            self.serializer_type = os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
-
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return self.serializer_type == other
-        return self.serializer_type == other.serializer_type
-
-    def __repr__(self):
-        """
-        Return the string representation of a AgentAddressSerializer.
-        """
-        return self.serializer_type
+    def __new__(cls, value):
+        if value not in ('raw', 'pickle'):
+            raise ValueError('Invalid serializer type %s!' % value)
+        return super().__new__(cls, value)
 
 
 class SocketAddress(object):
@@ -276,7 +263,7 @@ class AgentAddress():
     serializer : AgentAddressSerializer
         Agent serializer.
     """
-    def __init__(self, transport, address, kind, role, serializer=None):
+    def __init__(self, transport, address, kind, role, serializer):
         if transport == 'tcp':
             address = SocketAddress(*address_to_host_port(address))
         self.transport = AgentAddressTransport(transport)
@@ -322,6 +309,5 @@ class AgentAddress():
         """
         kind = self.kind.twin()
         role = self.role.twin()
-        serializer = self.serializer.serializer_type
         return self.__class__(self.transport, self.address, kind, role,
-                              serializer)
+                              self.serializer)

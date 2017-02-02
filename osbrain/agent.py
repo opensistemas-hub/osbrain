@@ -459,6 +459,8 @@ class Agent():
         socket = self.context.socket(kind)
         transport = transport or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
         addr = self._bind_socket(socket, addr=addr, transport=transport)
+        if not serializer:
+            serializer = os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
         server_address = AgentAddress(transport, addr, kind, 'server',
                                       serializer)
         self.register(socket, server_address, alias, handler)

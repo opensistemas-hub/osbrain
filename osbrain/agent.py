@@ -716,19 +716,22 @@ class Agent():
         serialized : bytes
             Data received on the socket.
         """
-        # TODO Instead of identifying the serializer by looking at the message,
-        #      we should have the AgentAddress corresponding to this channel
-        #      as a parameter, in order to get the information from it.
-        #      This will allow us to get rid of the `try-except` clause.
-        # TODO As of now, only `pickle` and `raw` serialization are supported.
-        try:
-            # Try pickle serialization
+        agent_address = None
+        for k, v in self.socket.items():
+            if v is socket:
+                agent_address = k
+
+        serializer = None
+        if self._is_address_internal(agent_address):
+            serializer = 'pickle'
+        else:
+            serializer = agent_address.serializer
+
+        if serializer == 'pickle':
             message = pickle.loads(serialized)
-            using_pickle = True
-        except:
-            # Not serialized
+        elif serializer == 'raw':
             message = serialized
-            using_pickle = False
+
         handlers = self.handler[socket]
         if not isinstance(handlers, list):
             handlers = [handlers]
@@ -736,7 +739,7 @@ class Agent():
             handler_return = handler(self, message)
         if socket_kind == 'REP':
             if handler_return is not None:
-                if using_pickle:
+                if serializer == 'pickle':
                     handler_return = pickle.dumps(handler_return, -1)
                 # FIXME Is this correct? We need to send direct bytes
                 socket.send(handler_return)
@@ -753,19 +756,25 @@ class Agent():
             Data received on the socket.
         """
         handlers = self.handler[socket]
-        # TODO Instead of identifying the serializer by looking at the message,
-        #      we should have the AgentAddress corresponding to this channel
-        #      as a parameter, in order to get the information from it.
-        #      This will allow us to get rid of the `try-except` clause.
-        # TODO As of now, only `pickle` and `raw` serialization is supported.
-        try:
-            # Try pickle serialization
+
+        agent_address = None
+        for k, v in self.socket.items():
+            if v is socket:
+                agent_address = k
+
+        serializer = None
+        if self._is_address_internal(agent_address):
+            serializer = 'pickle'
+        else:
+            serializer = agent_address.serializer
+
+        if serializer == 'pickle':
             sepp = serialized.index(b'\x80')
             data = memoryview(serialized)[sepp:]
             message = pickle.loads(data)
-        except:
-            # Not serialized
+        elif serializer == 'raw':
             message = serialized
+
         for str_topic in handlers:
             btopic = self.str2bytes(str_topic)
             if not serialized.startswith(btopic):

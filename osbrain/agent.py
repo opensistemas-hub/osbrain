@@ -715,11 +715,11 @@ class Agent():
 
         return message
 
-    def _process_nonsub_event_REP(self, socket, handler_return, serializer):
-        if handler_return is not None:
+    def _process_REP_event(self, socket_kind, socket, handler_return,
+                           serializer):
+        if socket_kind == 'REP' and handler_return is not None:
             if serializer == 'pickle':
                 handler_return = pickle.dumps(handler_return, -1)
-            # FIXME Is this correct? We need to send direct bytes
             socket.send(handler_return)
 
     def _process_nonsub_event(self, socket_kind, socket, serialized):
@@ -744,11 +744,15 @@ class Agent():
             handlers = [handlers]
         for handler in handlers:
             handler_return = handler(self, message)
-        if socket_kind == 'REP':
-            self._process_nonsub_event_REP(socket, handler_return, serializer)
+
+        self._process_REP_event(socket_kind, socket, handler_return,
+                                serializer)
 
     def _process_sub_message(self, serializer, serialized):
         if serializer == 'pickle':
+            # Since SUB messages might have a `topic`, we need to be careful to
+            # only deserialize the non-topic part. Pickle objects always start
+            # with b'\x80', so the pure message part will start from that char.
             sepp = serialized.index(b'\x80')
             data = memoryview(serialized)[sepp:]
             message = pickle.loads(data)
@@ -851,6 +855,8 @@ class Agent():
     def recv(self, address):
         """
         TODO
+
+        This method is only used in REQREP communication patterns.
         """
         serialized = self.socket[address].recv()
         # Check if socket is for internal use

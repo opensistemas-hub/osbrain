@@ -707,6 +707,21 @@ class Agent():
         else:
             self._process_nonsub_event(socket_kind, socket, serialized)
 
+    def _process_nonsub_message(self, serializer, serialized):
+        if serializer == 'pickle':
+            message = pickle.loads(serialized)
+        elif serializer == 'raw':
+            message = serialized
+
+        return message
+
+    def _process_nonsub_event_REP(self, socket, handler_return, serializer):
+        if handler_return is not None:
+            if serializer == 'pickle':
+                handler_return = pickle.dumps(handler_return, -1)
+            # FIXME Is this correct? We need to send direct bytes
+            socket.send(handler_return)
+
     def _process_nonsub_event(self, socket_kind, socket, serialized):
         """
         Process a non-SUB socket's event.
@@ -722,10 +737,7 @@ class Agent():
         """
         serializer = self._get_serialization_from_socket(socket)
 
-        if serializer == 'pickle':
-            message = pickle.loads(serialized)
-        elif serializer == 'raw':
-            message = serialized
+        message = self._process_nonsub_message(serializer, serialized)
 
         handlers = self.handler[socket]
         if not isinstance(handlers, list):
@@ -733,11 +745,17 @@ class Agent():
         for handler in handlers:
             handler_return = handler(self, message)
         if socket_kind == 'REP':
-            if handler_return is not None:
-                if serializer == 'pickle':
-                    handler_return = pickle.dumps(handler_return, -1)
-                # FIXME Is this correct? We need to send direct bytes
-                socket.send(handler_return)
+            self._process_nonsub_event_REP(socket, handler_return, serializer)
+
+    def _process_sub_message(self, serializer, serialized):
+        if serializer == 'pickle':
+            sepp = serialized.index(b'\x80')
+            data = memoryview(serialized)[sepp:]
+            message = pickle.loads(data)
+        elif serializer == 'raw':
+            message = serialized
+
+        return message
 
     def _process_sub_event(self, socket, serialized):
         """
@@ -754,12 +772,7 @@ class Agent():
 
         serializer = self._get_serialization_from_socket(socket)
 
-        if serializer == 'pickle':
-            sepp = serialized.index(b'\x80')
-            data = memoryview(serialized)[sepp:]
-            message = pickle.loads(data)
-        elif serializer == 'raw':
-            message = serialized
+        message = self._process_sub_message(serializer, serialized)
 
         for str_topic in handlers:
             btopic = self.str2bytes(str_topic)

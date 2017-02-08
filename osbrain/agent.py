@@ -429,7 +429,8 @@ class Agent():
     def registered(self, address):
         return address in self.socket
 
-    def bind(self, kind, alias=None, handler=None, addr=None, transport=None):
+    def bind(self, kind, alias=None, handler=None, addr=None, transport=None,
+             serializer=None):
         """
         Bind to an agent address.
 
@@ -458,7 +459,8 @@ class Agent():
         socket = self.context.socket(kind)
         transport = transport or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
         addr = self._bind_socket(socket, addr=addr, transport=transport)
-        server_address = AgentAddress(transport, addr, kind, 'server')
+        server_address = AgentAddress(transport, addr, kind, 'server',
+                                      serializer)
         self.register(socket, server_address, alias, handler)
         # SUB sockets are a special case
         if kind == 'SUB':
@@ -714,7 +716,19 @@ class Agent():
         serialized : bytes
             Data received on the socket.
         """
-        message = pickle.loads(serialized)
+        # TODO Instead of identifying the serializer by looking at the message,
+        #      we should have the AgentAddress corresponding to this channel
+        #      as a parameter, in order to get the information from it.
+        #      This will allow us to get rid of the `try-except` clause.
+        # TODO As of now, only `pickle` and `raw` serialization are supported.
+        try:
+            # Try pickle serialization
+            message = pickle.loads(serialized)
+            using_pickle = True
+        except:
+            # Not serialized
+            message = serialized
+            using_pickle = False
         handlers = self.handler[socket]
         if not isinstance(handlers, list):
             handlers = [handlers]
@@ -722,7 +736,10 @@ class Agent():
             handler_return = handler(self, message)
         if socket_kind == 'REP':
             if handler_return is not None:
-                socket.send_pyobj(handler_return)
+                if using_pickle:
+                    handler_return = pickle.dumps(handler_return, -1)
+                # FIXME Is this correct? We need to send direct bytes
+                socket.send(handler_return)
 
     def _process_sub_event(self, socket, serialized):
         """
@@ -736,9 +753,19 @@ class Agent():
             Data received on the socket.
         """
         handlers = self.handler[socket]
-        sepp = serialized.index(b'\x80')
-        data = memoryview(serialized)[sepp:]
-        message = pickle.loads(data)
+        # TODO Instead of identifying the serializer by looking at the message,
+        #      we should have the AgentAddress corresponding to this channel
+        #      as a parameter, in order to get the information from it.
+        #      This will allow us to get rid of the `try-except` clause.
+        # TODO As of now, only `pickle` and `raw` serialization is supported.
+        try:
+            # Try pickle serialization
+            sepp = serialized.index(b'\x80')
+            data = memoryview(serialized)[sepp:]
+            message = pickle.loads(data)
+        except:
+            # Not serialized
+            message = serialized
         for str_topic in handlers:
             btopic = self.str2bytes(str_topic)
             if not serialized.startswith(btopic):
@@ -755,14 +782,42 @@ class Agent():
         return message.encode('ascii')
 
     def send(self, address, message, topic=''):
+        """
+        TODO
+        """
         assert isinstance(topic, str), 'Topic must be of `str` type!'
-        serialized = pickle.dumps(message, -1)
+        # Check if socket is for internal use
+        if self.address[address] in ('loopback',
+                                     '_loopback_safe',
+                                     'inproc://loopback',
+                                     'inproc://_loopback_safe'):
+            serialized = pickle.dumps(message, -1)
+        else:
+            serializer = self.address[address].serializer
+            if serializer == 'pickle':
+                serialized = pickle.dumps(message, -1)
+            elif serializer == 'raw':
+                serialized = message
         topic = self.str2bytes(topic)
         self.socket[address].send(topic + serialized)
 
     def recv(self, address):
+        """
+        TODO
+        """
         serialized = self.socket[address].recv()
-        deserialized = pickle.loads(serialized)
+        # Check if socket is for internal use
+        if self.address[address] in ('loopback',
+                                     '_loopback_safe',
+                                     'inproc://loopback',
+                                     'inproc://_loopback_safe'):
+            deserialized = pickle.loads(serialized)
+        else:
+            serializer = self.address[address].serializer
+            if serializer == 'pickle':
+                deserialized = pickle.loads(serialized)
+            elif serializer == 'raw':
+                deserialized = serialized
         return deserialized
 
     def send_recv(self, address, message):

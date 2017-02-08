@@ -10,6 +10,7 @@ Pyro4.config.COMMTIMEOUT = 0.
 Pyro4.config.DETAILED_TRACEBACK = True
 os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'ipc'
 os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'
+os.environ['OSBRAIN_DEFAULT_SERIALIZER'] = 'pickle'
 
 __version__ = '0.3.1'
 

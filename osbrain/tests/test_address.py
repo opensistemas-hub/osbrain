@@ -136,6 +136,23 @@ def test_agent_address():
     assert address.twin() == AgentAddress('ipc', 'addr', 'PULL', 'client')
 
 
+def test_agent_address_explicit_serializer():
+    """
+    Test basic AgentAddress operations: initialization, equivalence and
+    basic methods when an explicit serializer is used.
+    """
+    address = AgentAddress('ipc', 'addr', 'PUSH', 'server', 'raw')
+    # Equivalence
+    assert address == AgentAddress('ipc', 'addr', 'PUSH', 'server', 'raw')
+    assert not address == 'foo'
+    assert address != 'foo'
+    # Basic methods
+    assert address.twin() == AgentAddress('ipc', 'addr', 'PULL', 'client',
+                                          'raw')
+    assert address.twin() != AgentAddress('ipc', 'addr', 'PULL', 'client',
+                                          'pickle')
+
+
 def test_agent_address_to_host_port():
     """
     An agent address should be convertible to host+port if TCP is used.

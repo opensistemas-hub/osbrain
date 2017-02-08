@@ -1,6 +1,8 @@
 """
 Implementation of address-related features.
 """
+import os
+
 from ipaddress import ip_address
 
 import zmq
@@ -171,6 +173,37 @@ class AgentAddressKind(int):
         return self.__class__(self.ZMQ_KIND_TWIN[self])
 
 
+class AgentAddressSerializer():
+    """
+    Agent's address serializer class.
+
+    Each communication channel will have a serializer.
+
+    Note that for `raw` message passing, everything must be on bytes, and the
+    programmer is the one responsible for converting data to bytes.
+
+    Parameters
+    ----------
+    serializer_type : str
+        Serializer type (i.e.: 'raw', 'pickle'...).
+    """
+    def __init__(self, serializer_type=None):
+        self.serializer_type = serializer_type
+        if not self.serializer_type:
+            self.serializer_type = os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.serializer_type == other
+        return self.serializer_type == other.serializer_type
+
+    def __repr__(self):
+        """
+        Return the string representation of a AgentAddressSerializer.
+        """
+        return self.serializer_type
+
+
 class SocketAddress(object):
     """
     Socket address information consisting on the host and port.
@@ -229,6 +262,8 @@ class AgentAddress():
         Agent kind.
     role : str, AgentAddressRole
         Agent role.
+    serializer : str
+        Agent serializer type.
 
     Attributes
     ----------
@@ -238,14 +273,17 @@ class AgentAddress():
         Agent kind.
     role : AgentAddressRole
         Agent role.
+    serializer : AgentAddressSerializer
+        Agent serializer.
     """
-    def __init__(self, transport, address, kind, role):
+    def __init__(self, transport, address, kind, role, serializer=None):
         if transport == 'tcp':
             address = SocketAddress(*address_to_host_port(address))
         self.transport = AgentAddressTransport(transport)
         self.address = address
         self.kind = AgentAddressKind(kind)
         self.role = AgentAddressRole(role)
+        self.serializer = AgentAddressSerializer(serializer)
 
     def __repr__(self):
         """
@@ -255,8 +293,9 @@ class AgentAddress():
         -------
         representation : str
         """
-        return 'AgentAddress(%s, %s, %s, %s)' % \
-            (self.transport, self.address, self.kind, self.role)
+        return 'AgentAddress(%s, %s, %s, %s, %s)' % \
+            (self.transport, self.address, self.kind, self.role,
+             self.serializer)
 
     def __hash__(self):
         return hash(self.transport) ^ hash(self.address) ^ \
@@ -268,7 +307,8 @@ class AgentAddress():
         return self.transport == other.transport \
             and self.address == other.address \
             and self.kind == other.kind \
-            and self.role == other.role
+            and self.role == other.role \
+            and self.serializer == other.serializer
 
     def twin(self):
         """
@@ -282,4 +322,6 @@ class AgentAddress():
         """
         kind = self.kind.twin()
         role = self.role.twin()
-        return self.__class__(self.transport, self.address, kind, role)
+        serializer = self.serializer.serializer_type
+        return self.__class__(self.transport, self.address, kind, role,
+                              serializer)

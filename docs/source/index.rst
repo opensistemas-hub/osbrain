@@ -37,6 +37,7 @@ Contents
    tutorial-1.rst
    tutorial-2.rst
    security.rst
+   developers.rst
    api.rst
    changelog.rst
    license.rst

@@ -23,7 +23,6 @@ from .common import LogLevel
 from .common import repeat
 from .address import AgentAddress
 from .address import AgentAddressKind
-from .address import AgentAddressSerializer
 from .address import address_to_host_port
 from .proxy import Proxy
 from .proxy import NSProxy
@@ -88,20 +87,16 @@ class Agent():
         self.context = zmq.Context()
         self.poller = zmq.Poller()
 
-        # This in-process socket could, eventually, handle safe access to
-        # memory from other threads (i.e. when using Pyro proxies).
-        socket = self.context.socket(zmq.REP)
-        address = 'inproc://loopback'
-        socket.bind(address)
-        self.register(socket, address, 'loopback', self._handle_loopback)
+        # A loopback socket where, for example, timers are processed
+        self.bind('REP', alias='loopback', addr='loopback',
+                  handler=self._handle_loopback, transport='inproc',
+                  serializer='pickle')
 
         # This in-process socket handles safe access to
         # memory from other threads (i.e. when using Pyro proxies).
-        socket = self.context.socket(zmq.REP)
-        address = 'inproc://_loopback_safe'
-        socket.bind(address)
-        self.register(socket, address, '_loopback_safe',
-                      self._handle_loopback_safe)
+        self.bind('REP', alias='_loopback_safe', addr='_loopback_safe',
+                  handler=self._handle_loopback_safe, transport='inproc',
+                  serializer='pickle')
 
         self.on_init()
 
@@ -460,9 +455,8 @@ class Agent():
             'This socket requires a handler!'
         socket = self.context.socket(kind)
         transport = transport or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
+        serializer = serializer or os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
         addr = self._bind_socket(socket, addr=addr, transport=transport)
-        if not serializer:
-            serializer = os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
         server_address = AgentAddress(transport, addr, kind, 'server',
                                       serializer)
         self.register(socket, server_address, alias, handler)
@@ -707,15 +701,12 @@ class Agent():
         else:
             self._process_nonsub_event(socket_kind, socket, serialized)
 
-    def _process_nonsub_message(self, serializer, serialized):
+    def _deserialize_message(self, serializer, message):
         if serializer == 'pickle':
-            message = pickle.loads(serialized)
-        elif serializer == 'raw':
-            message = serialized
-
+            return pickle.loads(message)
         return message
 
-    def _process_REP_event(self, socket_kind, socket, handler_return,
+    def _process_rep_event(self, socket_kind, socket, handler_return,
                            serializer):
         if socket_kind == 'REP' and handler_return is not None:
             if serializer == 'pickle':
@@ -737,7 +728,7 @@ class Agent():
         """
         serializer = self._get_serialization_from_socket(socket)
 
-        message = self._process_nonsub_message(serializer, serialized)
+        message = self._deserialize_message(serializer, serialized)
 
         handlers = self.handler[socket]
         if not isinstance(handlers, list):
@@ -745,21 +736,17 @@ class Agent():
         for handler in handlers:
             handler_return = handler(self, message)
 
-        self._process_REP_event(socket_kind, socket, handler_return,
+        self._process_rep_event(socket_kind, socket, handler_return,
                                 serializer)
 
-    def _process_sub_message(self, serializer, serialized):
+    def _process_sub_message(self, serializer, message):
         if serializer == 'pickle':
             # Since SUB messages might have a `topic`, we need to be careful to
             # only deserialize the non-topic part. Pickle objects always start
             # with b'\x80', so the pure message part will start from that char.
-            sepp = serialized.index(b'\x80')
-            data = memoryview(serialized)[sepp:]
-            message = pickle.loads(data)
-        elif serializer == 'raw':
-            message = serialized
-
-        return message
+            sepp = message.index(b'\x80')
+            message = memoryview(message)[sepp:]
+        return self._deserialize_message(serializer, message)
 
     def _process_sub_event(self, socket, serialized):
         """
@@ -808,47 +795,26 @@ class Agent():
                 agent_address = k
 
         serializer = None
-        if self._is_address_internal(agent_address):
-            serializer = AgentAddressSerializer('pickle')
+        if isinstance(agent_address, str):
+            serializer = self.address[agent_address].serializer
         else:
-            if isinstance(agent_address, str):
-                serializer = self.address[agent_address].serializer
-            else:
-                serializer = agent_address.serializer
+            serializer = agent_address.serializer
 
         return serializer
 
     def str2bytes(self, message):
         return message.encode('ascii')
 
-    def _is_address_internal(self, address):
-        """
-        TODO Perhaps we want to manually create inprocess addresses.
-            - Keep a variable for each one specifying whether it was internal,
-              regardless of type?
-
-        Returns
-        -------
-        bool
-            Whether the address is used for internal communication.
-        """
-        return address in ('loopback', '_loopback_safe', 'inproc://loopback',
-                           'inproc://_loopback_safe')
-
     def send(self, address, message, topic=''):
         """
         TODO
         """
         assert isinstance(topic, str), 'Topic must be of `str` type!'
-        # Check if socket is for internal use
-        if self._is_address_internal(self.address[address]):
+        serializer = self.address[address].serializer
+        if serializer == 'pickle':
             serialized = pickle.dumps(message, -1)
-        else:
-            serializer = self.address[address].serializer
-            if serializer == 'pickle':
-                serialized = pickle.dumps(message, -1)
-            elif serializer == 'raw':
-                serialized = message
+        elif serializer == 'raw':
+            serialized = message
         topic = self.str2bytes(topic)
         self.socket[address].send(topic + serialized)
 
@@ -858,17 +824,9 @@ class Agent():
 
         This method is only used in REQREP communication patterns.
         """
-        serialized = self.socket[address].recv()
-        # Check if socket is for internal use
-        if self._is_address_internal(self.address[address]):
-            deserialized = pickle.loads(serialized)
-        else:
-            serializer = self.address[address].serializer
-            if serializer == 'pickle':
-                deserialized = pickle.loads(serialized)
-            elif serializer == 'raw':
-                deserialized = serialized
-        return deserialized
+        message = self.socket[address].recv()
+        serializer = self.address[address].serializer
+        return self._deserialize_message(serializer, message)
 
     def send_recv(self, address, message):
         self.send(address, message)
@@ -908,7 +866,8 @@ class Agent():
 
     def close_sockets(self):
         for address in self.socket:
-            if self._is_address_internal(address):
+            if address in ('loopback', '_loopback_safe', 'inproc://loopback',
+                           'inproc://_loopback_safe'):
                 continue
             self.socket[address].close()
 

@@ -12,6 +12,7 @@ import pytest
 from osbrain import run_logger
 from osbrain import run_agent
 from osbrain import Agent
+from osbrain import AgentAddress
 from osbrain import AgentProcess
 from osbrain import Proxy
 from osbrain import NSProxy
@@ -66,7 +67,9 @@ def test_agent_loopback(nsaddr):
     An agent should always have a _loopback_safe inproc socket.
     """
     a0 = run_agent('a0')
-    assert a0.addr('_loopback_safe') == 'inproc://_loopback_safe'
+    assert a0.addr('_loopback_safe') == \
+        AgentAddress(transport='inproc', address='_loopback_safe',
+                     kind='REP', role='server', serializer='pickle')
 
 
 def test_ping(nsaddr):

@@ -12,6 +12,7 @@ from osbrain.address import AgentAddress
 from osbrain.address import AgentAddressKind
 from osbrain.address import AgentAddressRole
 from osbrain.address import AgentAddressTransport
+from osbrain.address import AgentAddressSerializer
 
 
 def twin_list(elements):
@@ -108,6 +109,17 @@ def test_role():
         AgentAddressRole('foo')
     with pytest.raises(ValueError):
         AgentAddressRole(1)
+
+
+def test_serializer():
+    """
+    This test aims to cover basic AgentAddressSerializer initialization and
+    equivalence.
+    """
+    assert AgentAddressSerializer('raw') == 'raw'
+    assert AgentAddressSerializer('pickle') == 'pickle'
+    with pytest.raises(ValueError):
+        AgentAddressSerializer('foo')
 
 
 def test_socket_address():

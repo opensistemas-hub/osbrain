@@ -28,6 +28,56 @@ from .proxy import Proxy
 from .proxy import NSProxy
 
 
+def serialize_message(message, serializer):
+    """
+    Check if a message needs to be serialized and do it if that is the
+    case.
+
+    Parameters
+    ----------
+    message : anything
+        The message to serialize.
+    serializer : AgentAddressSerializer
+        The type of serializer that should be used.
+
+    Returns
+    -------
+    bytes
+        The serialized message, or the same message in case no
+        serialization is needed.
+    """
+    if serializer == 'pickle':
+        return pickle.dumps(message, -1)
+    if serializer == 'raw':
+        return message
+    raise ValueError('Serializer not supported for serialization')
+
+
+def deserialize_message(message, serializer):
+    """
+    Check if a message needs to be deserialized and do it if that is the
+    case.
+
+    Parameters
+    ----------
+    message : bytes
+        The serialized message.
+    serializer : AgentAddressSerializer
+        The type of (de)serializer that should be used.
+
+    Returns
+    -------
+    anything
+        The deserialized message, or the same message in case no
+        deserialization is needed.
+    """
+    if serializer == 'pickle':
+        return pickle.loads(message)
+    if serializer == 'raw':
+        return message
+    raise ValueError('Serializer not supported for deserialization')
+
+
 class Agent():
     """
     A base agent class which is to be served by an AgentProcess.
@@ -701,11 +751,6 @@ class Agent():
         else:
             self._process_nonsub_event(socket_kind, socket, serialized)
 
-    def _deserialize_message(self, serializer, message):
-        if serializer == 'pickle':
-            return pickle.loads(message)
-        return message
-
     def _process_rep_event(self, socket_kind, socket, handler_return,
                            serializer):
         if socket_kind == 'REP' and handler_return is not None:
@@ -728,7 +773,8 @@ class Agent():
         """
         serializer = self._get_serialization_from_socket(socket)
 
-        message = self._deserialize_message(serializer, serialized)
+        message = deserialize_message(message=serialized,
+                                      serializer=serializer)
 
         handlers = self.handler[socket]
         if not isinstance(handlers, list):
@@ -746,7 +792,7 @@ class Agent():
             # with b'\x80', so the pure message part will start from that char.
             sepp = message.index(b'\x80')
             message = memoryview(message)[sepp:]
-        return self._deserialize_message(serializer, message)
+        return deserialize_message(message=message, serializer=serializer)
 
     def _process_sub_event(self, socket, serialized):
         """
@@ -811,10 +857,7 @@ class Agent():
         """
         assert isinstance(topic, str), 'Topic must be of `str` type!'
         serializer = self.address[address].serializer
-        if serializer == 'pickle':
-            serialized = pickle.dumps(message, -1)
-        elif serializer == 'raw':
-            serialized = message
+        serialized = serialize_message(message=message, serializer=serializer)
         topic = self.str2bytes(topic)
         self.socket[address].send(topic + serialized)
 
@@ -826,7 +869,7 @@ class Agent():
         """
         message = self.socket[address].recv()
         serializer = self.address[address].serializer
-        return self._deserialize_message(serializer, message)
+        return deserialize_message(message=message, serializer=serializer)
 
     def send_recv(self, address, message):
         self.send(address, message)

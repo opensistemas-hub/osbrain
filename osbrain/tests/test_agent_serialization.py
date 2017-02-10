@@ -1,8 +1,12 @@
 import time
+import pickle
 
 import zmq
+import pytest
 
 from osbrain import run_agent
+from osbrain.agent import serialize_message
+from osbrain.agent import deserialize_message
 
 from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
@@ -10,6 +14,32 @@ from common import nsproxy  # pragma: no flakes
 
 def set_received(agent, message, topic=None):
     agent.received = message
+
+
+def test_serialize_message():
+    """
+    Test basic serialization.
+    """
+    test = b'asdf'
+    assert test == serialize_message(message=test, serializer='raw')
+    test = [0, 1]
+    assert test == pickle.loads(serialize_message(message=test,
+                                serializer='pickle'))
+    with pytest.raises(ValueError):
+        serialize_message(message=test, serializer='foo')
+
+
+def test_deserialize_message():
+    """
+    Test basic deserialization.
+    """
+    test = b'asdf'
+    assert test == deserialize_message(message=test, serializer='raw')
+    test = [0, 1]
+    assert test == deserialize_message(message=pickle.dumps(test, -1),
+                                       serializer='pickle')
+    with pytest.raises(ValueError):
+        deserialize_message(message=b'x', serializer='foo')
 
 
 def test_reqrep_raw(nsaddr):

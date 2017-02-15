@@ -758,8 +758,7 @@ class Agent():
     def _process_rep_event(self, socket_kind, socket, handler_return,
                            serializer):
         if socket_kind == 'REP' and handler_return is not None:
-            if serializer == 'pickle':
-                handler_return = pickle.dumps(handler_return, -1)
+            handler_return = serialize_message(handler_return, serializer)
             socket.send(handler_return)
 
     def _process_nonsub_event(self, socket_kind, socket, serialized):

@@ -302,7 +302,7 @@ class Agent():
 
     def ping(self):
         """
-        A simple ping method testing purposes.
+        A simple ping method (for testing purposes).
         """
         return 'pong'
 
@@ -789,6 +789,20 @@ class Agent():
                                 serializer)
 
     def _process_sub_message(self, serializer, message):
+        """
+        Return the received message in a PUBSUB communication.
+
+        Parameters
+        ----------
+        message : bytes
+            Received message without any treatment. Note that we do not know
+            whether there is a topic or not.
+
+        Returns
+        -------
+        anything
+            The content of the message passed.
+        """
         if serializer == 'pickle':
             # Since SUB messages might have a `topic`, we need to be careful to
             # only deserialize the non-topic part. Pickle objects always start
@@ -853,7 +867,10 @@ class Agent():
 
     def send(self, address, message, topic=''):
         """
-        TODO
+        Send a message through the specified address.
+
+        Note that replies in a REQREP pattern do not use this function in
+        order to be sent.
         """
         assert isinstance(topic, str), 'Topic must be of `str` type!'
         serializer = self.address[address].serializer
@@ -863,15 +880,28 @@ class Agent():
 
     def recv(self, address):
         """
-        TODO
+        Receive a message from the specified address.
 
         This method is only used in REQREP communication patterns.
+
+        Parameters
+        ----------
+        address :
+
+        Returns
+        -------
+        anything
+            The content received in the address.
+
         """
         message = self.socket[address].recv()
         serializer = self.address[address].serializer
         return deserialize_message(message=message, serializer=serializer)
 
     def send_recv(self, address, message):
+        """
+        This method is only used in REQREP communication patterns.
+        """
         self.send(address, message)
         return self.recv(address)
 

@@ -28,6 +28,10 @@ from .proxy import Proxy
 from .proxy import NSProxy
 
 
+def str2bytes(message):
+    return message.encode('ascii')
+
+
 def serialize_message(message, serializer):
     """
     Check if a message needs to be serialized and do it if that is the
@@ -606,7 +610,7 @@ class Agent():
             handlers = {'': handlers}
         for topic in handlers.keys():
             assert isinstance(topic, str), 'Topic must be of type `str`!'
-            topic = self.str2bytes(topic)
+            topic = str2bytes(topic)
             self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
         # Reset handlers
         self._set_handler(self.socket[alias], handlers)
@@ -812,7 +816,7 @@ class Agent():
         message = self._process_sub_message(serializer, serialized)
 
         for str_topic in handlers:
-            btopic = self.str2bytes(str_topic)
+            btopic = str2bytes(str_topic)
             if not serialized.startswith(btopic):
                 continue
             # Call the handler (with or without the topic)
@@ -848,9 +852,6 @@ class Agent():
 
         return serializer
 
-    def str2bytes(self, message):
-        return message.encode('ascii')
-
     def send(self, address, message, topic=''):
         """
         TODO
@@ -858,7 +859,7 @@ class Agent():
         assert isinstance(topic, str), 'Topic must be of `str` type!'
         serializer = self.address[address].serializer
         serialized = serialize_message(message=message, serializer=serializer)
-        topic = self.str2bytes(topic)
+        topic = str2bytes(topic)
         self.socket[address].send(topic + serialized)
 
     def recv(self, address):

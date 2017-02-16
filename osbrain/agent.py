@@ -7,6 +7,7 @@ import inspect
 import multiprocessing
 import os
 import pickle
+import json
 import signal
 import sys
 import types
@@ -56,6 +57,8 @@ def serialize_message(message, serializer):
     """
     if serializer == 'pickle':
         return pickle.dumps(message, -1)
+    if serializer == 'json':
+        return str2bytes(json.dumps(message))
     if serializer == 'raw':
         return message
     raise ValueError('Serializer not supported for serialization')
@@ -81,6 +84,8 @@ def deserialize_message(message, serializer):
     """
     if serializer == 'pickle':
         return pickle.loads(message)
+    if serializer == 'json':
+        return json.loads(message)
     if serializer == 'raw':
         return message
     raise ValueError('Serializer not supported for deserialization')

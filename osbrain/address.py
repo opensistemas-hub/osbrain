@@ -186,7 +186,7 @@ class AgentAddressSerializer(str):
         Serializer type (i.e.: 'raw', 'pickle'...).
     """
     def __new__(cls, value):
-        if value not in ('raw', 'pickle'):
+        if value not in ('raw', 'pickle', 'json'):
             raise ValueError('Invalid serializer type %s!' % value)
         return super().__new__(cls, value)
 

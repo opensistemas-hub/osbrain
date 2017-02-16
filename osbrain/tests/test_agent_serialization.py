@@ -92,8 +92,9 @@ def test_deserialize_message():
                                        serializer='pickle')
 
     # Json deserialization
-    assert test == deserialize_message(message=json.dumps(test).encode('ascii'),
-                                       serializer='json')
+    assert test == \
+        deserialize_message(message=json.dumps(test).encode('ascii'),
+                            serializer='json')
 
     # Wrong type
     with pytest.raises(TypeError):

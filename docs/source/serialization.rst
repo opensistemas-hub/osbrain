@@ -24,9 +24,13 @@ For example, the `json` method does not support serializing an object of
 
 Defining the serializer
 =======================
+Specifying the serializer only makes sense in `server` sockets, since `clients`
+will automatically detect and set the type they need in order to communicate
+accordingly with the server.
+
 Right now, there are two ways in which the serializer can be specified.
 
-One is manually specifying it when binding to a socket:
+The first one is manually specifying it when binding to a socket:
 
 .. literalinclude:: ../../examples/explicit_serializer.py
 

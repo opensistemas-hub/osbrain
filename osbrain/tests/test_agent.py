@@ -173,6 +173,44 @@ def test_socket_creation(nsaddr):
     assert 'alias2' in addresses
 
 
+def test_correct_serialization(nsaddr):
+    """
+    Test that the right serializer is being used when using the different
+    initialization options.
+    """
+    # Without specifying a serializer
+    a0 = run_agent('a0')
+    addr0 = a0.bind('PUB', 'alias0')
+    _address = a0.get_attr('address')
+    assert _address[addr0].serializer \
+        == os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
+
+    # Specifying a serializer at Agent level
+    # Test is twice with different serializer to avoid collision with the
+    # environment variable
+    a1 = run_agent('a1', serializer='raw')
+    addr1 = a1.bind('PUB', 'alias1')
+    _address = a1.get_attr('address')
+    assert _address[addr1].serializer == 'raw'
+
+    a2 = run_agent('a2', serializer='pickle')
+    addr2 = a2.bind('PUB', 'alias2')
+    _address = a2.get_attr('address')
+    assert _address[addr2].serializer == 'pickle'
+
+    # Specifying a serializer at Socket level
+    # Test is twice with different serializer to avoid collision with the
+    # environment variable
+    a3 = run_agent('a3')
+    addr3 = a3.bind('PUB', 'alias3', serializer='raw')
+    _address = a3.get_attr('address')
+    assert _address[addr3].serializer == 'raw'
+    a4 = run_agent('a4')
+    addr4 = a4.bind('PUB', 'alias4', serializer='json')
+    _address = a4.get_attr('address')
+    assert _address[addr4].serializer == 'json'
+
+
 def test_reqrep(nsaddr):
     """
     Simple request-reply pattern between two agents.

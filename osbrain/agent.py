@@ -180,11 +180,12 @@ class Agent():
     running : bool
         Set to `True` if the agent is running (executing the main loop).
     """
-    def __init__(self, name=None, host=None):
+    def __init__(self, name=None, host=None, serializer=None):
         self.name = name
         self.host = host
         if not self.host:
             self.host = '127.0.0.1'
+        self.serializer = serializer
         self.socket = {}
         self.address = {}
         self.handler = {}
@@ -568,7 +569,9 @@ class Agent():
             'This socket requires a handler!'
         socket = self.context.socket(kind)
         transport = transport or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
-        serializer = serializer or os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
+        serializer = serializer \
+            or self.serializer \
+            or os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
         addr = self._bind_socket(socket, addr=addr, transport=transport)
         server_address = AgentAddress(transport, addr, kind, 'server',
                                       serializer)
@@ -1020,7 +1023,8 @@ class AgentProcess(multiprocessing.Process):
     Agent class. Instances of an Agent are system processes which
     can be run independently.
     """
-    def __init__(self, name, nsaddr=None, addr=None, base=Agent):
+    def __init__(self, name, nsaddr=None, addr=None, serializer=None,
+                 base=Agent):
         super().__init__()
         self.name = name
         self.daemon = None
@@ -1028,6 +1032,7 @@ class AgentProcess(multiprocessing.Process):
         if self.port is None:
             self.port = 0
         self.nsaddr = nsaddr
+        self.serializer = serializer
         self.base = base
         self.shutdown_event = multiprocessing.Event()
         self.queue = multiprocessing.Queue()
@@ -1045,7 +1050,8 @@ class AgentProcess(multiprocessing.Process):
             return
         self.queue.put('STARTED')
 
-        self.agent = self.base(name=self.name, host=self.host)
+        self.agent = self.base(name=self.name, host=self.host,
+                               serializer=self.serializer)
         uri = self.daemon.register(self.agent)
         ns.register(self.name, uri)
         ns.release()
@@ -1092,7 +1098,7 @@ class AgentProcess(multiprocessing.Process):
         self.kill()
 
 
-def run_agent(name, nsaddr=None, addr=None, base=Agent):
+def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None):
     """
     Ease the agent creation process.
 
@@ -1115,7 +1121,8 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent):
     """
     if not nsaddr:
         nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
-    AgentProcess(name, nsaddr=nsaddr, addr=addr, base=base).start()
+    AgentProcess(name, nsaddr=nsaddr, addr=addr, base=base,
+                 serializer=serializer).start()
     proxy = Proxy(name, nsaddr)
     proxy.run()
     return proxy

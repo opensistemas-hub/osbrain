@@ -77,7 +77,7 @@ def test_deserialize_message():
     test = [0, 1]
     assert test == deserialize_message(message=pickle.dumps(test, -1),
                                        serializer='pickle')
-    assert test == deserialize_message(message=json.dumps(test),
+    assert test == deserialize_message(message=json.dumps(test).encode('ascii'),
                                        serializer='json')
     with pytest.raises(ValueError):
         deserialize_message(message=b'x', serializer='foo')

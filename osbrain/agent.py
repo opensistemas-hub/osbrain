@@ -32,6 +32,10 @@ def str2bytes(message):
     return message.encode('ascii')
 
 
+def bytes2str(message):
+    return message.decode('ascii')
+
+
 def serialize_message(message, serializer):
     """
     Check if a message needs to be serialized and do it if that is the

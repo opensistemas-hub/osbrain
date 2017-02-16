@@ -82,6 +82,31 @@ def deserialize_message(message, serializer):
     raise ValueError('Serializer not supported for deserialization')
 
 
+def compose_message(serializer, message, topic=''):
+    """
+    Compose a message and leave it ready to be sent through a socket.
+
+    Parameters
+    ----------
+    serializer : AgentAddressSerializer
+        Serialization for the message part.
+    message : anything
+        Message to be serialized. The user is the one responsible for passing
+        serializable data.
+    topic : str
+        Topic.
+
+    Returns
+    -------
+    bytes
+        The bytes representation of the final message to be sent.
+    """
+    assert isinstance(topic, str), 'Topic must be of `str` type!'
+    serialized = serialize_message(message=message, serializer=serializer)
+    topic = str2bytes(topic)
+    return topic + serialized
+
+
 class Agent():
     """
     A base agent class which is to be served by an AgentProcess.
@@ -872,11 +897,9 @@ class Agent():
         Note that replies in a REQREP pattern do not use this function in
         order to be sent.
         """
-        assert isinstance(topic, str), 'Topic must be of `str` type!'
         serializer = self.address[address].serializer
-        serialized = serialize_message(message=message, serializer=serializer)
-        topic = str2bytes(topic)
-        self.socket[address].send(topic + serialized)
+        message = compose_message(serializer, message, topic)
+        self.socket[address].send(message)
 
     def recv(self, address):
         """

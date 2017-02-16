@@ -6,6 +6,7 @@ import time
 import random
 from uuid import uuid4
 from threading import Timer
+import pickle
 
 import pytest
 
@@ -17,6 +18,7 @@ from osbrain import AgentProcess
 from osbrain import Proxy
 from osbrain import NSProxy
 from osbrain import SocketAddress
+from osbrain.agent import compose_message
 
 from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
@@ -33,6 +35,26 @@ def sync_agent_logger(agent, logger):
         time.sleep(0.01)
     while message not in logger.get_attr('log_history_info')[-1]:
         time.sleep(0.01)
+
+
+def test_message_composer():
+    msg_1 = b'Chain of bytes'
+    msg_2 = [1, 3, "Hello"]
+    topic = "test topic"
+    topic_bytes = b"test topic"
+
+    # Test raw serialization composing
+    assert compose_message('raw', msg_1) == b'Chain of bytes'
+    assert compose_message('raw', msg_1, topic) == b'test topicChain of bytes'
+
+    # Test pickle serialization composing
+    assert compose_message('pickle', msg_1) == pickle.dumps(msg_1, -1)
+    assert compose_message('pickle', msg_2) == pickle.dumps(msg_2, -1)
+
+    assert compose_message('pickle', msg_1, topic) \
+        == topic_bytes + pickle.dumps(msg_1, -1)
+    assert compose_message('pickle', msg_2, topic) \
+        == topic_bytes + pickle.dumps(msg_2, -1)
 
 
 def logger_received(logger, log_name, message, timeout=1.):

@@ -37,6 +37,12 @@ def bytes2str(message):
     return message.decode('ascii')
 
 
+def check_type(x, check_type):
+    if not isinstance(x, check_type):
+        msg = 'Expected type `{}`, but got `{}`'.format(check_type, type(x))
+        raise TypeError(msg)
+
+
 def serialize_message(message, serializer):
     """
     Check if a message needs to be serialized and do it if that is the
@@ -67,8 +73,7 @@ def serialize_message(message, serializer):
     if result is None:
         raise ValueError('Serializer not supported for serialization')
 
-    if not isinstance(result, bytes):
-        raise TypeError('Must return `bytes`, not {}'.format(type(result)))
+    check_type(result, bytes)
 
     return result
 
@@ -91,8 +96,7 @@ def deserialize_message(message, serializer):
         The deserialized message, or the same message in case no
         deserialization is needed.
     """
-    if not isinstance(message, bytes):
-        raise TypeError('Expected `bytes`, but got {}'.format(type(message)))
+    check_type(message, bytes)
 
     result = None
 

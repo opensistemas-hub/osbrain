@@ -24,6 +24,8 @@ def test_message_composer():
     topic = "test topic"
     topic_bytes = b"test topic"
 
+    separator = b'\x80'
+
     # Test raw serialization composing
     assert compose_message('raw', msg_1) == b'Chain of bytes'
     assert compose_message('raw', msg_1, topic) == b'test topicChain of bytes'
@@ -33,9 +35,9 @@ def test_message_composer():
     assert compose_message('pickle', msg_2) == pickle.dumps(msg_2, -1)
 
     assert compose_message('pickle', msg_1, topic) \
-        == topic_bytes + pickle.dumps(msg_1, -1)
+        == topic_bytes + separator + pickle.dumps(msg_1, -1)
     assert compose_message('pickle', msg_2, topic) \
-        == topic_bytes + pickle.dumps(msg_2, -1)
+        == topic_bytes + separator + pickle.dumps(msg_2, -1)
 
     # Test json serialization composing
     msg_1_str = 'Chain of bytes'
@@ -46,9 +48,9 @@ def test_message_composer():
         == json.dumps(msg_2).encode('ascii')
 
     assert compose_message('json', msg_1_str, topic) \
-        == topic_bytes + json.dumps(msg_1_str).encode('ascii')
+        == topic_bytes + separator + json.dumps(msg_1_str).encode('ascii')
     assert compose_message('json', msg_2, topic) \
-        == topic_bytes + json.dumps(msg_2).encode('ascii')
+        == topic_bytes + separator + json.dumps(msg_2).encode('ascii')
 
 
 def test_serialize_message():

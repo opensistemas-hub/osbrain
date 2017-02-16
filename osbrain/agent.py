@@ -113,6 +113,9 @@ def compose_message(serializer, message, topic=''):
     assert isinstance(topic, str), 'Topic must be of `str` type!'
     serialized = serialize_message(message=message, serializer=serializer)
     topic = str2bytes(topic)
+    if topic and serializer != 'raw':
+        separator = b'\x80'
+        return topic + separator + serialized
     return topic + serialized
 
 
@@ -837,12 +840,18 @@ class Agent():
         anything
             The content of the message passed.
         """
+        separator = b'\x80'
+
         if serializer == 'pickle':
-            # Since SUB messages might have a `topic`, we need to be careful to
-            # only deserialize the non-topic part. Pickle objects always start
-            # with b'\x80', so the pure message part will start from that char.
-            sepp = message.index(b'\x80')
-            message = memoryview(message)[sepp:]
+            if not message.startswith(separator):
+                sepp = message.index(separator) + 1
+                message = memoryview(message)[sepp:]
+
+        if serializer == 'json':
+            if separator in message:
+                sepp = message.index(separator) + 1
+                message = bytes(memoryview(message)[sepp:])
+
         return deserialize_message(message=message, serializer=serializer)
 
     def _process_sub_event(self, socket, serialized):

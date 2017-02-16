@@ -28,15 +28,30 @@ Specifying the serializer only makes sense in `server` sockets, since `clients`
 will automatically detect and set the type they need in order to communicate
 accordingly with the server.
 
-Right now, there are two ways in which the serializer can be specified.
+Right now, there are three ways in which the serializer can be specified:
+
+- Specifying it at `per socket` level.
+- Specifying it at `per agent` level.
+- Through an environment variable.
+
 
 The first one is manually specifying it when binding to a socket:
 
-.. literalinclude:: ../../examples/explicit_serializer.py
+.. literalinclude:: ../../examples/explicit_serializer_socket.py
 
-The other one is through setting the environment variable
-`OSBRAIN_DEFAULT_SERIALIZER`. This option is only used if, when binding to a
-socket, there is no serializer specified.
+The second one is manually specifying it when creating an agent:
+
+.. literalinclude:: ../../examples/explicit_serializer_agent.py
+
+The last one is through setting the environment variable
+`OSBRAIN_DEFAULT_SERIALIZER`.
+
+When binding, the serializer is selected in this order (if the selected one is
+not specified, it will try to select the next one):
+
+- Socket
+- Agent
+- Environment variable.
 
 
 PUBSUB messaging pattern

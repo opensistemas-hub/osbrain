@@ -1,0 +1,6 @@
+...
+
+a1 = run_agent('a1')
+addr1 = a1.bind('PULL', handler=set_received, serializer='pickle')
+
+...

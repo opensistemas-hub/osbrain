@@ -55,13 +55,22 @@ def serialize_message(message, serializer):
         The serialized message, or the same message in case no
         serialization is needed.
     """
+    result = None
+
     if serializer == 'pickle':
-        return pickle.dumps(message, -1)
+        result = pickle.dumps(message, -1)
     if serializer == 'json':
-        return str2bytes(json.dumps(message))
+        result = str2bytes(json.dumps(message))
     if serializer == 'raw':
-        return message
-    raise ValueError('Serializer not supported for serialization')
+        result = message
+
+    if result is None:
+        raise ValueError('Serializer not supported for serialization')
+
+    if not isinstance(result, bytes):
+        raise TypeError('Must return `bytes`, not {}'.format(type(result)))
+
+    return result
 
 
 def deserialize_message(message, serializer):
@@ -82,13 +91,22 @@ def deserialize_message(message, serializer):
         The deserialized message, or the same message in case no
         deserialization is needed.
     """
+    if not isinstance(message, bytes):
+        raise TypeError('Expected `bytes`, but got {}'.format(type(message)))
+
+    result = None
+
     if serializer == 'pickle':
-        return pickle.loads(message)
+        result = pickle.loads(message)
     if serializer == 'json':
-        return json.loads(message)
+        result = json.loads(bytes2str(message))
     if serializer == 'raw':
-        return message
-    raise ValueError('Serializer not supported for deserialization')
+        result = message
+
+    if result is None:
+        raise ValueError('Serializer not supported for deserialization')
+
+    return result
 
 
 def compose_message(serializer, message, topic=''):
@@ -845,7 +863,7 @@ class Agent():
         if serializer == 'pickle':
             if not message.startswith(separator):
                 sepp = message.index(separator) + 1
-                message = memoryview(message)[sepp:]
+                message = bytes(memoryview(message)[sepp:])
 
         if serializer == 'json':
             if separator in message:

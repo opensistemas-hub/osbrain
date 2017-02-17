@@ -59,16 +59,22 @@ def test_serialize_message():
     """
     # Raw serialization
     test = b'asdf'
-    assert test == serialize_message(message=test, serializer='raw')
+    message = serialize_message(message=test, serializer='raw')
+    assert isinstance(message, bytes)
+    assert test == message
 
     # Pickle serialization
     test = [0, 1]
-    assert test == pickle.loads(serialize_message(message=test,
-                                serializer='pickle'))
+    message = serialize_message(message=test, serializer='pickle')
+    assert isinstance(message, bytes)
+    assert test == pickle.loads(message)
 
     # Json serialization
-    assert test == json.loads(serialize_message(message=test,
-                              serializer='json').decode('ascii'))
+    test = [0, 1]
+    message = serialize_message(message=test, serializer='json')
+    assert isinstance(message, bytes)
+    assert test == json.loads(message.decode('ascii'))
+
     # Un-serializable type
     with pytest.raises(TypeError):
         serialize_message(message=b'Hello', serializer='json')
@@ -95,14 +101,6 @@ def test_deserialize_message():
     assert test == \
         deserialize_message(message=json.dumps(test).encode('ascii'),
                             serializer='json')
-
-    # Wrong type
-    with pytest.raises(TypeError):
-        deserialize_message(message='Hello', serializer='raw')
-    with pytest.raises(TypeError):
-        deserialize_message(message=[1, 2, 3], serializer='pickle')
-    with pytest.raises(TypeError):
-        deserialize_message(message=None, serializer='json')
 
     # Incorrect serializer
     with pytest.raises(ValueError):

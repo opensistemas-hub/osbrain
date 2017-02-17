@@ -37,12 +37,6 @@ def bytes2str(message):
     return message.decode('ascii')
 
 
-def check_type(x, check_type):
-    if not isinstance(x, check_type):
-        msg = 'Expected type `{}`, but got `{}`'.format(check_type, type(x))
-        raise TypeError(msg)
-
-
 def serialize_message(message, serializer):
     """
     Check if a message needs to be serialized and do it if that is the
@@ -61,21 +55,13 @@ def serialize_message(message, serializer):
         The serialized message, or the same message in case no
         serialization is needed.
     """
-    result = None
-
     if serializer == 'pickle':
-        result = pickle.dumps(message, -1)
+        return pickle.dumps(message, -1)
     if serializer == 'json':
-        result = str2bytes(json.dumps(message))
+        return str2bytes(json.dumps(message))
     if serializer == 'raw':
-        result = message
-
-    if result is None:
-        raise ValueError('Serializer not supported for serialization')
-
-    check_type(result, bytes)
-
-    return result
+        return message
+    raise ValueError('Serializer not supported for serialization')
 
 
 def deserialize_message(message, serializer):
@@ -96,21 +82,13 @@ def deserialize_message(message, serializer):
         The deserialized message, or the same message in case no
         deserialization is needed.
     """
-    check_type(message, bytes)
-
-    result = None
-
     if serializer == 'pickle':
-        result = pickle.loads(message)
+        return pickle.loads(message)
     if serializer == 'json':
-        result = json.loads(bytes2str(message))
+        return json.loads(bytes2str(message))
     if serializer == 'raw':
-        result = message
-
-    if result is None:
-        raise ValueError('Serializer not supported for deserialization')
-
-    return result
+        return message
+    raise ValueError('Serializer not supported for deserialization')
 
 
 def compose_message(serializer, message, topic=''):

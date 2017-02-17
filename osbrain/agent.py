@@ -29,6 +29,9 @@ from .proxy import Proxy
 from .proxy import NSProxy
 
 
+TOPIC_SEPARATOR = b'\x80'
+
+
 def str2bytes(message):
     return message.encode('ascii')
 
@@ -71,7 +74,7 @@ def deserialize_message(message, serializer):
 
     Parameters
     ----------
-    message : bytes
+    message : bytes, memoryview
         The serialized message.
     serializer : AgentAddressSerializer
         The type of (de)serializer that should be used.
@@ -85,25 +88,27 @@ def deserialize_message(message, serializer):
     if serializer == 'pickle':
         return pickle.loads(message)
     if serializer == 'json':
-        return json.loads(bytes2str(message))
+        return json.loads(bytes2str(bytes(message)))
     if serializer == 'raw':
         return message
     raise ValueError('Serializer not supported for deserialization')
 
 
-def compose_message(serializer, message, topic=''):
+def compose_message(message, topic, serializer):
     """
     Compose a message and leave it ready to be sent through a socket.
 
+    This is used in PUB-SUB patterns to combine the topic and the message
+    in a single bytes buffer.
+
     Parameters
     ----------
+    message : bytes
+        Message to be composed.
+    topic : str
+        Topic to combine the message with.
     serializer : AgentAddressSerializer
         Serialization for the message part.
-    message : anything
-        Message to be serialized. The user is the one responsible for passing
-        serializable data.
-    topic : str
-        Topic.
 
     Returns
     -------
@@ -111,12 +116,10 @@ def compose_message(serializer, message, topic=''):
         The bytes representation of the final message to be sent.
     """
     assert isinstance(topic, str), 'Topic must be of `str` type!'
-    serialized = serialize_message(message=message, serializer=serializer)
     topic = str2bytes(topic)
-    if topic and serializer != 'raw':
-        separator = b'\x80'
-        return topic + separator + serialized
-    return topic + serialized
+    if serializer.requires_separator:
+        return topic + TOPIC_SEPARATOR + message
+    return topic + message
 
 
 class Agent():
@@ -843,17 +846,9 @@ class Agent():
         anything
             The content of the message passed.
         """
-        separator = b'\x80'
-
-        if serializer == 'pickle':
-            if not message.startswith(separator):
-                sepp = message.index(separator) + 1
-                message = bytes(memoryview(message)[sepp:])
-
-        if serializer == 'json':
-            if separator in message:
-                sepp = message.index(separator) + 1
-                message = bytes(memoryview(message)[sepp:])
+        if serializer.requires_separator:
+            sep = message.index(TOPIC_SEPARATOR) + 1
+            message = memoryview(message)[sep:]
 
         return deserialize_message(message=message, serializer=serializer)
 
@@ -919,7 +914,11 @@ class Agent():
         order to be sent.
         """
         serializer = self.address[address].serializer
-        message = compose_message(serializer, message, topic)
+        message = serialize_message(message=message, serializer=serializer)
+        if self.address[address].kind == 'PUB':
+            message = compose_message(message=message,
+                                      topic=topic,
+                                      serializer=serializer)
         self.socket[address].send(message)
 
     def recv(self, address):

@@ -9,6 +9,8 @@ from osbrain import run_agent
 from osbrain.agent import serialize_message
 from osbrain.agent import deserialize_message
 from osbrain.agent import compose_message
+from osbrain.agent import TOPIC_SEPARATOR
+from osbrain.address import AgentAddressSerializer
 
 from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
@@ -19,38 +21,26 @@ def set_received(agent, message, topic=None):
 
 
 def test_message_composer():
-    msg_1 = b'Chain of bytes'
-    msg_2 = [1, 3, "Hello"]
-    topic = "test topic"
-    topic_bytes = b"test topic"
+    """
+    Test correct message composing.
+    """
+    message = b'message'
+    topic = 'test topic'
+    topic_bytes = b'test topic'
 
-    separator = b'\x80'
+    # Basic composing
+    for serializer in AgentAddressSerializer.SERIALIZER_SIMPLE:
+        serializer = AgentAddressSerializer(serializer)
+        assert compose_message(message, topic, serializer) \
+            == topic_bytes + message
+    for serializer in AgentAddressSerializer.SERIALIZER_SEPARATOR:
+        serializer = AgentAddressSerializer(serializer)
+        assert compose_message(message, topic, serializer) \
+            == topic_bytes + TOPIC_SEPARATOR + message
 
-    # Test raw serialization composing
-    assert compose_message('raw', msg_1) == b'Chain of bytes'
-    assert compose_message('raw', msg_1, topic) == b'test topicChain of bytes'
-
-    # Test pickle serialization composing
-    assert compose_message('pickle', msg_1) == pickle.dumps(msg_1, -1)
-    assert compose_message('pickle', msg_2) == pickle.dumps(msg_2, -1)
-
-    assert compose_message('pickle', msg_1, topic) \
-        == topic_bytes + separator + pickle.dumps(msg_1, -1)
-    assert compose_message('pickle', msg_2, topic) \
-        == topic_bytes + separator + pickle.dumps(msg_2, -1)
-
-    # Test json serialization composing
-    msg_1_str = 'Chain of bytes'
-
-    assert compose_message('json', msg_1_str) \
-        == json.dumps(msg_1_str).encode('ascii')
-    assert compose_message('json', msg_2) \
-        == json.dumps(msg_2).encode('ascii')
-
-    assert compose_message('json', msg_1_str, topic) \
-        == topic_bytes + separator + json.dumps(msg_1_str).encode('ascii')
-    assert compose_message('json', msg_2, topic) \
-        == topic_bytes + separator + json.dumps(msg_2).encode('ascii')
+    # Raise with wrong serializer
+    with pytest.raises(Exception):
+        compose_message(message, topic, 'foo')
 
 
 def test_serialize_message():

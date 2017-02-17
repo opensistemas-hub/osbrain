@@ -185,10 +185,16 @@ class AgentAddressSerializer(str):
     serializer_type : str
         Serializer type (i.e.: 'raw', 'pickle'...).
     """
+    SERIALIZER_SIMPLE = ('raw', )
+    SERIALIZER_SEPARATOR = ('pickle', 'json')
+
     def __new__(cls, value):
-        if value not in ('raw', 'pickle', 'json'):
+        if value not in cls.SERIALIZER_SIMPLE + cls.SERIALIZER_SEPARATOR:
             raise ValueError('Invalid serializer type %s!' % value)
         return super().__new__(cls, value)
+
+    def __init__(self, value):
+        self.requires_separator = value in self.SERIALIZER_SEPARATOR
 
 
 class SocketAddress(object):

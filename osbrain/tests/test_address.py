@@ -118,8 +118,19 @@ def test_serializer():
     """
     assert AgentAddressSerializer('raw') == 'raw'
     assert AgentAddressSerializer('pickle') == 'pickle'
+    assert AgentAddressSerializer('json') == 'json'
     with pytest.raises(ValueError):
         AgentAddressSerializer('foo')
+
+
+def test_serializer_separator():
+    """
+    Check which serializers do require a separator between topic and
+    message to be automatically inserted.
+    """
+    assert not AgentAddressSerializer('raw').requires_separator
+    assert AgentAddressSerializer('pickle').requires_separator
+    assert AgentAddressSerializer('json').requires_separator
 
 
 def test_socket_address():

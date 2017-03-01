@@ -227,6 +227,29 @@ def test_reqrep_lambda(nsaddr):
     assert response == 'xHello world'
 
 
+def test_reqrep_early_reply(nsaddr):
+    """
+    Reply early test, in which we want to send a quick response as a reply and
+    keep executing other stuff after that.
+    """
+    def reply_early_handler(agent, message):
+        yield 'Reply early: {}'.format(message)
+        time.sleep(0.5)
+        agent._invented_variable = 5
+
+    a0 = run_agent('a0')
+    a1 = run_agent('a1')
+
+    addr = a0.bind('REP', 'reply', reply_early_handler)
+    a1.connect(addr, 'request')
+
+    response = a1.send_recv('request', 'Working!')
+    assert response == 'Reply early: Working!'
+    assert not a0.get_attr('_invented_variable')
+    time.sleep(1)
+    assert a0.get_attr('_invented_variable') == 5
+
+
 def test_pushpull(nsaddr):
     """
     Simple push-pull pattern test.

@@ -803,6 +803,16 @@ class Agent():
     def _process_rep_event(self, socket_kind, socket, handler_return,
                            serializer):
         if socket_kind == 'REP' and handler_return is not None:
+            try:
+                res = next(handler_return)
+                # Try to get next element.
+                # Ideally, there should be only one yield statement (executed
+                # once) for the early reply. By executing it again, we want to
+                # force the execution of further code after the fast reply.
+                next(handler_return)
+                handler_return = res
+            except:
+                pass
             handler_return = serialize_message(handler_return, serializer)
             socket.send(handler_return)
 

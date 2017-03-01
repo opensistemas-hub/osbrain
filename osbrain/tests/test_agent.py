@@ -244,8 +244,10 @@ def test_reqrep_early_reply(nsaddr):
     a1.connect(addr, 'request')
 
     response = a1.send_recv('request', 'Working!')
+    a0.set_attr(_invented_variable=None)
     assert response == 'Reply early: Working!'
     assert not a0.get_attr('_invented_variable')
+    # Sleep so that the replier has had time to update
     time.sleep(1)
     assert a0.get_attr('_invented_variable') == 5
 

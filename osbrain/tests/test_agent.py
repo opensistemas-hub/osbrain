@@ -543,21 +543,20 @@ def test_agent_loopback_header_unknown(nsaddr):
     """
     Test an unknown header on loopback handler.
     """
+    class Unknown(Agent):
+        def unknown(self):
+            self._loopback('UNKNOWN_HEADER', 1)
+
     logger = run_logger('logger')
-    agent = run_agent('a0')
+    agent = run_agent('a0', base=Unknown)
     agent.set_logger(logger)
     # Make sure agent and logger are connected
-    while not len(logger.get_attr('log_history_info')):
-        agent.log_info('foo')
-        time.sleep(0.01)
-    agent.set_method(
-        loopback_unknown=lambda a: a._handle_loopback(('UNKNOWN_HEADER', 1)))
-    response = agent.loopback_unknown()
+    sync_agent_logger(agent, logger)
+    agent.unsafe.unknown()
     history = []
     while not history:
         history = logger.get_attr('log_history_error')
     assert 'Unrecognized loopback message' in history[-1]
-    assert 'Unrecognized loopback message' in response
 
 
 def test_agent_stop(nsaddr):

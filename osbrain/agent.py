@@ -388,7 +388,7 @@ class Agent():
         level = LogLevel(level)
         message = '[%s] (%s): %s' % (datetime.utcnow(), self.name, message)
         if self.registered(logger):
-            logger_kind = AgentAddressKind(self.socket[logger].socket_type)
+            logger_kind = AgentAddressKind(self.address[logger].kind)
             assert logger_kind == 'PUB', \
                 'Logger must use publisher-subscriber pattern!'
             self.send(logger, message, topic=level)
@@ -481,6 +481,7 @@ class Agent():
         self.socket[alias] = socket
         self.socket[address] = socket
         self.address[alias] = address
+        self.address[socket] = address
         self.address[address] = address
         if handler is not None:
             self.poller.register(socket, zmq.POLLIN)
@@ -549,7 +550,7 @@ class Agent():
         kind = AgentAddressKind(kind)
         assert not kind.requires_handler() or handler is not None, \
             'This socket requires a handler!'
-        socket = self.context.socket(kind)
+        socket = self.context.socket(kind.zmq())
         transport = transport or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
         serializer = serializer \
             or self.serializer \
@@ -630,7 +631,7 @@ class Agent():
         return client_address
 
     def _connect_new(self, client_address, alias=None, handler=None):
-        socket = self.context.socket(client_address.kind)
+        socket = self.context.socket(client_address.kind.zmq())
         socket.connect('%s://%s' % (client_address.transport,
                                     client_address.address))
         self.register(socket, client_address, alias, handler)
@@ -781,9 +782,9 @@ class Agent():
         for socket in events:
             if events[socket] != zmq.POLLIN:
                 continue
-            self._process_socket_event(socket)
+            self._process_single_event(socket)
 
-    def _process_socket_event(self, socket):
+    def _process_single_event(self, socket):
         """
         Process a socket's event.
 
@@ -793,7 +794,7 @@ class Agent():
             Socket that generated the event.
         """
         serialized = socket.recv()
-        socket_kind = AgentAddressKind(socket.socket_type)
+        socket_kind = AgentAddressKind(self.address[socket].kind)
         if socket_kind == 'SUB':
             self._process_sub_event(socket, serialized)
         else:

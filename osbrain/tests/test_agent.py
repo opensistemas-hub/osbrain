@@ -174,51 +174,30 @@ def test_socket_creation(nsaddr):
     Test ZMQ socket creation.
     """
     a0 = run_agent('a0')
-    a0.bind('REQ', 'alias0')
-    a0.bind('PUB', 'alias1')
-    a0.bind('PUSH', 'alias2')
-    addresses = a0.get_attr('address')
-    assert 'alias0' in addresses
-    assert 'alias1' in addresses
-    assert 'alias2' in addresses
+    addr0 = a0.bind('REQ', 'alias0')
+    addr1 = a0.bind('PUB', 'alias1')
+    addr2 = a0.bind('PUSH', 'alias2')
+    assert a0.addr('alias0') == addr0
+    assert a0.addr('alias1') == addr1
+    assert a0.addr('alias2') == addr2
 
 
-def test_correct_serialization(nsaddr):
+@pytest.mark.parametrize('agent_serial,socket_serial,result', [
+    (None, None, os.getenv('OSBRAIN_DEFAULT_SERIALIZER')),
+    ('raw', None, 'raw'),
+    ('pickle', None, 'pickle'),
+    (None, 'raw', 'raw'),
+    (None, 'json', 'json'),
+    ('pickle', 'json', 'json'),
+])
+def test_correct_serialization(nsaddr, agent_serial, socket_serial, result):
     """
     Test that the right serializer is being used when using the different
     initialization options.
     """
-    # Without specifying a serializer
-    a0 = run_agent('a0')
-    addr0 = a0.bind('PUB', 'alias0')
-    _address = a0.get_attr('address')
-    assert _address[addr0].serializer \
-        == os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
-
-    # Specifying a serializer at Agent level
-    # Test is twice with different serializer to avoid collision with the
-    # environment variable
-    a1 = run_agent('a1', serializer='raw')
-    addr1 = a1.bind('PUB', 'alias1')
-    _address = a1.get_attr('address')
-    assert _address[addr1].serializer == 'raw'
-
-    a2 = run_agent('a2', serializer='pickle')
-    addr2 = a2.bind('PUB', 'alias2')
-    _address = a2.get_attr('address')
-    assert _address[addr2].serializer == 'pickle'
-
-    # Specifying a serializer at Socket level
-    # Test is twice with different serializer to avoid collision with the
-    # environment variable
-    a3 = run_agent('a3')
-    addr3 = a3.bind('PUB', 'alias3', serializer='raw')
-    _address = a3.get_attr('address')
-    assert _address[addr3].serializer == 'raw'
-    a4 = run_agent('a4')
-    addr4 = a4.bind('PUB', 'alias4', serializer='json')
-    _address = a4.get_attr('address')
-    assert _address[addr4].serializer == 'json'
+    agent = run_agent('a0', serializer=agent_serial)
+    addr = agent.bind('PUB', serializer=socket_serial)
+    assert addr.serializer == result
 
 
 def test_reqrep(nsaddr):

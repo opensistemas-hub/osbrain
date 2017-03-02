@@ -59,31 +59,35 @@ def test_transport():
         AgentAddressTransport('foo')
 
 
-def test_kind():
+@pytest.mark.parametrize('string,strtwin,zmqint,zmqtwin,handler', [
+    ('REQ', 'REP', zmq.REQ, zmq.REP, False),
+    ('REP', 'REQ', zmq.REP, zmq.REQ, True),
+    ('PUSH', 'PULL', zmq.PUSH, zmq.PULL, False),
+    ('PULL', 'PUSH', zmq.PULL, zmq.PUSH, True),
+    ('PUB', 'SUB', zmq.PUB, zmq.SUB, False),
+    ('SUB', 'PUB', zmq.SUB, zmq.PUB, True),
+])
+def test_kind(string, strtwin, zmqint, zmqtwin, handler):
     """
     This test aims to cover basic AgentAddressKind operations: initialization,
     equivalence and basic methods.
     """
-    strings = ['REQ', 'REP', 'PUSH', 'PULL', 'PUB', 'SUB']
-    zmqints = [zmq.REQ, zmq.REP, zmq.PUSH, zmq.PULL, zmq.PUB, zmq.SUB]
-    handlers = [False, True, False, True, False, True]
-    strtwins = twin_list(strings)
-    zmqtwins = twin_list(zmqints)
-    configurations = zip(strings, strtwins, zmqints, zmqtwins, handlers)
-    # Make sure there are no missing values
-    assert len(list(configurations)) == len(strings)
+    # Initialization and equivalence
+    kind = AgentAddressKind(string)
+    assert kind == string
+    assert kind == AgentAddressKind(kind)
+    # Basic methods
+    assert kind.zmq() == zmqint
+    assert isinstance(kind.twin(), AgentAddressKind)
+    assert kind.twin() == strtwin
+    assert kind.requires_handler() == handler
 
-    for string, strtwin, zmqint, zmqtwin, handler in configurations:
-        # Initialization and equivalence
-        kind = AgentAddressKind(string)
-        assert kind == zmqint
-        assert kind == string
-        assert kind == AgentAddressKind(zmqint)
-        assert kind == AgentAddressKind(kind)
-        # Basic methods
-        assert isinstance(kind.twin(), AgentAddressKind)
-        assert kind.twin() == strtwin
-        assert kind.requires_handler() == handler
+
+def test_kind_value_error():
+    """
+    Creating an AgentAddressKind with a wrong value should result in an
+    exception being raised.
+    """
     # Value error exceptions
     with pytest.raises(ValueError):
         AgentAddressKind('FOO')

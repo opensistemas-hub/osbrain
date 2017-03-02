@@ -217,14 +217,13 @@ class Agent():
                     (str(method), str(args), str(kwargs))
                 message += format_exception()
                 aux = type(error)(message)
-                self.send('loopback', aux)
+                yield aux
                 raise
-            if not response:
-                return True
-            return response
-        error = 'Unrecognized loopback message: {} {}'.format(header, data)
-        self.log_error(error)
-        return error
+            yield response or True
+        else:
+            error = 'Unrecognized loopback message: {} {}'.format(header, data)
+            self.log_error(error)
+            yield error
 
     def _handle_loopback_safe(self, data):
         """
@@ -239,9 +238,9 @@ class Agent():
                 (str(method), str(args), str(kwargs))
             message += format_exception()
             aux = type(error)(message)
-            self.send('_loopback_safe', aux)
+            yield aux
             raise
-        self.send('_loopback_safe', response)
+        yield response
 
     def safe_call(self, method, *args, **kwargs):
         """
@@ -498,8 +497,6 @@ class Agent():
         handlers : function(s)
             Handler(s) for the socket. This can be a list or a dictionary too.
         """
-        if not isinstance(handlers, (list, dict, tuple)):
-            handlers = [handlers]
         self.handler[socket] = self._curated_handlers(handlers)
 
     def _curated_handlers(self, handlers):
@@ -508,6 +505,7 @@ class Agent():
         if isinstance(handlers, dict):
             return dict((k, self._curate_handler(v))
                         for k, v in handlers.items())
+        return self._curate_handler(handlers)
 
     def _curate_handler(self, handler):
         if isinstance(handler, str):
@@ -794,32 +792,27 @@ class Agent():
             Socket that generated the event.
         """
         serialized = socket.recv()
-        socket_kind = AgentAddressKind(self.address[socket].kind)
+        socket_kind = self.address[socket].kind
         if socket_kind == 'SUB':
             self._process_sub_event(socket, serialized)
         else:
             self._process_nonsub_event(socket_kind, socket, serialized)
 
-    def _process_rep_event(self, socket_kind, socket, handler_return,
-                           serializer):
-        if socket_kind == 'REP' and handler_return is not None:
-            res = next(handler_return)
-
-            msg = serialize_message(res, serializer)
-            socket.send(msg)
+    def _process_rep_event(self, socket, message, handler, serializer):
+        if inspect.isgeneratorfunction(handler):
+            generator = handler(self, message)
+            socket.send(serialize_message(next(generator), serializer))
             try:
-                # Try to get next element.
-                # Ideally, there should be only one yield statement (executed
-                # once) for the early reply. By executing it again, we want to
-                # force the execution of further code after the fast reply.
-                next(handler_return)
+                # By executing `next` again, force the execution of further
+                # code after the `yield`
+                next(generator)
             except StopIteration:
                 pass
-            except Exception as error:
-                msg = 'An exception occured while running! (%s)\n' % error
-                msg += format_exception()
-                self.log_error(msg)
-                raise
+            else:
+                raise ValueError('Reply handler yielded more than once!')
+        else:
+            reply = handler(self, message)
+            socket.send(serialize_message(reply, serializer))
 
     def _process_nonsub_event(self, socket_kind, socket, serialized):
         """
@@ -839,14 +832,12 @@ class Agent():
         message = deserialize_message(message=serialized,
                                       serializer=serializer)
 
-        handlers = self.handler[socket]
-        if not isinstance(handlers, list):
-            handlers = [handlers]
-        for handler in handlers:
-            handler_return = handler(self, message)
+        handler = self.handler[socket]
 
-        self._process_rep_event(socket_kind, socket, handler_return,
-                                serializer)
+        if socket_kind == 'REP':
+            self._process_rep_event(socket, message, handler, serializer)
+        else:
+            handler(self, message)
 
     def _process_sub_message(self, serializer, message):
         """

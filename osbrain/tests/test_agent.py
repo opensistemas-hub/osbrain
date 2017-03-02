@@ -234,22 +234,25 @@ def test_reqrep_early_reply(nsaddr):
     """
     def reply_early_handler(agent, message):
         yield 'Reply early: {}'.format(message)
-        time.sleep(0.5)
-        agent._invented_variable = 5
+        time.sleep(agent.delay)
+        agent.delay = 'ok'
 
+    delay = 1
     a0 = run_agent('a0')
+    a0.set_attr(delay=delay)
     a1 = run_agent('a1')
 
     addr = a0.bind('REP', 'reply', reply_early_handler)
     a1.connect(addr, 'request')
 
+    t0 = time.time()
     response = a1.send_recv('request', 'Working!')
-    a0.set_attr(_invented_variable=None)
+    assert time.time() - t0 < delay / 2.
     assert response == 'Reply early: Working!'
-    assert not a0.get_attr('_invented_variable')
+    assert a0.get_attr('delay') == delay
     # Sleep so that the replier has had time to update
-    time.sleep(1)
-    assert a0.get_attr('_invented_variable') == 5
+    time.sleep(delay)
+    assert a0.get_attr('delay') == 'ok'
 
 
 def test_pushpull(nsaddr):

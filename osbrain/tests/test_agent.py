@@ -47,6 +47,16 @@ def logger_received(logger, log_name, message, timeout=1.):
     return True
 
 
+def test_agent_uuid():
+    """
+    All agent identifiers should be unique strings.
+    """
+    N = 1000
+    bunch = set(Agent().uuid for i in range(N))
+    assert len(bunch) == N
+    assert all(isinstance(identifier, str) for identifier in bunch)
+
+
 def test_early_agent_proxy(nsaddr):
     """
     It must be possible to create a Proxy when the registration of the new

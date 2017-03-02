@@ -162,6 +162,7 @@ class Agent():
         Set to `True` if the agent is running (executing the main loop).
     """
     def __init__(self, name=None, host=None, serializer=None):
+        self.uuid = uuid4().hex
         self.name = name
         self.host = host
         if not self.host:

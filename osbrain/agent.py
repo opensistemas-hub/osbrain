@@ -503,8 +503,7 @@ class Agent():
         if isinstance(handlers, (list, tuple)):
             return [self._curate_handler(h) for h in handlers]
         if isinstance(handlers, dict):
-            return dict((k, self._curate_handler(v))
-                        for k, v in handlers.items())
+            return {k: self._curate_handler(v) for k, v in handlers.items()}
         return self._curate_handler(handlers)
 
     def _curate_handler(self, handler):

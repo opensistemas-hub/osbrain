@@ -162,6 +162,7 @@ class Agent():
         Set to `True` if the agent is running (executing the main loop).
     """
     def __init__(self, name=None, host=None, serializer=None):
+        self.uuid = uuid4().hex
         self.name = name
         self.host = host
         if not self.host:
@@ -216,14 +217,13 @@ class Agent():
                     (str(method), str(args), str(kwargs))
                 message += format_exception()
                 aux = type(error)(message)
-                self.send('loopback', aux)
+                yield aux
                 raise
-            if not response:
-                return True
-            return response
-        error = 'Unrecognized loopback message: {} {}'.format(header, data)
-        self.log_error(error)
-        return error
+            yield response or True
+        else:
+            error = 'Unrecognized loopback message: {} {}'.format(header, data)
+            self.log_error(error)
+            yield error
 
     def _handle_loopback_safe(self, data):
         """
@@ -238,9 +238,9 @@ class Agent():
                 (str(method), str(args), str(kwargs))
             message += format_exception()
             aux = type(error)(message)
-            self.send('_loopback_safe', aux)
+            yield aux
             raise
-        self.send('_loopback_safe', response)
+        yield response
 
     def safe_call(self, method, *args, **kwargs):
         """
@@ -387,7 +387,7 @@ class Agent():
         level = LogLevel(level)
         message = '[%s] (%s): %s' % (datetime.utcnow(), self.name, message)
         if self.registered(logger):
-            logger_kind = AgentAddressKind(self.socket[logger].socket_type)
+            logger_kind = AgentAddressKind(self.address[logger].kind)
             assert logger_kind == 'PUB', \
                 'Logger must use publisher-subscriber pattern!'
             self.send(logger, message, topic=level)
@@ -480,6 +480,7 @@ class Agent():
         self.socket[alias] = socket
         self.socket[address] = socket
         self.address[alias] = address
+        self.address[socket] = address
         self.address[address] = address
         if handler is not None:
             self.poller.register(socket, zmq.POLLIN)
@@ -496,8 +497,6 @@ class Agent():
         handlers : function(s)
             Handler(s) for the socket. This can be a list or a dictionary too.
         """
-        if not isinstance(handlers, (list, dict, tuple)):
-            handlers = [handlers]
         self.handler[socket] = self._curated_handlers(handlers)
 
     def _curated_handlers(self, handlers):
@@ -506,6 +505,7 @@ class Agent():
         if isinstance(handlers, dict):
             return dict((k, self._curate_handler(v))
                         for k, v in handlers.items())
+        return self._curate_handler(handlers)
 
     def _curate_handler(self, handler):
         if isinstance(handler, str):
@@ -548,7 +548,7 @@ class Agent():
         kind = AgentAddressKind(kind)
         assert not kind.requires_handler() or handler is not None, \
             'This socket requires a handler!'
-        socket = self.context.socket(kind)
+        socket = self.context.socket(kind.zmq())
         transport = transport or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
         serializer = serializer \
             or self.serializer \
@@ -629,7 +629,7 @@ class Agent():
         return client_address
 
     def _connect_new(self, client_address, alias=None, handler=None):
-        socket = self.context.socket(client_address.kind)
+        socket = self.context.socket(client_address.kind.zmq())
         socket.connect('%s://%s' % (client_address.transport,
                                     client_address.address))
         self.register(socket, client_address, alias, handler)
@@ -768,69 +768,6 @@ class Agent():
 
         return 0
 
-    def _process_events(self, events):
-        """
-        Process a socket's event.
-
-        Parameters
-        ----------
-        events : dict
-            Events to be processed.
-        """
-        for socket in events:
-            if events[socket] != zmq.POLLIN:
-                continue
-            self._process_socket_event(socket)
-
-    def _process_socket_event(self, socket):
-        """
-        Process a socket's event.
-
-        Parameters
-        ----------
-        socket : zmq.Socket
-            Socket that generated the event.
-        """
-        serialized = socket.recv()
-        socket_kind = AgentAddressKind(socket.socket_type)
-        if socket_kind == 'SUB':
-            self._process_sub_event(socket, serialized)
-        else:
-            self._process_nonsub_event(socket_kind, socket, serialized)
-
-    def _process_rep_event(self, socket_kind, socket, handler_return,
-                           serializer):
-        if socket_kind == 'REP' and handler_return is not None:
-            handler_return = serialize_message(handler_return, serializer)
-            socket.send(handler_return)
-
-    def _process_nonsub_event(self, socket_kind, socket, serialized):
-        """
-        Process a non-SUB socket's event.
-
-        Parameters
-        ----------
-        socket_kind : str
-            The socket kind (i.e.: REP or PULL).
-        socket : zmq.Socket
-            Socket that generated the event.
-        serialized : bytes
-            Data received on the socket.
-        """
-        serializer = self._get_serialization_from_socket(socket)
-
-        message = deserialize_message(message=serialized,
-                                      serializer=serializer)
-
-        handlers = self.handler[socket]
-        if not isinstance(handlers, list):
-            handlers = [handlers]
-        for handler in handlers:
-            handler_return = handler(self, message)
-
-        self._process_rep_event(socket_kind, socket, handler_return,
-                                serializer)
-
     def _process_sub_message(self, serializer, message):
         """
         Return the received message in a PUBSUB communication.
@@ -852,7 +789,89 @@ class Agent():
 
         return deserialize_message(message=message, serializer=serializer)
 
-    def _process_sub_event(self, socket, serialized):
+    def _process_events(self, events):
+        """
+        Process a socket's event.
+
+        Parameters
+        ----------
+        events : dict
+            Events to be processed.
+        """
+        for socket in events:
+            if events[socket] != zmq.POLLIN:
+                continue
+            self._process_single_event(socket)
+
+    def _process_single_event(self, socket):
+        """
+        Process a socket's event.
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket that generated the event.
+        """
+        data = socket.recv()
+        address = self.address[socket]
+        if address.kind == 'SUB':
+            self._process_sub_event(socket, address, data)
+        elif address.kind == 'PULL':
+            self._process_pull_event(socket, address, data)
+        else:
+            self._process_rep_event(socket, address, data)
+
+    def _process_rep_event(self, socket, addr, data):
+        """
+        Process a REP socket's event.
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket that generated the event.
+        addr : AgentAddress
+            AgentAddress associated with the socket that generated the event.
+        data : bytes
+            Data received on the socket.
+        """
+        message = deserialize_message(message=data, serializer=addr.serializer)
+        handler = self.handler[socket]
+        if inspect.isgeneratorfunction(handler):
+            generator = handler(self, message)
+            socket.send(serialize_message(next(generator), addr.serializer))
+            try:
+                # By executing `next` again, force the execution of further
+                # code after the `yield`
+                next(generator)
+            except StopIteration:
+                pass
+            else:
+                raise ValueError('Reply handler yielded more than once!')
+        else:
+            reply = handler(self, message)
+            socket.send(serialize_message(reply, addr.serializer))
+
+    def _process_pull_event(self, socket, addr, data):
+        """
+        Process a PULL socket's event.
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket that generated the event.
+        addr : AgentAddress
+            AgentAddress associated with the socket that generated the event.
+        data : bytes
+            Data received on the socket.
+        """
+        message = deserialize_message(message=data, serializer=addr.serializer)
+        handler = self.handler[socket]
+        if not isinstance(handler, (list, dict, tuple)):
+            handler = [handler]
+        for h in handler:
+            h(self, message)
+
+    def _process_sub_event(self, socket, addr, data):
         """
         Process a SUB socket's event.
 
@@ -860,18 +879,18 @@ class Agent():
         ----------
         socket : zmq.Socket
             Socket that generated the event.
-        serialized : bytes
+        addr : AgentAddress
+            AgentAddress associated with the socket that generated the event.
+        data : bytes
             Data received on the socket.
         """
         handlers = self.handler[socket]
 
-        serializer = self._get_serialization_from_socket(socket)
-
-        message = self._process_sub_message(serializer, serialized)
+        message = self._process_sub_message(addr.serializer, data)
 
         for str_topic in handlers:
             btopic = str2bytes(str_topic)
-            if not serialized.startswith(btopic):
+            if not data.startswith(btopic):
                 continue
             # Call the handler (with or without the topic)
             handler = handlers[str_topic]
@@ -880,31 +899,6 @@ class Agent():
                 handler(self, message)
             elif nparams == 3:
                 handler(self, message, str_topic)
-
-    def _get_serialization_from_socket(self, socket):
-        """
-        Parameters
-        ----------
-        socket : zmq.Socket
-            Socket which we want to know the type of serialization from.
-
-        Return
-        ------
-        AgentAddressSerializer
-            The serializer type for that socket.
-        """
-        agent_address = None
-        for k, v in self.socket.items():
-            if v is socket:
-                agent_address = k
-
-        serializer = None
-        if isinstance(agent_address, str):
-            serializer = self.address[agent_address].serializer
-        else:
-            serializer = agent_address.serializer
-
-        return serializer
 
     def send(self, address, message, topic=''):
         """

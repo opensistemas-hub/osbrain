@@ -95,23 +95,22 @@ class AgentAddressRole(str):
         return self.__class__('server')
 
 
-class AgentAddressKind(int):
+class AgentAddressKind(str):
     """
-    Agent's address kind class. It can be any ZMQ type ('REP', 'PUB'...).
+    Agent's address kind class.
 
-    Inherits from `int` to be compatible with ZMQ definitions, however,
-    it is represented in its string form. The equivalence can also be
-    evaluated against its string form.
+    This kind represents the communication pattern being used by the agent
+    address: REP, PULL, PUB...
     """
-    ZMQ_KIND_TWIN = {
-        zmq.REQ: zmq.REP,
-        zmq.REP: zmq.REQ,
-        zmq.PUSH: zmq.PULL,
-        zmq.PULL: zmq.PUSH,
-        zmq.PUB: zmq.SUB,
-        zmq.SUB: zmq.PUB,
+    TWIN = {
+        'REQ': 'REP',
+        'REP': 'REQ',
+        'PUSH': 'PULL',
+        'PULL': 'PUSH',
+        'PUB': 'SUB',
+        'SUB': 'PUB',
     }
-    ZMQ_STR_CONVERSION = {
+    ZMQ_KIND_CONVERSION = {
         'REQ': zmq.REQ,
         'REP': zmq.REP,
         'PUSH': zmq.PUSH,
@@ -119,32 +118,21 @@ class AgentAddressKind(int):
         'PUB': zmq.PUB,
         'SUB': zmq.SUB
     }
-    keys = list(ZMQ_STR_CONVERSION.keys())
-    for key in keys:
-        ZMQ_STR_CONVERSION[ZMQ_STR_CONVERSION[key]] = key
+    REQUIRE_HANDLER = ('REP', 'PULL', 'SUB')
 
     def __new__(cls, kind):
-        if kind not in cls.ZMQ_STR_CONVERSION:
+        if kind not in cls.TWIN.keys():
             raise ValueError('Invalid address kind "%s"!' % kind)
-        if isinstance(kind, str):
-            kind = cls.ZMQ_STR_CONVERSION[kind]
         return super().__new__(cls, kind)
 
-    def __eq__(self, other):
-        if isinstance(other, int):
-            return int(self) == other
-        if isinstance(other, str):
-            return str(self) == other
-        return False
-
-    def __str__(self):
-        return self.ZMQ_STR_CONVERSION[self]
-
-    def __repr__(self):
-        return str(self)
-
-    def __hash__(self):
-        return hash(int(self))
+    def zmq(self):
+        """
+        Returns
+        -------
+        int
+            The equivalent ZeroMQ socket kind.
+        """
+        return self.ZMQ_KIND_CONVERSION[self]
 
     def requires_handler(self):
         """
@@ -155,9 +143,7 @@ class AgentAddressKind(int):
             A socket which processes incoming messages would require a
             handler (i.e. 'REP', 'PULL', 'SUB'...).
         """
-        if self.ZMQ_STR_CONVERSION[self] in ('REQ', 'PUSH', 'PUB'):
-            return False
-        return True
+        return self in self.REQUIRE_HANDLER
 
     def twin(self):
         """
@@ -168,7 +154,7 @@ class AgentAddressKind(int):
             of `REP` and viceversa, `PUB` would be the twin of `SUB` and
             viceversa, etc.
         """
-        return self.__class__(self.ZMQ_KIND_TWIN[self])
+        return self.__class__(self.TWIN[self])
 
 
 class AgentAddressSerializer(str):

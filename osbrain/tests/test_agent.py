@@ -47,6 +47,16 @@ def logger_received(logger, log_name, message, timeout=1.):
     return True
 
 
+def test_agent_uuid():
+    """
+    All agent identifiers should be unique strings.
+    """
+    N = 1000
+    bunch = set(Agent().uuid for i in range(N))
+    assert len(bunch) == N
+    assert all(isinstance(identifier, str) for identifier in bunch)
+
+
 def test_early_agent_proxy(nsaddr):
     """
     It must be possible to create a Proxy when the registration of the new
@@ -164,51 +174,30 @@ def test_socket_creation(nsaddr):
     Test ZMQ socket creation.
     """
     a0 = run_agent('a0')
-    a0.bind('REQ', 'alias0')
-    a0.bind('PUB', 'alias1')
-    a0.bind('PUSH', 'alias2')
-    addresses = a0.get_attr('address')
-    assert 'alias0' in addresses
-    assert 'alias1' in addresses
-    assert 'alias2' in addresses
+    addr0 = a0.bind('REQ', 'alias0')
+    addr1 = a0.bind('PUB', 'alias1')
+    addr2 = a0.bind('PUSH', 'alias2')
+    assert a0.addr('alias0') == addr0
+    assert a0.addr('alias1') == addr1
+    assert a0.addr('alias2') == addr2
 
 
-def test_correct_serialization(nsaddr):
+@pytest.mark.parametrize('agent_serial,socket_serial,result', [
+    (None, None, os.getenv('OSBRAIN_DEFAULT_SERIALIZER')),
+    ('raw', None, 'raw'),
+    ('pickle', None, 'pickle'),
+    (None, 'raw', 'raw'),
+    (None, 'json', 'json'),
+    ('pickle', 'json', 'json'),
+])
+def test_correct_serialization(nsaddr, agent_serial, socket_serial, result):
     """
     Test that the right serializer is being used when using the different
     initialization options.
     """
-    # Without specifying a serializer
-    a0 = run_agent('a0')
-    addr0 = a0.bind('PUB', 'alias0')
-    _address = a0.get_attr('address')
-    assert _address[addr0].serializer \
-        == os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
-
-    # Specifying a serializer at Agent level
-    # Test is twice with different serializer to avoid collision with the
-    # environment variable
-    a1 = run_agent('a1', serializer='raw')
-    addr1 = a1.bind('PUB', 'alias1')
-    _address = a1.get_attr('address')
-    assert _address[addr1].serializer == 'raw'
-
-    a2 = run_agent('a2', serializer='pickle')
-    addr2 = a2.bind('PUB', 'alias2')
-    _address = a2.get_attr('address')
-    assert _address[addr2].serializer == 'pickle'
-
-    # Specifying a serializer at Socket level
-    # Test is twice with different serializer to avoid collision with the
-    # environment variable
-    a3 = run_agent('a3')
-    addr3 = a3.bind('PUB', 'alias3', serializer='raw')
-    _address = a3.get_attr('address')
-    assert _address[addr3].serializer == 'raw'
-    a4 = run_agent('a4')
-    addr4 = a4.bind('PUB', 'alias4', serializer='json')
-    _address = a4.get_attr('address')
-    assert _address[addr4].serializer == 'json'
+    agent = run_agent('a0', serializer=agent_serial)
+    addr = agent.bind('PUB', serializer=socket_serial)
+    assert addr.serializer == result
 
 
 def test_reqrep(nsaddr):
@@ -236,6 +225,34 @@ def test_reqrep_lambda(nsaddr):
     a1.connect(addr, 'request')
     response = a1.send_recv('request', 'Hello world')
     assert response == 'xHello world'
+
+
+def test_reqrep_early_reply(nsaddr):
+    """
+    Reply early test, in which we want to send a quick response as a reply and
+    keep executing other stuff after that.
+    """
+    def reply_early_handler(agent, message):
+        yield 'Reply early: {}'.format(message)
+        time.sleep(agent.delay)
+        agent.delay = 'ok'
+
+    delay = 1
+    a0 = run_agent('a0')
+    a0.set_attr(delay=delay)
+    a1 = run_agent('a1')
+
+    addr = a0.bind('REP', 'reply', reply_early_handler)
+    a1.connect(addr, 'request')
+
+    t0 = time.time()
+    response = a1.send_recv('request', 'Working!')
+    assert time.time() - t0 < delay / 2.
+    assert response == 'Reply early: Working!'
+    assert a0.get_attr('delay') == delay
+    # Sleep so that the replier has had time to update
+    time.sleep(delay)
+    assert a0.get_attr('delay') == 'ok'
 
 
 def test_pushpull(nsaddr):
@@ -526,21 +543,20 @@ def test_agent_loopback_header_unknown(nsaddr):
     """
     Test an unknown header on loopback handler.
     """
+    class Unknown(Agent):
+        def unknown(self):
+            self._loopback('UNKNOWN_HEADER', 1)
+
     logger = run_logger('logger')
-    agent = run_agent('a0')
+    agent = run_agent('a0', base=Unknown)
     agent.set_logger(logger)
     # Make sure agent and logger are connected
-    while not len(logger.get_attr('log_history_info')):
-        agent.log_info('foo')
-        time.sleep(0.01)
-    agent.set_method(
-        loopback_unknown=lambda a: a._handle_loopback(('UNKNOWN_HEADER', 1)))
-    response = agent.loopback_unknown()
+    sync_agent_logger(agent, logger)
+    agent.unsafe.unknown()
     history = []
     while not history:
         history = logger.get_attr('log_history_error')
     assert 'Unrecognized loopback message' in history[-1]
-    assert 'Unrecognized loopback message' in response
 
 
 def test_agent_stop(nsaddr):

@@ -20,31 +20,12 @@ from osbrain import SocketAddress
 
 from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
+from common import logger_received
+from common import sync_agent_logger
 
 
 def set_received(agent, message, topic=None):
     agent.received = message
-
-
-def sync_agent_logger(agent, logger):
-    while not len(logger.get_attr('log_history_info')):
-        message = str(uuid4())
-        agent.log_info(message)
-        time.sleep(0.01)
-    while message not in logger.get_attr('log_history_info')[-1]:
-        time.sleep(0.01)
-
-
-def logger_received(logger, log_name, message, timeout=1.):
-    t0 = time.time()
-    while True:
-        time.sleep(0.01)
-        log_history = logger.get_attr(log_name)
-        if len(log_history) and message in log_history[-1]:
-            break
-        if timeout and time.time() - t0 > timeout:
-            return False
-    return True
 
 
 def test_agent_uuid():
@@ -198,61 +179,6 @@ def test_correct_serialization(nsaddr, agent_serial, socket_serial, result):
     agent = run_agent('a0', serializer=agent_serial)
     addr = agent.bind('PUB', serializer=socket_serial)
     assert addr.serializer == result
-
-
-def test_reqrep(nsaddr):
-    """
-    Simple request-reply pattern between two agents.
-    """
-    def rep_handler(agent, message):
-        return 'OK'
-
-    a0 = run_agent('a0')
-    a1 = run_agent('a1')
-    addr = a0.bind('REP', 'reply', rep_handler)
-    a1.connect(addr, 'request')
-    response = a1.send_recv('request', 'Hello world')
-    assert response == 'OK'
-
-
-def test_reqrep_lambda(nsaddr):
-    """
-    Simple request-reply pattern between two agents using lambda handler.
-    """
-    a0 = run_agent('a0')
-    a1 = run_agent('a1')
-    addr = a0.bind('REP', 'reply', lambda agent, message: 'x' + message)
-    a1.connect(addr, 'request')
-    response = a1.send_recv('request', 'Hello world')
-    assert response == 'xHello world'
-
-
-def test_reqrep_early_reply(nsaddr):
-    """
-    Reply early test, in which we want to send a quick response as a reply and
-    keep executing other stuff after that.
-    """
-    def reply_early_handler(agent, message):
-        yield 'Reply early: {}'.format(message)
-        time.sleep(agent.delay)
-        agent.delay = 'ok'
-
-    delay = 1
-    a0 = run_agent('a0')
-    a0.set_attr(delay=delay)
-    a1 = run_agent('a1')
-
-    addr = a0.bind('REP', 'reply', reply_early_handler)
-    a1.connect(addr, 'request')
-
-    t0 = time.time()
-    response = a1.send_recv('request', 'Working!')
-    assert time.time() - t0 < delay / 2.
-    assert response == 'Reply early: Working!'
-    assert a0.get_attr('delay') == delay
-    # Sleep so that the replier has had time to update
-    time.sleep(delay)
-    assert a0.get_attr('delay') == 'ok'
 
 
 def test_pushpull(nsaddr):

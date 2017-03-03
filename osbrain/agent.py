@@ -304,7 +304,7 @@ class Agent():
         """
         Stop all currently running timers.
         """
-        for alias in list(self._timer.keys()):
+        for alias in self.list_timers():
             self.stop_timer(alias)
 
     def stop_timer(self, alias):

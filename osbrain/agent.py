@@ -172,6 +172,9 @@ class Agent():
         self.socket = {}
         self.address = {}
         self.handler = {}
+        self._async_req_uuid = {}
+        self._async_req_handler = {}
+        self._async_req_pending = set()
         self._timer = {}
         self.poll_timeout = 1000
         self.keep_alive = True
@@ -640,6 +643,28 @@ class Agent():
         """
         assert server_address.role == 'server', \
             'Incorrect address! A server address must be provided!'
+        # TODO: clean connect() method...
+        if server_address.kind == 'ASYNC_REP':
+            self.connect_async_rep(server_address,
+                                   handler=handler,
+                                   alias=alias)
+            return
+        self._connect_basic(server_address, alias=alias, handler=handler)
+
+    def _connect_basic(self, server_address, alias=None, handler=None):
+        """
+        Connect to a basic ZMQ agent address.
+
+        Parameters
+        ----------
+        server_address : AgentAddress
+            Agent address to connect to.
+        alias : str, default is None
+            Optional alias for the new address.
+        handler, default is None
+            If the new socket receives input messages, the handler/s is/are to
+            be set with this parameter.
+        """
         client_address = server_address.twin()
         assert not client_address.kind.requires_handler() or \
             handler is not None, 'This socket requires a handler!'
@@ -665,6 +690,27 @@ class Agent():
                                     client_address.address))
         self.register(socket, client_address, alias, handler)
         return client_address
+
+    def _handle_async_requests(self, data):
+        address_uuid, uuid, response = data
+        if not uuid in self._async_req_pending:
+            error = 'Received response for an unknown request! %s' % uuid
+            self.log_warning(error)
+            return
+        self._async_req_pending.remove(uuid)
+        self._async_req_handler[address_uuid](self, response)
+
+    def connect_async_rep(self, server_address, handler, alias=None):
+        # Connect PUSH-PULL (asynchronous REQ-REP)
+        self._connect_basic(server_address, alias=alias, handler=None)
+        # Create socket for receiving responses
+        uuid = uuid4().hex
+        addr = self.bind('PULL', alias=uuid, handler=self._handle_async_requests)
+        # TODO: clean-up...
+        self._async_req_uuid[server_address] = uuid
+        self._async_req_uuid[server_address.twin()] = uuid
+        self._async_req_uuid[addr] = uuid
+        self._async_req_handler[uuid] = handler
 
     def subscribe(self, alias, handlers):
         """
@@ -849,6 +895,8 @@ class Agent():
             self._process_sub_event(socket, address, data)
         elif address.kind == 'PULL':
             self._process_pull_event(socket, address, data)
+        elif address.kind == 'ASYNC_REP':
+            self._process_async_rep_event(socket, address, data)
         else:
             self._process_rep_event(socket, address, data)
 
@@ -881,6 +929,45 @@ class Agent():
         else:
             reply = handler(self, message)
             socket.send(serialize_message(reply, addr.serializer))
+
+    def _process_async_rep_event(self, socket, addr, data):
+        """
+        Process a ASYNC_REP socket's event.
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket that generated the event.
+        addr : AgentAddress
+            AgentAddress associated with the socket that generated the event.
+        data : bytes
+            Data received on the socket.
+        """
+        message = deserialize_message(message=data, serializer=addr.serializer)
+        address_uuid, request_uuid, data, address = message
+        client_address = address.twin()
+        if not self.registered(client_address):
+            self.connect(address)
+        handler = self.handler[socket]
+        if inspect.isgeneratorfunction(handler):
+            generator = handler(self, data)
+            reply = next(generator)
+            # TODO: use socket instead of `self` just like in
+            #       `_process_rep_event`?
+            self.send(client_address, (address_uuid, request_uuid, reply))
+            try:
+                # By executing `next` again, force the execution of further
+                # code after the `yield`
+                next(generator)
+            except StopIteration:
+                pass
+            else:
+                raise ValueError('Reply handler yielded more than once!')
+        else:
+            reply = handler(self, data)
+            # TODO: use socket instead of `self` just like in
+            #       `_process_rep_event`?
+            self.send(client_address, (address_uuid, request_uuid, reply))
 
     def _process_pull_event(self, socket, addr, data):
         """
@@ -938,12 +1025,25 @@ class Agent():
         Note that replies in a REQREP pattern do not use this function in
         order to be sent.
         """
-        serializer = self.address[address].serializer
-        message = serialize_message(message=message, serializer=serializer)
-        if self.address[address].kind == 'PUB':
-            message = compose_message(message=message,
-                                      topic=topic,
-                                      serializer=serializer)
+        # TODO: clean-up send() method
+        address = self.address[address]
+        serializer = address.serializer
+        if address.kind == 'ASYNC_REQ':
+            if not serializer == 'pickle':
+                error = 'Complex patterns can only be used with pickle!'
+                raise NotImplementedError(error)
+            address_uuid = self._async_req_uuid[address]
+            request_uuid = uuid4().hex
+            self._async_req_pending.add(request_uuid)
+            receiver_address = self.address[address_uuid]
+            message = (address_uuid, request_uuid, message, receiver_address)
+            message = serialize_message(message=message, serializer=serializer)
+        else:
+            message = serialize_message(message=message, serializer=serializer)
+            if self.address[address].kind == 'PUB':
+                message = compose_message(message=message,
+                                          topic=topic,
+                                          serializer=serializer)
         self.socket[address].send(message)
 
     def recv(self, address):

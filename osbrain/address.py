@@ -109,6 +109,8 @@ class AgentAddressKind(str):
         'PULL': 'PUSH',
         'PUB': 'SUB',
         'SUB': 'PUB',
+        'ASYNC_REP': 'ASYNC_REQ',
+        'ASYNC_REQ': 'ASYNC_REP',
     }
     ZMQ_KIND_CONVERSION = {
         'REQ': zmq.REQ,
@@ -116,9 +118,11 @@ class AgentAddressKind(str):
         'PUSH': zmq.PUSH,
         'PULL': zmq.PULL,
         'PUB': zmq.PUB,
-        'SUB': zmq.SUB
+        'SUB': zmq.SUB,
+        'ASYNC_REP': zmq.PULL,
+        'ASYNC_REQ': zmq.PUSH,
     }
-    REQUIRE_HANDLER = ('REP', 'PULL', 'SUB')
+    REQUIRE_HANDLER = ('REP', 'PULL', 'SUB', 'ASYNC_REP')
 
     def __new__(cls, kind):
         if kind not in cls.TWIN.keys():
@@ -303,3 +307,9 @@ class AgentAddress():
         role = self.role.twin()
         return self.__class__(self.transport, self.address, kind, role,
                               self.serializer)
+
+
+def AgentChannel():
+    # TODO: Complex address. Communication channel with sender and receiver
+    #       in both sides (i.e.: PULL+PUB - PUSH+SUB or PULL+PUSH - PUSH+PULL).
+    pass

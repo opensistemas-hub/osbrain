@@ -25,6 +25,7 @@ from .common import repeat
 from .common import after
 from .address import AgentAddress
 from .address import AgentAddressKind
+from .address import AgentChannel
 from .address import address_to_host_port
 from .address import guess_kind
 from .proxy import Proxy
@@ -628,6 +629,39 @@ class Agent():
             self.subscribe(server_address, handler)
         return server_address
 
+    def _bind_channel(self, kind, alias=None, handler=None, addr=None,
+                      transport=None, serializer=None):
+        """
+        Bind process for channels.
+
+        Parameters
+        ----------
+        kind : str, AgentAddressKind
+            The agent address kind: PUB, REQ...
+        alias : str, default is None
+            Optional alias for the socket.
+        handler, default is None
+            If the socket receives input messages, the handler/s is/are to
+            be set with this parameter.
+        addr : str, default is None
+            The address to bind to.
+        transport : str, AgentAddressTransport, default is None
+            Transport protocol.
+
+        Returns
+        -------
+        AgentChannel
+            The channel where the agent binded to.
+        """
+        if kind == 'ASYNC_REP':
+            socket = self.context.socket(zmq.PULL)
+            addr = self._bind_socket(socket, addr=addr, transport=transport)
+            server_address = AgentAddress(transport, addr, 'PULL', 'server',
+                                          serializer)
+            channel = AgentChannel(kind, server_address, None)
+            self.register(socket, channel, alias, handler)
+            return channel
+
     def _bind_socket(self, socket, addr=None, transport=None):
         """
         Bind a socket using the corresponding transport and address.
@@ -659,13 +693,13 @@ class Agent():
             socket.bind('%s://%s' % (transport, addr))
         return addr
 
-    def connect(self, server_address, alias=None, handler=None):
+    def connect(self, server, alias=None, handler=None):
         """
         Connect to a server agent address.
 
         Parameters
         ----------
-        server_address : AgentAddress
+        server : AgentAddress
             Agent address to connect to.
         alias : str, default is None
             Optional alias for the new address.
@@ -673,17 +707,12 @@ class Agent():
             If the new socket receives input messages, the handler/s is/are to
             be set with this parameter.
         """
-        assert server_address.role == 'server', \
-            'Incorrect address! A server address must be provided!'
-        # TODO: clean connect() method...
-        if server_address.kind == 'ASYNC_REP':
-            self.connect_async_rep(server_address,
-                                   handler=handler,
-                                   alias=alias)
-            return
-        self._connect_basic(server_address, alias=alias, handler=handler)
+        if isinstance(server, AgentAddress):
+            return self._connect_address(server, alias=alias, handler=handler)
+        else:
+            return self._connect_channel(server, alias=alias, handler=handler)
 
-    def _connect_basic(self, server_address, alias=None, handler=None):
+    def _connect_address(self, server_address, alias=None, handler=None):
         """
         Connect to a basic ZMQ agent address.
 
@@ -697,17 +726,57 @@ class Agent():
             If the new socket receives input messages, the handler/s is/are to
             be set with this parameter.
         """
+        assert server_address.role == 'server', \
+            'Incorrect address! A server address must be provided!'
         client_address = server_address.twin()
         assert not client_address.kind.requires_handler() or \
             handler is not None, 'This socket requires a handler!'
         if self.registered(client_address):
             self._connect_old(client_address, alias, handler)
         else:
-            self._connect_new(client_address, alias, handler)
+            self._connect_and_register(client_address, alias, handler)
         if client_address.kind == 'SUB':
             if not alias:
                 alias = client_address
             self.subscribe(alias, handler)
+
+    def _connect_channel(self, channel, alias=None, handler=None):
+        """
+        Connect to a server agent channel.
+
+        Parameters
+        ----------
+        channel : AgentChannel
+            Agent channel to connect to.
+        alias : str, default is None
+            Optional alias for the new channel.
+        handler, default is None
+            If the new socket receives input messages, the handler/s is/are to
+            be set with this parameter.
+        """
+        if channel.kind == 'ASYNC_REP':
+            self._connect_channel_async_rep(channel,
+                                            handler=handler,
+                                            alias=alias)
+
+    def _connect_channel_async_rep(self, channel, handler, alias=None):
+        # TODO: clean-up method...
+        # Connect PUSH-PULL (asynchronous REQ-REP)
+        server_address = channel.address0
+        self._connect_address(server_address, alias=alias, handler=None)
+        if self.registered(channel):
+            error = 'Tried to connect to a connected channel'
+            raise NotImplementedError(error)
+        self._connect_and_register(server_address.twin(), alias=alias,
+                                   register_as=channel)
+        # Create socket for receiving responses
+        uuid = uuid4().hex
+        addr = self.bind('PULL', alias=uuid,
+                         handler=self._handle_async_requests)
+        self._async_req_uuid[server_address] = uuid
+        self._async_req_uuid[server_address.twin()] = uuid
+        self._async_req_uuid[addr] = uuid
+        self._async_req_handler[uuid] = handler
 
     def _connect_old(self, client_address, alias=None, handler=None):
         if handler is not None:
@@ -716,11 +785,14 @@ class Agent():
         self.address[alias] = client_address
         return client_address
 
-    def _connect_new(self, client_address, alias=None, handler=None):
+    def _connect_and_register(self, client_address, alias=None, handler=None,
+                              register_as=None):
+        if not register_as:
+            register_as = client_address
         socket = self.context.socket(client_address.kind.zmq())
         socket.connect('%s://%s' % (client_address.transport,
                                     client_address.address))
-        self.register(socket, client_address, alias, handler)
+        self.register(socket, register_as, alias, handler)
         return client_address
 
     def _handle_async_requests(self, data):
@@ -731,19 +803,6 @@ class Agent():
             return
         self._async_req_pending.remove(uuid)
         self._async_req_handler[address_uuid](self, response)
-
-    def connect_async_rep(self, server_address, handler, alias=None):
-        # Connect PUSH-PULL (asynchronous REQ-REP)
-        self._connect_basic(server_address, alias=alias, handler=None)
-        # Create socket for receiving responses
-        uuid = uuid4().hex
-        addr = self.bind('PULL', alias=uuid,
-                         handler=self._handle_async_requests)
-        # TODO: clean-up...
-        self._async_req_uuid[server_address] = uuid
-        self._async_req_uuid[server_address.twin()] = uuid
-        self._async_req_uuid[addr] = uuid
-        self._async_req_handler[uuid] = handler
 
     def subscribe(self, alias, handlers):
         """
@@ -963,7 +1022,7 @@ class Agent():
             reply = handler(self, message)
             socket.send(serialize_message(reply, addr.serializer))
 
-    def _process_async_rep_event(self, socket, addr, data):
+    def _process_async_rep_event(self, socket, channel, data):
         """
         Process a ASYNC_REP socket's event.
 
@@ -971,11 +1030,12 @@ class Agent():
         ----------
         socket : zmq.Socket
             Socket that generated the event.
-        addr : AgentAddress
-            AgentAddress associated with the socket that generated the event.
+        channel : AgentChannel
+            AgentChannel associated with the socket that generated the event.
         data : bytes
             Data received on the socket.
         """
+        addr = channel.address0
         message = deserialize_message(message=data, serializer=addr.serializer)
         address_uuid, request_uuid, data, address = message
         client_address = address.twin()
@@ -1060,24 +1120,31 @@ class Agent():
         """
         # TODO: clean-up send() method
         address = self.address[address]
-        serializer = address.serializer
-        if address.kind == 'ASYNC_REQ':
-            if not serializer == 'pickle':
-                error = 'Complex patterns can only be used with pickle!'
-                raise NotImplementedError(error)
-            address_uuid = self._async_req_uuid[address]
-            request_uuid = uuid4().hex
-            self._async_req_pending.add(request_uuid)
-            receiver_address = self.address[address_uuid]
-            message = (address_uuid, request_uuid, message, receiver_address)
-            message = serialize_message(message=message, serializer=serializer)
+        if isinstance(address, AgentChannel):
+            self._send_channel(channel=address, message=message, topic=topic)
         else:
+            assert isinstance(address, AgentAddress)
+            serializer = address.serializer
             message = serialize_message(message=message, serializer=serializer)
             if self.address[address].kind == 'PUB':
                 message = compose_message(message=message,
                                           topic=topic,
                                           serializer=serializer)
-        self.socket[address].send(message)
+            self.socket[address].send(message)
+
+    def _send_channel(self, channel, message, topic=''):
+        address = channel.address0
+        serializer = address.serializer
+        if not serializer == 'pickle':
+            error = 'Complex patterns can only be used with pickle!'
+            raise NotImplementedError(error)
+        address_uuid = self._async_req_uuid[address]
+        request_uuid = uuid4().hex
+        self._async_req_pending.add(request_uuid)
+        receiver_address = self.address[address_uuid]
+        message = (address_uuid, request_uuid, message, receiver_address)
+        message = serialize_message(message=message, serializer=serializer)
+        self.socket[channel].send(message)
 
     def recv(self, address):
         """

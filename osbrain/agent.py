@@ -26,6 +26,7 @@ from .common import after
 from .address import AgentAddress
 from .address import AgentAddressKind
 from .address import address_to_host_port
+from .address import guess_kind
 from .proxy import Proxy
 from .proxy import NSProxy
 
@@ -579,14 +580,45 @@ class Agent():
         AgentAddress
             The address where the agent binded to.
         """
-        kind = AgentAddressKind(kind)
-        assert not kind.requires_handler() or handler is not None, \
-            'This socket requires a handler!'
-        socket = self.context.socket(kind.zmq())
+        kind = guess_kind(kind)
         transport = transport or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
         serializer = serializer \
             or self.serializer \
             or os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
+        if isinstance(kind, AgentAddressKind):
+            return self._bind_address(kind, alias, handler, addr, transport,
+                                      serializer)
+        else:
+            return self._bind_channel(kind, alias, handler, addr, transport,
+                                      serializer)
+
+    def _bind_address(self, kind, alias=None, handler=None, addr=None,
+                      transport=None, serializer=None):
+        """
+        Bind to an agent address.
+
+        Parameters
+        ----------
+        kind : str, AgentAddressKind
+            The agent address kind: PUB, REQ...
+        alias : str, default is None
+            Optional alias for the socket.
+        handler, default is None
+            If the socket receives input messages, the handler/s is/are to
+            be set with this parameter.
+        addr : str, default is None
+            The address to bind to.
+        transport : str, AgentAddressTransport, default is None
+            Transport protocol.
+
+        Returns
+        -------
+        AgentAddress
+            The address where the agent binded to.
+        """
+        assert not kind.requires_handler() or handler is not None, \
+            'This socket requires a handler!'
+        socket = self.context.socket(kind.zmq())
         addr = self._bind_socket(socket, addr=addr, transport=transport)
         server_address = AgentAddress(transport, addr, kind, 'server',
                                       serializer)
@@ -693,7 +725,7 @@ class Agent():
 
     def _handle_async_requests(self, data):
         address_uuid, uuid, response = data
-        if not uuid in self._async_req_pending:
+        if uuid not in self._async_req_pending:
             error = 'Received response for an unknown request! %s' % uuid
             self.log_warning(error)
             return
@@ -705,7 +737,8 @@ class Agent():
         self._connect_basic(server_address, alias=alias, handler=None)
         # Create socket for receiving responses
         uuid = uuid4().hex
-        addr = self.bind('PULL', alias=uuid, handler=self._handle_async_requests)
+        addr = self.bind('PULL', alias=uuid,
+                         handler=self._handle_async_requests)
         # TODO: clean-up...
         self._async_req_uuid[server_address] = uuid
         self._async_req_uuid[server_address.twin()] = uuid

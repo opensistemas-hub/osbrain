@@ -63,6 +63,26 @@ def _common_address_to_host_port(addr):
     raise TypeError('Unsupported address type "%s"!' % type(addr))
 
 
+def guess_kind(kind):
+    """
+    Guess if a kind string is an AgentAddressKind or AgentChannelKind.
+
+    Parameters
+    ----------
+    kind : str
+        The AgentAddressKind or AgentChannelKind in string format.
+
+    Returns
+    ----------
+    AgentAddressKind or AgentChannelKind
+        The actual kind type.
+    """
+    try:
+        return AgentAddressKind(kind)
+    except ValueError:
+        return AgentChannelKind(kind)
+
+
 class AgentAddressTransport(str):
     """
     Agent's address transport class. It can be 'tcp', 'ipc' or 'inproc'.
@@ -109,8 +129,6 @@ class AgentAddressKind(str):
         'PULL': 'PUSH',
         'PUB': 'SUB',
         'SUB': 'PUB',
-        'ASYNC_REP': 'ASYNC_REQ',
-        'ASYNC_REQ': 'ASYNC_REP',
     }
     ZMQ_KIND_CONVERSION = {
         'REQ': zmq.REQ,
@@ -119,10 +137,8 @@ class AgentAddressKind(str):
         'PULL': zmq.PULL,
         'PUB': zmq.PUB,
         'SUB': zmq.SUB,
-        'ASYNC_REP': zmq.PULL,
-        'ASYNC_REQ': zmq.PUSH,
     }
-    REQUIRE_HANDLER = ('REP', 'PULL', 'SUB', 'ASYNC_REP')
+    REQUIRE_HANDLER = ('REP', 'PULL', 'SUB')
 
     def __new__(cls, kind):
         if kind not in cls.TWIN.keys():
@@ -239,7 +255,7 @@ class AgentAddress():
     ----------
     transport : str, AgentAddressTransport
         Agent transport protocol.
-    addr : str
+    address : str
         Agent address.
     kind : str, AgentAddressKind
         Agent kind.
@@ -250,7 +266,9 @@ class AgentAddress():
 
     Attributes
     ----------
-    addr : int
+    transport : str, AgentAddressTransport
+        Agent transport protocol.
+    address : int
         Agent address.
     kind : AgentAddressKind
         Agent kind.
@@ -282,7 +300,7 @@ class AgentAddress():
 
     def __hash__(self):
         return hash(self.transport) ^ hash(self.address) ^ \
-            hash(self.kind) ^ hash(self.role)
+            hash(self.kind) ^ hash(self.role) ^ hash(self.serializer)
 
     def __eq__(self, other):
         if not isinstance(other, AgentAddress):
@@ -309,7 +327,107 @@ class AgentAddress():
                               self.serializer)
 
 
-def AgentChannel():
-    # TODO: Complex address. Communication channel with sender and receiver
-    #       in both sides (i.e.: PULL+PUB - PUSH+SUB or PULL+PUSH - PUSH+PULL).
-    pass
+class AgentChannelKind(str):
+    """
+    Agent's channel kind class.
+
+    This kind represents the communication pattern being used by the agent
+    channel: ASYNC_REP, STREAM...
+    """
+    TWIN = {
+        'ASYNC_REP': 'ASYNC_REQ',
+        'ASYNC_REQ': 'ASYNC_REP',
+        'SYNC_PUB': 'SYNC_SUB',
+        'SYNC_SUB': 'SYNC_PUB',
+    }
+
+    def __new__(cls, kind):
+        if kind not in cls.TWIN.keys():
+            raise ValueError('Invalid channel kind "%s"!' % kind)
+        return super().__new__(cls, kind)
+
+    def requires_handler(self):
+        """
+        Returns
+        -------
+        bool
+            Whether the Agent's channel kind requires a handler or not.
+            A socket which processes incoming messages would require a
+            handler (i.e. 'REP', 'PULL', 'SUB'...).
+        """
+        return self in self.REQUIRE_HANDLER
+
+    def twin(self):
+        """
+        Returns
+        -------
+        AgentChannelKind
+            The twin kind of the current one; `REQ` would be the twin
+            of `REP` and viceversa, `PUB` would be the twin of `SUB` and
+            viceversa, etc.
+        """
+        return self.__class__(self.TWIN[self])
+
+
+class AgentChannel():
+    """
+    Agent channel information.
+
+    Channels are communication means with sender and receiver in both sides
+    (i.e.: PULL+PUB - PUSH-SUB or PULL+PUSH - PUSH+PULL).
+
+    Parameters
+    ----------
+    kind : AgentChannelKind
+        Agent kind.
+    address0 : str
+        First AgentAddress.
+    address1 : str
+        Second AgentAddress.
+
+    Attributes
+    ----------
+    kind : AgentChannelKind
+        Agent kind.
+    address0 : str
+        First AgentAddress.
+    address1 : str
+        Second AgentAddress.
+    """
+    def __init__(self, kind, address0, address1):
+        self.kind = AgentChannelKind(kind)
+        self.address0 = address0
+        self.address1 = address1
+
+    def __repr__(self):
+        """
+        Return the string representation of the AgentChannel.
+
+        Returns
+        -------
+        representation : str
+        """
+        return 'AgentChannel(%s, %s, %s)' % \
+            (self.kind, self.address0, self.address1)
+
+    def __hash__(self):
+        return hash(self.kind) ^ hash(self.address0) ^ hash(self.address1)
+
+    def __eq__(self, other):
+        if not isinstance(other, AgentChannel):
+            return False
+        return self.kind == other.kind \
+            and self.address0 == other.address0 \
+            and self.address1 == other.address1
+
+    def twin(self):
+        """
+        Returns
+        -------
+        AgentChannel
+            The twin channel of the current one.
+        """
+        kind = self.kind.twin()
+        addr0 = self.address0.twin() if self.address0 is not None else None
+        addr1 = self.address1.twin() if self.address1 is not None else None
+        return self.__class__(kind, addr0, addr1)

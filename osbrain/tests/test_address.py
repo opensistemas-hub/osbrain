@@ -7,12 +7,15 @@ import zmq
 import pytest
 
 from osbrain.address import address_to_host_port
+from osbrain.address import guess_kind
 from osbrain.address import SocketAddress
 from osbrain.address import AgentAddress
 from osbrain.address import AgentAddressKind
 from osbrain.address import AgentAddressRole
 from osbrain.address import AgentAddressTransport
 from osbrain.address import AgentAddressSerializer
+from osbrain.address import AgentChannel
+from osbrain.address import AgentChannelKind
 
 
 def twin_list(elements):
@@ -45,6 +48,22 @@ def test_valid_address_to_host_port(address, host, port):
     Test conversion of an address to its corresponding host+port tuple.
     """
     assert address_to_host_port(address) == (host, port)
+
+
+@pytest.mark.parametrize('kind,cls', [
+    ('PUB', AgentAddressKind),
+    ('REQ', AgentAddressKind),
+    ('PUSH', AgentAddressKind),
+    ('ASYNC_REP', AgentChannelKind),
+    ('SYNC_PUB', AgentChannelKind),
+])
+def test_guess_kind(kind, cls):
+    """
+    Test guessing address/channel kind.
+    """
+    guessed = guess_kind(kind)
+    assert guessed == kind
+    assert isinstance(guessed, cls)
 
 
 def test_transport():
@@ -188,3 +207,49 @@ def test_agent_address_to_host_port():
     """
     address = AgentAddress('tcp', '127.0.0.1:1234', 'PUSH', 'server', 'pickle')
     assert address_to_host_port(address) == ('127.0.0.1', 1234)
+
+
+@pytest.mark.parametrize('string,string_twin', [
+    ('ASYNC_REQ', 'ASYNC_REP'),
+    ('ASYNC_REP', 'ASYNC_REQ'),
+    ('SYNC_PUB', 'SYNC_SUB'),
+    ('SYNC_SUB', 'SYNC_PUB'),
+])
+def test_agentchannelkind(string, string_twin):
+    """
+    This test aims to cover basic AgentChannelKind operations: initialization,
+    equivalence and basic methods.
+    """
+    # Initialization and equivalence
+    kind = AgentChannelKind(string)
+    assert kind == string
+    assert kind == AgentChannelKind(kind)
+    # Basic methods
+    assert isinstance(kind.twin(), AgentChannelKind)
+    assert kind.twin() == string_twin
+
+
+def test_agentchannelkind_value_error():
+    """
+    Creating an AgentChannelKind with a wrong value should result in an
+    exception being raised.
+    """
+    # Value error exceptions
+    with pytest.raises(ValueError):
+        AgentChannelKind('FOO')
+
+
+def test_agentchannel():
+    """
+    Test basic AgentChannel operations: initialization, equivalence and
+    basic methods.
+    """
+    address0 = AgentAddress('ipc', 'addr0', 'PULL', 'server', 'pickle')
+    address1 = None
+    channel = AgentChannel('ASYNC_REP', address0, address1)
+    # Equivalence
+    assert channel == AgentChannel('ASYNC_REP', address0, address1)
+    assert not channel == 'foo'
+    assert channel != 'foo'
+    # Basic methods
+    assert channel.twin() == AgentChannel('ASYNC_REQ', address0.twin(), None)

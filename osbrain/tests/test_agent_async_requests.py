@@ -68,7 +68,6 @@ def test_return(nsproxy):
     assert server.get_attr('received') == ['foo', 'bar']
     assert client.get_attr('received') == ['xfoo']
     time.sleep(1)
-    received = client.get_attr('received')
     assert server.get_attr('received') == ['foo', 'bar']
     assert client.get_attr('received') == ['xfoo', 'xbar']
 
@@ -110,7 +109,6 @@ def test_yield(nsproxy):
     assert server.get_attr('received') == ['foo', 'foo', 'bar']
     assert client.get_attr('received') == ['xfoo']
     time.sleep(1)
-    received = client.get_attr('received')
     assert server.get_attr('received') == ['foo', 'foo', 'bar', 'bar']
     assert client.get_attr('received') == ['xfoo', 'xbar']
 

@@ -4,8 +4,11 @@ Test file for asynchronous requests.
 import time
 
 from osbrain import run_agent
+from osbrain import run_logger
 
 from common import nsproxy  # pragma: no flakes
+from common import sync_agent_logger
+from common import logger_received
 
 
 def test_return(nsproxy):
@@ -90,14 +93,76 @@ def test_yield(nsproxy):
 
 
 def test_wait(nsproxy):
-    # TODO
-    # client.send('async', 'Hello world!', wait=3)
-    pass
+    """
+    Asynchronous request-reply pattern maximum wait.
+    """
+    def late_reply(agent, delay):
+        agent.received.append(delay)
+        time.sleep(delay)
+        return 'x' + str(delay)
+
+    def receive(agent, response):
+        agent.received.append(response)
+
+    server = run_agent('server')
+    client = run_agent('client')
+    logger = run_logger('logger')
+    server.set_attr(received=[])
+    client.set_attr(received=[])
+    client.set_logger(logger)
+    sync_agent_logger(client, logger)
+
+    addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
+    client.connect(addr, alias='async', handler=receive)
+
+    # Response received in time
+    client.send('async', 1, wait=2)
+    time.sleep(1.1)
+    assert server.get_attr('received') == [1]
+    assert client.get_attr('received') == ['x1']
+
+    # Response not received in time
+    client.send('async', 2, wait=1)
+    assert logger_received(logger,
+                           log_name='log_history_warning',
+                           message='not receive req',
+                           timeout=1.1)
+    assert server.get_attr('received') == [1, 2]
+    assert client.get_attr('received') == ['x1']
 
 
 def test_wait_on_error(nsproxy):
+    """
+    Asynchronous request-reply pattern maximum wait with an error handler.
+    """
     def on_error(agent):
-        pass
-    # TODO
-    # client.send('async', 'Hello world!', wait=3, on_error=on_error)
-    pass
+        agent.error_count += 1
+
+    def late_reply(agent, delay):
+        agent.received.append(delay)
+        time.sleep(delay)
+        return 'x' + str(delay)
+
+    def receive(agent, response):
+        agent.received.append(response)
+
+    server = run_agent('server')
+    client = run_agent('client')
+    server.set_attr(received=[])
+    client.set_attr(received=[])
+    client.set_attr(error_count=0)
+
+    addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
+    client.connect(addr, alias='async', handler=receive)
+
+    # Response received in time
+    client.send('async', 1, wait=2)
+    time.sleep(1.1)
+    assert server.get_attr('received') == [1]
+    assert client.get_attr('received') == ['x1']
+
+    # Response not received in time
+    client.send('async', 2, wait=1, on_error=on_error)
+    time.sleep(1.1)
+    assert client.get_attr('error_count') == 1
+    assert client.get_attr('received') == ['x1']

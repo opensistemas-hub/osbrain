@@ -176,7 +176,7 @@ class Agent():
         self.handler = {}
         self._async_req_uuid = {}
         self._async_req_handler = {}
-        self._async_req_pending = set()
+        self._pending_requests = set()
         self._timer = {}
         self.poll_timeout = 1000
         self.keep_alive = True
@@ -212,7 +212,7 @@ class Agent():
         """
         Handle incoming messages in the loopback socket.
         """
-        header, data = message
+        header, data = dill.loads(message)
         if header == 'EXECUTE_METHOD':
             method, args, kwargs = data
             try:
@@ -371,9 +371,10 @@ class Agent():
         """
         if not self.running:
             raise NotImplementedError()
+        data = dill.dumps((header, data))
         loopback = self.context.socket(zmq.REQ)
         loopback.connect('inproc://loopback')
-        loopback.send_pyobj((header, data))
+        loopback.send_pyobj(data)
         response = loopback.recv_pyobj()
         loopback.close()
         return response
@@ -797,11 +798,11 @@ class Agent():
 
     def _handle_async_requests(self, data):
         address_uuid, uuid, response = data
-        if uuid not in self._async_req_pending:
+        if uuid not in self._pending_requests:
             error = 'Received response for an unknown request! %s' % uuid
             self.log_warning(error)
             return
-        self._async_req_pending.remove(uuid)
+        self._pending_requests.remove(uuid)
         self._async_req_handler[address_uuid](self, response)
 
     def subscribe(self, alias, handlers):
@@ -1111,7 +1112,7 @@ class Agent():
             elif nparams == 3:
                 handler(self, message, str_topic)
 
-    def send(self, address, message, topic=''):
+    def send(self, address, message, topic='', wait=None, on_error=None):
         """
         Send a message through the specified address.
 
@@ -1121,7 +1122,8 @@ class Agent():
         # TODO: clean-up send() method
         address = self.address[address]
         if isinstance(address, AgentChannel):
-            self._send_channel(channel=address, message=message, topic=topic)
+            self._send_channel(channel=address, message=message, topic=topic,
+                               wait=wait, on_error=on_error)
         else:
             assert isinstance(address, AgentAddress)
             serializer = address.serializer
@@ -1132,7 +1134,7 @@ class Agent():
                                           serializer=serializer)
             self.socket[address].send(message)
 
-    def _send_channel(self, channel, message, topic=''):
+    def _send_channel(self, channel, message, topic, wait, on_error):
         address = channel.address0
         serializer = address.serializer
         if not serializer == 'pickle':
@@ -1140,11 +1142,23 @@ class Agent():
             raise NotImplementedError(error)
         address_uuid = self._async_req_uuid[address]
         request_uuid = uuid4().hex
-        self._async_req_pending.add(request_uuid)
+        self._pending_requests.add(request_uuid)
         receiver_address = self.address[address_uuid]
         message = (address_uuid, request_uuid, message, receiver_address)
         message = serialize_message(message=message, serializer=serializer)
         self.socket[channel].send(message)
+        if wait:
+            self.after(wait, '_check_received', request_uuid, wait, on_error)
+
+    def _check_received(self, uuid, wait, on_error):
+        if uuid not in self._pending_requests:
+            return
+        if not on_error:
+            warning = 'Did not receive request {} after {} seconds'.format(
+                uuid, wait)
+            self.log_warning(warning)
+            return
+        on_error(self)
 
     def recv(self, address):
         """

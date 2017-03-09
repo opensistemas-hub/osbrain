@@ -346,17 +346,6 @@ class AgentChannelKind(str):
             raise ValueError('Invalid channel kind "%s"!' % kind)
         return super().__new__(cls, kind)
 
-    def requires_handler(self):
-        """
-        Returns
-        -------
-        bool
-            Whether the Agent's channel kind requires a handler or not.
-            A socket which processes incoming messages would require a
-            handler (i.e. 'REP', 'PULL', 'SUB'...).
-        """
-        return self in self.REQUIRE_HANDLER
-
     def twin(self):
         """
         Returns

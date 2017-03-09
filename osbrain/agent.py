@@ -125,6 +125,31 @@ def compose_message(message, topic, serializer):
     return topic + message
 
 
+def execute_code_after_yield(generator):
+    """
+    Some responses are dispatched with yield (generator handler). In those
+    cases we still want to execute the remaining code in the generator, and
+    also make sure it does not yield any more.
+
+    Parameter
+    ---------
+    generator
+        The handler that already yielded one result and is not expected to
+        yield again.
+
+    Raises
+    ------
+    ValueError
+        If the generator yielded once more, which is unexpected.
+    """
+    try:
+        next(generator)
+    except StopIteration:
+        pass
+    else:
+        raise ValueError('Reply handler yielded more than once!')
+
+
 class Agent():
     """
     A base agent class which is to be served by an AgentProcess.
@@ -662,6 +687,8 @@ class Agent():
             channel = AgentChannel(kind, server_address, None)
             self.register(socket, channel, alias, handler)
             return channel
+        else:
+            raise NotImplementedError('Unsupported channel kind!')
 
     def _bind_socket(self, socket, addr=None, transport=None):
         """
@@ -759,6 +786,8 @@ class Agent():
             self._connect_channel_async_rep(channel,
                                             handler=handler,
                                             alias=alias)
+        else:
+            raise NotImplementedError('Unsupported channel kind!')
 
     def _connect_channel_async_rep(self, channel, handler, alias=None):
         # TODO: clean-up method...
@@ -766,8 +795,7 @@ class Agent():
         server_address = channel.address0
         self._connect_address(server_address, alias=alias, handler=None)
         if self.registered(channel):
-            error = 'Tried to connect to a connected channel'
-            raise NotImplementedError(error)
+            raise NotImplementedError('Tried to (re)connect a channel')
         self._connect_and_register(server_address.twin(), alias=alias,
                                    register_as=channel)
         # Create socket for receiving responses
@@ -1011,14 +1039,7 @@ class Agent():
         if inspect.isgeneratorfunction(handler):
             generator = handler(self, message)
             socket.send(serialize_message(next(generator), addr.serializer))
-            try:
-                # By executing `next` again, force the execution of further
-                # code after the `yield`
-                next(generator)
-            except StopIteration:
-                pass
-            else:
-                raise ValueError('Reply handler yielded more than once!')
+            execute_code_after_yield(generator)
         else:
             reply = handler(self, message)
             socket.send(serialize_message(reply, addr.serializer))
@@ -1046,17 +1067,8 @@ class Agent():
         if inspect.isgeneratorfunction(handler):
             generator = handler(self, data)
             reply = next(generator)
-            # TODO: use socket instead of `self` just like in
-            #       `_process_rep_event`?
             self.send(client_address, (address_uuid, request_uuid, reply))
-            try:
-                # By executing `next` again, force the execution of further
-                # code after the `yield`
-                next(generator)
-            except StopIteration:
-                pass
-            else:
-                raise ValueError('Reply handler yielded more than once!')
+            execute_code_after_yield(generator)
         else:
             reply = handler(self, data)
             # TODO: use socket instead of `self` just like in
@@ -1138,8 +1150,7 @@ class Agent():
         address = channel.address0
         serializer = address.serializer
         if not serializer == 'pickle':
-            error = 'Complex patterns can only be used with pickle!'
-            raise NotImplementedError(error)
+            raise NotImplementedError('Channels need high-level serializers!')
         address_uuid = self._async_req_uuid[address]
         request_uuid = uuid4().hex
         self._pending_requests.add(request_uuid)

@@ -92,6 +92,41 @@ def test_yield(nsproxy):
     assert client.get_attr('received') == ['xfoo', 'xbar']
 
 
+def test_unknown(nsproxy):
+    """
+    When receiving a response for an unknow request (or an already processed
+    request), a warning should be logged and handler should not be executed.
+    """
+    def late_reply(agent, request):
+        agent.received.append(request)
+        time.sleep(1)
+        return 'x' + request
+
+    def receive(agent, response):
+        agent.received.append(response)
+
+    server = run_agent('server')
+    client = run_agent('client')
+    logger = run_logger('logger')
+    server.set_attr(received=[])
+    client.set_attr(received=[])
+    client.set_logger(logger)
+    sync_agent_logger(client, logger)
+
+    addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
+    client.connect(addr, alias='async', handler=receive)
+    client.send('async', 'foo')
+
+    # Manually remove the pending request before it is received
+    client.set_attr(_pending_requests={})
+    time.sleep(1.1)
+    assert server.get_attr('received') == ['foo']
+    assert client.get_attr('received') == []
+    assert logger_received(logger,
+                           log_name='log_history_warning',
+                           message='Received response for an unknown request!')
+
+
 def test_wait(nsproxy):
     """
     Asynchronous request-reply pattern maximum wait.

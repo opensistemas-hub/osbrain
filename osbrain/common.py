@@ -77,6 +77,41 @@ def repeat(interval, action, *args):
             delay = interval - (time.time() - starttime)
             if event.wait(delay):
                 break
+
     Thread(target=loop).start()
     event.stop = event.set
+
+    return event
+
+
+def after(delay, action, *args):
+    """
+    Execute an action after a given number of seconds.
+
+    This function is executed in a separate thread.
+
+    Parameters
+    ----------
+    delay : float
+        Number of seconds to delay the action.
+    action
+        To be taken after the interval.
+    args : tuple, default is ()
+        Arguments for the action.
+
+    Returns
+    -------
+    Event
+        A timer object that can be terminated using the `stop()` method.
+    """
+    event = Event()
+
+    def wait():
+        if event.wait(delay):
+            return
+        action(*args)
+
+    Thread(target=wait).start()
+    event.stop = event.set
+
     return event

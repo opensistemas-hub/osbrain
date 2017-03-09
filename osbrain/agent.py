@@ -22,6 +22,7 @@ from .common import format_exception
 from .common import unbound_method
 from .common import LogLevel
 from .common import repeat
+from .common import after
 from .address import AgentAddress
 from .address import AgentAddressKind
 from .address import address_to_host_port
@@ -295,6 +296,37 @@ class Agent():
             method = self.set_method(method)
         timer = repeat(period, self._loopback,
                        'EXECUTE_METHOD', (method, args, kwargs))
+        if not alias:
+            alias = uuid4().hex
+        self._timer[alias] = timer
+        return alias
+
+    def after(self, delay, method, *args, alias=None, **kwargs):
+        """
+        Execute an action after a delay.
+
+        Parameters
+        ----------
+        delay : float
+            Execute the action after `delay` seconds.
+        method
+            Method (action) to be executed by the agent.
+        alias : str, default is None
+            An alias for the generated timer.
+        *args : tuple
+            Parameters to pass for the method execution.
+        **kwargs : dict
+            Named parameters to pass for the method execution.
+
+        Returns
+        -------
+        str
+            The timer alias or identifier.
+        """
+        if not isinstance(method, str):
+            method = self.set_method(method)
+        timer = after(delay, self._loopback,
+                      'EXECUTE_METHOD', (method, args, kwargs))
         if not alias:
             alias = uuid4().hex
         self._timer[alias] = timer

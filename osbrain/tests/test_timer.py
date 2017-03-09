@@ -8,6 +8,7 @@ from osbrain import run_agent
 from osbrain.common import repeat
 
 from common import nsaddr  # pragma: no flakes
+from common import nsproxy  # pragma: no flakes
 
 
 def set_received(agent, message, topic=None):
@@ -200,3 +201,79 @@ def test_stop_all_timers(nsaddr):
     time.sleep(1)
     assert abs(receiver.get_attr('received') - 20) <= 1
     assert len(sender.list_timers()) == 0
+
+
+def test_timer_after(nsproxy):
+    """
+    Test a timer executed once after a time delay.
+    """
+    def event(agent, number):
+        agent.count += number
+
+    agent = run_agent('agent')
+    agent.set_attr(count=0)
+    # Start timer
+    agent.after(1, event, 2)
+    agent.after(2, event, 1)
+    time.sleep(0.9)
+    assert agent.get_attr('count') == 0
+    time.sleep(0.2)
+    assert agent.get_attr('count') == 2
+    time.sleep(1)
+    assert agent.get_attr('count') == 3
+
+
+def test_timer_after_oop(nsproxy):
+    """
+    Test a timer executed once after a time delay (using OOP).
+    """
+    class Foo(Agent):
+        def on_init(self):
+            self.count = 0
+
+        def event(self, number):
+            self.count += number
+
+        def setup_timer(self, delay, number):
+            self.after(delay, 'event', number)
+
+    agent = run_agent('agent', base=Foo)
+    # Start timer
+    agent.setup_timer(0.5, 1)
+    agent.setup_timer(1.0, 2)
+    time.sleep(0.6)
+    assert agent.get_attr('count') == 1
+    time.sleep(0.5)
+    assert agent.get_attr('count') == 3
+
+
+def test_timer_after_stop_uuid(nsaddr):
+    """
+    Test a timer executed once after a time delay and stopped by its UUID.
+    """
+    def event(agent, number):
+        agent.count += number
+
+    agent = run_agent('agent')
+    agent.set_attr(count=0)
+    # Start timer
+    uuid = agent.after(1, event, 2)
+    agent.stop_timer(uuid)
+    time.sleep(1.1)
+    assert agent.get_attr('count') == 0
+
+
+def test_timer_after_stop_alias(nsaddr):
+    """
+    Test a timer executed once after a time delay and stopped by its alias.
+    """
+    def event(agent, number):
+        agent.count += number
+
+    agent = run_agent('agent')
+    agent.set_attr(count=0)
+    # Start timer
+    agent.after(1, event, 2, alias='foo')
+    agent.stop_timer('foo')
+    time.sleep(1.1)
+    assert agent.get_attr('count') == 0

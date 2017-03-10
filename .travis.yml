@@ -13,6 +13,5 @@ script:
   - tox
 
 after_script:
-  - pip install codecov coveralls
+  - pip install codecov
   - codecov
-  - coveralls

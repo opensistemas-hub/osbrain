@@ -1,7 +1,7 @@
 |logo|
 
 |build| |version| |documentation|
-|codeclimate| |codecov| |coveralls|
+|codeclimate| |codecov|
 |requirements|
 
 osBrain is a **general-purpose multi-agent system module** written in
@@ -94,9 +94,6 @@ fits the application well:
 .. |codecov| image:: https://codecov.io/github/opensistemas-hub/osbrain/coverage.svg?branch=master
    :target: https://codecov.io/github/opensistemas-hub/osbrain
    :alt: Coverage (codecov) badge
-.. |coveralls| image:: https://coveralls.io/repos/github/opensistemas-hub/osbrain/badge.svg
-   :target: https://coveralls.io/github/opensistemas-hub/osbrain
-   :alt: Coverage (coveralls) badge
 .. |requirements| image:: https://requires.io/github/opensistemas-hub/osbrain/requirements.svg
    :target: https://requires.io/github/opensistemas-hub/osbrain/requirements/
    :alt: Requirements badge

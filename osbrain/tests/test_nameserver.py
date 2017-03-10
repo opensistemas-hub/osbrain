@@ -2,6 +2,7 @@
 Test file for nameserver.
 """
 import os
+import time
 import random
 from threading import Timer
 
@@ -10,9 +11,10 @@ import pytest
 from osbrain import SocketAddress
 from osbrain import run_agent
 from osbrain import run_nameserver
+from osbrain import Agent
 from osbrain import NSProxy
 from osbrain.nameserver import NameServerProcess
-from osbrain.nameserver import random_nameserver
+from osbrain.nameserver import random_nameserver_process
 
 from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
@@ -81,25 +83,34 @@ def test_nameserverprocess_shutdown():
     """
     Name server shutdown can be called directly from the name server process.
     """
-    while True:
-        try:
-            # Bind to random port
-            port = random.randrange(10000, 20000)
-            addr = SocketAddress('127.0.0.1', port)
-            nameserver = NameServerProcess(addr)
-            nameserver.start()
-            break
-        except RuntimeError:
-            pass
-    nsaddr = nameserver.addr
-    run_agent('a0', nsaddr=nsaddr)
-    run_agent('a1', nsaddr=nsaddr)
+    nameserver = random_nameserver_process()
+    run_agent('a0')
+    run_agent('a1')
     while not len(nameserver.agents()) == 2:
         continue
     assert 'a0' in nameserver.agents()
     assert 'a1' in nameserver.agents()
     nameserver.shutdown()
     assert not nameserver.is_alive()
+
+
+def test_nameserverprocess_shutdown_lazy_agents():
+    """
+    Shutdown a name server process with agents that wait some time before
+    shutting down.
+    """
+    class Lazy(Agent):
+        def shutdown(self):
+            time.sleep(1)
+            super().shutdown()
+
+    nsprocess = random_nameserver_process()
+    run_agent('a0', base=Lazy)
+    run_agent('a1', base=Lazy)
+
+    t0 = time.time()
+    nsprocess.shutdown()
+    assert time.time() - t0 > 2
 
 
 def test_nameserver_proxy_timeout():
@@ -182,22 +193,24 @@ def test_nameserver_agent_address(nsproxy):
     assert nsproxy.addr('a1', 'bar') == addr1
 
 
-def test_random_nameserver():
+def test_random_nameserver_process():
     """
-    Basic random_nameserver function tests: port range and exceptions.
+    Basic random_nameserver_process function tests: port range and exceptions.
     """
     # Port range
     port_start = 11000
     port_stop = port_start + 100
-    address = random_nameserver(port_start=port_start, port_stop=port_stop)
+    nsprocess = random_nameserver_process(port_start=port_start,
+                                          port_stop=port_stop)
+    address = nsprocess.addr
     assert port_start <= address.port <= port_stop
     ns = NSProxy(address)
     ns.shutdown()
     # Raising exceptions
     with pytest.raises(ValueError):
-        random_nameserver(port_start=-1, port_stop=-2)
+        random_nameserver_process(port_start=-1, port_stop=-2)
     with pytest.raises(RuntimeError):
-        random_nameserver(port_start=22, port_stop=22, timeout=0.5)
+        random_nameserver_process(port_start=22, port_stop=22, timeout=0.5)
 
 
 def test_nameserver_oserror(nsaddr):

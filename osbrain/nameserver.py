@@ -130,8 +130,8 @@ class NameServerProcess(multiprocessing.Process):
         Shutdown all agents registered in the name server.
         """
         for agent in self.agents():
-            agent = Proxy(agent, self.addr)
-            agent.shutdown()
+            with Proxy(agent, self.addr) as agent:
+                agent.after(0, 'shutdown')
 
     def shutdown(self):
         """
@@ -147,10 +147,10 @@ class NameServerProcess(multiprocessing.Process):
         self.join()
 
 
-def random_nameserver(host='127.0.0.1', port_start=10000, port_stop=20000,
-                      timeout=3.):
+def random_nameserver_process(host='127.0.0.1', port_start=10000,
+                              port_stop=20000, timeout=3.):
     """
-    Start a random name server.
+    Start a random NameServerProcess.
 
     Parameters
     ----------
@@ -163,8 +163,8 @@ def random_nameserver(host='127.0.0.1', port_start=10000, port_stop=20000,
 
     Returns
     -------
-    SocketAddress
-        The name server address.
+    NameServerProcess
+        The name server process started.
     """
     t0 = time.time()
     exception = TimeoutError('Name server starting timed out!')
@@ -175,7 +175,7 @@ def random_nameserver(host='127.0.0.1', port_start=10000, port_stop=20000,
             addr = SocketAddress(host, port)
             nameserver = NameServerProcess(addr)
             nameserver.start()
-            return addr
+            return nameserver
         except RuntimeError as error:
             exception = error
         if time.time() - t0 > timeout:
@@ -200,7 +200,7 @@ def run_nameserver(addr=None):
         A proxy to the name server.
     """
     if not addr:
-        addr = random_nameserver()
+        addr = random_nameserver_process().addr
     else:
         NameServerProcess(addr).start()
     return NSProxy(addr)

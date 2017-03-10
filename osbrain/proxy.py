@@ -90,7 +90,7 @@ class Proxy(Pyro4.core.Proxy):
             exception.
         """
         try:
-            self.ready()
+            self.unsafe.ping()
         except Exception:
             if time.time() - time0 < timeout:
                 return False
@@ -172,8 +172,7 @@ class Proxy(Pyro4.core.Proxy):
         """
         return (methodname in self._pyroMethods and
                 not methodname.startswith('_') and
-                methodname not in ('ready', 'run', 'get_attr', 'kill',
-                                   'safe_call'))
+                methodname not in ('run', 'get_attr', 'kill', 'safe_call'))
 
     def _remote_call(self, methodname, args, kwargs, flags, objectId):
         """

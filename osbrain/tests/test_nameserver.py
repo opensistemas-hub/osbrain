@@ -22,7 +22,7 @@ from common import nsproxy  # pragma: no flakes
 
 def test_nameserver_ping(nsproxy):
     """
-    Ping name server.
+    Simple name server ping test.
     """
     assert nsproxy.ping() == 'pong'
 

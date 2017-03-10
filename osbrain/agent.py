@@ -400,12 +400,6 @@ class Agent():
         """
         return list(self._timer.keys())
 
-    def ping(self):
-        """
-        A simple ping method (for testing purposes).
-        """
-        return 'pong'
-
     def raise_exception(self):
         """
         Raise an exception (for testing purposes).
@@ -1233,12 +1227,12 @@ class Agent():
                 continue
             self.socket[address].close()
 
-    def ready(self):
+    def ping(self):
         """
         A test method to check the readiness of the agent. Used for testing
         purposes, where timing is very important. Do not remove.
         """
-        return 'OK'
+        return 'pong'
 
 
 class AgentProcess(multiprocessing.Process):

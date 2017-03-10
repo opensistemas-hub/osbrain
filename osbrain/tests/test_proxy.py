@@ -111,7 +111,7 @@ def test_agent_proxy_initialization_timeout(nsproxy):
     is not ready after a number of seconds.
     """
     class InitTimeoutProxy(Proxy):
-        def ready(self):
+        def ping(self):
             time.sleep(0.1)
             raise TimeoutError()
 

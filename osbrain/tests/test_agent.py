@@ -50,7 +50,7 @@ def test_early_agent_proxy(nsaddr):
     # Locate agent now
     a0 = Proxy('a0', timeout=3.)
     # Just check agent is ready
-    assert a0.ready() == 'OK'
+    assert a0.unsafe.ping() == 'pong'
 
 
 def test_agent_loopback(nsaddr):

@@ -35,7 +35,7 @@ def test_return(nsproxy):
     t0 = time.time()
     client.send('async', 'foo')
     client.send('async', 'bar')
-    assert time.time() - t0 < 0.01
+    assert time.time() - t0 < 0.1
 
     # Server should receive first request "soon"
     time.sleep(0.1)
@@ -76,7 +76,7 @@ def test_yield(nsproxy):
     t0 = time.time()
     client.send('async', 'foo')
     client.send('async', 'bar')
-    assert time.time() - t0 < 0.01
+    assert time.time() - t0 < 0.1
 
     # Server should receive first request "soon"
     time.sleep(0.1)

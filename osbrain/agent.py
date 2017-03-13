@@ -233,6 +233,13 @@ class Agent():
         """
         pass
 
+    def _loopback_exception(self, error, method, args, kwargs):
+        message = 'Error executing `%s`! (%s)\n' % (method, error)
+        message += '\n> method: %s\n> args: %s\n> kwargs: %s\n' % \
+            (str(method), str(args), str(kwargs))
+        message += format_exception()
+        return type(error)(message)
+
     def _handle_loopback(self, message):
         """
         Handle incoming messages in the loopback socket.
@@ -243,12 +250,7 @@ class Agent():
             try:
                 response = getattr(self, method)(*args, **kwargs)
             except Exception as error:
-                message = 'Error executing `%s`! (%s)\n' % (method, error)
-                message += '\n> method: %s\n> args: %s\n> kwargs: %s\n' % \
-                    (str(method), str(args), str(kwargs))
-                message += format_exception()
-                aux = type(error)(message)
-                yield aux
+                yield self._loopback_exception(error, method, args, kwargs)
                 raise
             yield response or True
         else:
@@ -264,14 +266,33 @@ class Agent():
         try:
             response = getattr(self, method)(*args, **kwargs)
         except Exception as error:
-            message = 'Error executing `%s`! (%s)\n' % (method, error)
-            message += '\n> method: %s\n> args: %s\n> kwargs: %s\n' % \
-                (str(method), str(args), str(kwargs))
-            message += format_exception()
-            aux = type(error)(message)
-            yield aux
+            yield self._loopback_exception(error, method, args, kwargs)
             raise
         yield response
+
+    def _loopback_reqrep(self, socket, data_to_send):
+        """
+        Create a temporary connection a loopback socket and send a request.
+
+        Returns
+        -------
+        Response obtained from the loopback socket.
+        """
+        loopback = self.context.socket(zmq.REQ)
+        loopback.connect(socket)
+        loopback.send_pyobj(data_to_send)
+        response = loopback.recv_pyobj()
+        loopback.close()
+        return response
+
+    def _loopback(self, header, data=None):
+        """
+        Send a message to the loopback socket.
+        """
+        if not self.running:
+            raise NotImplementedError()
+        data = dill.dumps((header, data))
+        return self._loopback_reqrep('inproc://loopback', data)
 
     def safe_call(self, method, *args, **kwargs):
         """
@@ -292,12 +313,7 @@ class Agent():
             raise RuntimeError(
                 'Agent must be running to safely execute methods!')
         data = dill.dumps((method, args, kwargs))
-        loopback = self.context.socket(zmq.REQ)
-        loopback.connect('inproc://_loopback_safe')
-        loopback.send_pyobj(data)
-        response = loopback.recv_pyobj()
-        loopback.close()
-        return response
+        return self._loopback_reqrep('inproc://_loopback_safe', data)
 
     def each(self, period, method, *args, alias=None, **kwargs):
         """
@@ -389,20 +405,6 @@ class Agent():
             A list with all the timer aliases currently running.
         """
         return list(self._timer.keys())
-
-    def _loopback(self, header, data=None):
-        """
-        Send a message to the loopback socket.
-        """
-        if not self.running:
-            raise NotImplementedError()
-        data = dill.dumps((header, data))
-        loopback = self.context.socket(zmq.REQ)
-        loopback.connect('inproc://loopback')
-        loopback.send_pyobj(data)
-        response = loopback.recv_pyobj()
-        loopback.close()
-        return response
 
     def ping(self):
         """

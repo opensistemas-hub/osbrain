@@ -19,6 +19,7 @@ from Pyro4.errors import PyroError
 import zmq
 
 from .common import format_exception
+from .common import format_method_exception
 from .common import unbound_method
 from .common import LogLevel
 from .common import repeat
@@ -233,13 +234,6 @@ class Agent():
         """
         pass
 
-    def _loopback_exception(self, error, method, args, kwargs):
-        message = 'Error executing `%s`! (%s)\n' % (method, error)
-        message += '\n> method: %s\n> args: %s\n> kwargs: %s\n' % \
-            (str(method), str(args), str(kwargs))
-        message += format_exception()
-        return type(error)(message)
-
     def _handle_loopback(self, message):
         """
         Handle incoming messages in the loopback socket.
@@ -250,7 +244,7 @@ class Agent():
             try:
                 response = getattr(self, method)(*args, **kwargs)
             except Exception as error:
-                yield self._loopback_exception(error, method, args, kwargs)
+                yield format_method_exception(error, method, args, kwargs)
                 raise
             yield response or True
         else:
@@ -266,7 +260,7 @@ class Agent():
         try:
             response = getattr(self, method)(*args, **kwargs)
         except Exception as error:
-            yield self._loopback_exception(error, method, args, kwargs)
+            yield format_method_exception(error, method, args, kwargs)
             raise
         yield response
 

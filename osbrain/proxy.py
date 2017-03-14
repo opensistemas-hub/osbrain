@@ -72,9 +72,7 @@ class Proxy(Pyro4.core.Proxy):
             self._default_safe = safe
         else:
             self._default_safe = \
-                False \
-                if os.environ['OSBRAIN_DEFAULT_SAFE'].lower() == 'false' \
-                else True
+                os.environ['OSBRAIN_DEFAULT_SAFE'].lower() != 'false'
         self._safe = self._default_safe
         while not self._ready_or_timeout(time0, timeout):
             continue

@@ -188,11 +188,15 @@ def test_agent_proxy_safe_and_unsafe_calls_property_safe(nsproxy):
     When using the `safe` property, calls are expected to wait until the main
     thread is able to process them to avoid concurrency.
     """
+    os.environ['OSBRAIN_DEFAULT_SAFE'] = 'false'
     worker = setup_bussy_worker(nsproxy)
+    assert not worker._safe
     t0 = time.time()
     assert worker.safe.listen() == 'OK'
     assert since(t0, passed=2., tolerance=0.1)
     assert not worker.get_attr('bussy')
+    # Calling a method with `.safe` should not change default behavior
+    assert not worker._safe
 
 
 def test_agent_proxy_safe_and_unsafe_calls_property_unsafe(nsproxy):
@@ -201,13 +205,17 @@ def test_agent_proxy_safe_and_unsafe_calls_property_unsafe(nsproxy):
     When using the `unsafe` property, calls are not expected to wait until
     the main thread is able to process them (concurrency is allowed).
     """
+    os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'
     worker = setup_bussy_worker(nsproxy)
+    assert worker._safe
     t0 = time.time()
     assert worker.unsafe.listen() == 'OK'
     assert since(t0, passed=0., tolerance=0.1)
     while worker.get_attr('bussy'):
         time.sleep(0.01)
     assert since(t0, passed=2., tolerance=0.1)
+    # Calling a method with `.unsafe` should not change default behavior
+    assert worker._safe
 
 
 def test_agent_proxy_safe_and_unsafe_calls_environ_safe(nsproxy):

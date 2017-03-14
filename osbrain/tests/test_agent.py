@@ -8,6 +8,7 @@ from uuid import uuid4
 from threading import Timer
 
 import pytest
+import Pyro4
 
 from osbrain import run_logger
 from osbrain import run_agent
@@ -68,6 +69,23 @@ def test_ping(nsaddr):
     Test simple agent ping.
     """
     a0 = run_agent('a0')
+    assert a0.ping() == 'pong'
+
+
+def test_late_runner(nsaddr):
+    """
+    The `run_agent` function should always make sure the agent is actually
+    running before returning its proxy.
+    """
+    class LateRunner(Agent):
+        @Pyro4.oneway
+        def run(self):
+            time.sleep(1)
+            super().run()
+
+    t0 = time.time()
+    a0 = run_agent('a0', base=LateRunner)
+    assert time.time() - t0 > 1
     assert a0.ping() == 'pong'
 
 

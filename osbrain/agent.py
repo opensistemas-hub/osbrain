@@ -10,6 +10,7 @@ import pickle
 import json
 import signal
 import sys
+import time
 import types
 from uuid import uuid4
 
@@ -1342,4 +1343,6 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None):
                  serializer=serializer).start()
     proxy = Proxy(name, nsaddr)
     proxy.run()
+    while not proxy.get_attr('running'):
+        time.sleep(0.01)
     return proxy

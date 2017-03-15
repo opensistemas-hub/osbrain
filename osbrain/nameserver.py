@@ -43,7 +43,7 @@ class NameServer(Pyro4.naming.NameServer):
                 continue
             agent = Pyro4.core.Proxy(address)
             if agent.get_attr('running'):
-                agent.shutdown()
+                agent.after(0, 'shutdown')
             else:
                 agent.kill()
 

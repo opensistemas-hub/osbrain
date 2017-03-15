@@ -1313,7 +1313,8 @@ class AgentProcess(multiprocessing.Process):
         self.kill()
 
 
-def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None):
+def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
+              safe=None):
     """
     Ease the agent creation process.
 
@@ -1328,6 +1329,8 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None):
         Name server address.
     addr : SocketAddress, default is None
         New agent address, if it is to be fixed.
+    safe : bool, default is None
+        Use safe calls by default from the Proxy.
 
     Returns
     -------
@@ -1338,7 +1341,7 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None):
         nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
     AgentProcess(name, nsaddr=nsaddr, addr=addr, base=base,
                  serializer=serializer).start()
-    proxy = Proxy(name, nsaddr)
+    proxy = Proxy(name, nsaddr, safe=safe)
     proxy.run()
     while not proxy.get_attr('running'):
         time.sleep(0.01)

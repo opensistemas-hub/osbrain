@@ -162,6 +162,17 @@ def test_agent_proxy_safe_and_unsafe_property(nsproxy):
     assert not proxy.unsafe._safe
 
 
+def test_agent_run_agent_safe_and_unsafe(nsproxy):
+    """
+    Using the `run_agent` function should allow us to set a `safe` attribute
+    for the returned Proxy as well.
+    """
+    safe = run_agent('a0', safe=True)
+    unsafe = run_agent('a1', safe=False)
+    assert safe._safe
+    assert not unsafe._safe
+
+
 def test_agent_proxy_safe_and_unsafe_parameter(nsproxy):
     """
     Using the safe/unsafe parameter when initializating a proxy should allow

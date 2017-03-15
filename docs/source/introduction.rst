@@ -45,6 +45,7 @@ saying `Hello world!` but, what exactly is happening there?
 
 
 .. index:: agents, proxies
+.. _agents_and_proxies:
 
 Agents and proxies
 ==================
@@ -56,12 +57,12 @@ as in the `Hello world!` example, makes little or no sense. Agents in a
 multi-agent system start to make sense when connected to each other.
 
 The easiest way to run an agent in an osBrain architecture is by calling the
-function :func:`osbrain.run_agent`:
+function :func:`osbrain.run_agent <osbrain.agent.run_agent>`:
 
 >>> agent = run_agent(...)
 
 This function will spawn a new agent and will return a
-:class:`osbrain.Proxy` to it.
+:class:`osbrain.Proxy <osbrain.proxy.Proxy>` to it.
 
 Proxies are simply local objects that allow us to easily have access to the
 remote agent. The fact that agents are run independently from each other
@@ -72,7 +73,8 @@ a very convenient way. See for example the previous call:
 
 >>> agent.log_info('Hello world')
 
-The method ``log_info()`` is implemented in :class:`osbrain.Agent` so,
+The method ``log_info()`` is implemented in
+:class:`osbrain.Agent <osbrain.agent.Agent>` so,
 when this method is called from the proxy, this call is actually being
 serialized to the remote running agent and gets executed there. The return
 value, if any, is then serialized back and returned by the proxy. So basically

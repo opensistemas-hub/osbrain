@@ -63,9 +63,9 @@ taken during the development process:
 #. **Ease of configuration/deployment**; making use of the very convenient,
    well implemented and documented `Pyro4 <https://pythonhosted.org/Pyro4/>`_
    package.
-#. **Separation from the trading platform**; what it started as a basic
-   architecture to implement a real-time automated-trading platform, ended-up
-   being a general-purpose multi-agent system architecture.
+#. **Separation from the trading platform**; what started as a basic
+   architecture for implementing a real-time automated-trading platform,
+   ended-up being a general-purpose multi-agent system architecture.
 
 
 .. index:: applications

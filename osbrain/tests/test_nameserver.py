@@ -110,7 +110,7 @@ def test_nameserverprocess_shutdown_lazy_agents():
 
     t0 = time.time()
     nsprocess.shutdown()
-    assert time.time() - t0 > 2
+    assert time.time() - t0 > 1
 
 
 def test_nameserver_proxy_timeout():

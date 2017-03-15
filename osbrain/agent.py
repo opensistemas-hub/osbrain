@@ -209,8 +209,6 @@ class Agent():
         self.keep_alive = True
         self._shutdown_now = False
         self.running = False
-        # Kill parent AgentProcess
-        self.kill_agent = False
         self._DEBUG = False
 
         self.context = zmq.Context()
@@ -1219,7 +1217,7 @@ class Agent():
 
     def kill(self):
         self.close_sockets()
-        self.kill_agent = True
+        self._pyroDaemon.shutdown()
 
     def close_sockets(self):
         for address in self.socket:
@@ -1274,8 +1272,7 @@ class AgentProcess(multiprocessing.Process):
         ns.register(self.name, uri)
         ns.release()
 
-        self.daemon.requestLoop(lambda: (not self.shutdown_event.is_set() and
-                                         not self.agent.kill_agent))
+        self.daemon.requestLoop(lambda: not self.shutdown_event.is_set())
         self.daemon.unregister(self.agent)
 
         self._teardown()

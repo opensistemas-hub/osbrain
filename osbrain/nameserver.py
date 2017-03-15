@@ -20,7 +20,6 @@ from .proxy import NSProxy
 class NameServer(Pyro4.naming.NameServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.shutdown_parent_daemon = False
 
     def ping(self):
         """
@@ -53,7 +52,7 @@ class NameServer(Pyro4.naming.NameServer):
         Shutdown the name server. All agents will be shutdown as well.
         """
         self.async_shutdown_agents()
-        self.shutdown_parent_daemon = True
+        self._pyroDaemon.shutdown()
 
 
 Pyro4.naming.NameServer = NameServer
@@ -97,10 +96,7 @@ class NameServerProcess(multiprocessing.Process):
         print("NS running on %s (%s)" % (self.daemon.locationStr, hostip))
         print("URI = %s" % self.uri)
         try:
-            self.daemon.requestLoop(
-                lambda: (not self.shutdown_event.is_set() and
-                         not self.daemon.nameserver.shutdown_parent_daemon)
-            )
+            self.daemon.requestLoop(lambda: not self.shutdown_event.is_set())
         finally:
             self.daemon.close()
             if bcserver is not None:

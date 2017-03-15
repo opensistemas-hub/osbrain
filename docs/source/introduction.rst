@@ -2,135 +2,119 @@
 Introduction and Example
 ************************
 
-.. image:: _static/osbrain-logo-name.svg
-   :align: center
-   :alt: osBrain logo
+
+.. index:: installation
+
+Installation
+============
+
+This tutorial is a step-by-step introduction to osBrain with examples. In order
+to start playing with this module, you only need to install it.
+
+osBrain requires Python 3. Most probably, Python 3 is already packaged for your
+favorite distribution (and maybe even installed by default in your system). If
+you do not have Python 3 available, consider using
+`Conda <http://conda.pydata.org/miniconda.html>`_ to create a virtual
+environment with Python 3.
+
+Installing osBrain is very simple with `pip`::
+
+    pip install osbrain
+
+You should now be able to import ``osbrain`` from a python console:
+
+    >>> import osbrain
 
 
-.. index:: features
+.. index:: hello world
 
-About osBrain: feature overview
-===============================
+Hello world
+===========
 
-osBrain is a **general-purpose multi-agent system module** written in Python.
+The first example is, of course, a simple *hello world!* program. Three steps
+are taken here:
 
-- Agents run **independently** as system processes and communicate with each
-  other using **message passing**.
-- Message passing is implemented using `ØMQ <http://zeromq.org/>`_, and in
-  particular, the `PyZMQ <https://github.com/zeromq/pyzmq>`_ Python bindings.
-- `ØMQ <http://zeromq.org/>`_ allows for **efficient**, **asynchronous**
-  communication using different commonly used communication **patterns** such
-  as request-reply, push-pull and publish-subscribe.
-- osBrain integrates `Pyro4 <https://pythonhosted.org/Pyro4/>`_ to ease the
-  configuration and deployment of complex systems.
-- Thanks to `Pyro4 <https://pythonhosted.org/Pyro4/>`_, **remote agents can be
-  treated as local** objects and reconfigured even when they are running. Not
-  just variables, but also new methods can be created in the remote agents.
-- osBrain provides the base for implementing robust, highly-available,
-  flexible multi-agent systems.
-- Being implemented in Python, osBrain can take advantage of a huge set of
-  packages for data analysis, statistics, numerical computing, etc. available
-  in the Python ecosystem.
-
-In order to fully understand osBrain capabilities, it is **highly recommended**
-to read the `Pyro4 documentation <https://pythonhosted.org/Pyro4/>`_ and the
-`ØMQ guide <http://zguide.zeromq.org/page:all>`_.
-
-
-.. index:: history
-
-OsBrain's history
-^^^^^^^^^^^^^^^^^
-
-osBrain was initially developed in
-`OpenSistemas <http://www.opensistemas.com>`_ based on the need to create a
-**real-time automated-trading platform**. This platform needed to be able to
-process real-time market data updates fast and in a parallel way. Robustness
-was very important as well in order to prevent running trading strategies
-from being affected by a failure in another strategy.
-
-Python was chosen for being a great language for fast prototyping and for
-having a huge data analysis ecosystem available. It was kept for its final
-performance and the beautiful source code created with it.
-
-The appearance of osBrain was a consecuence of a series of steps that were
-taken during the development process:
-
-#. **Isolation of agents**; creating separate system processes to avoid shared
-   memory and any problems derived from multi-threading development.
-#. **Implementation of message passing**; making use of the modern, efficient
-   and flexible `ØMQ <http://zeromq.org/>`_ library.
-#. **Ease of configuration/deployment**; making use of the very convenient,
-   well implemented and documented `Pyro4 <https://pythonhosted.org/Pyro4/>`_
-   package.
-#. **Separation from the trading platform**; what it started as a basic
-   architecture to implement a real-time automated-trading platform, ended-up
-   being a general-purpose multi-agent system architecture.
-
-
-.. index:: usage
-
-What can you use osBrain for?
-=============================
-
-osBrain has been successfully used to develop a real-time automated-trading
-platform in `OpenSistemas <http://www.opensistemas.com>`_, but being a
-general-purpose multi-agent system, it is not limited to this application.
-Other applications include:
-
-- Transportation.
-- Logistics.
-- Defense and military applications.
-- Networking.
-- Load balancing.
-- Self-healing networks.
-
-In general, osBrain can be used whenever a multi-agent system architecture
-fits the application well:
-
-- Autonomy of the agents.
-- Local views.
-- Decentralization.
-
-
-.. index:: example
-
-Simple Example
-==============
-
-In the following example we run a very simple architecture in three steps:
-
-#. Run a name server, which will register agents running by their alias.
+#. Run a name server.
 #. Run an agent with an alias ``Example``.
 #. Log a ``Hello world`` message from the agent.
 
 .. literalinclude:: ../../examples/hello_world.py
 
-It is important to note that the ``agent`` variable in that example is just
-what is called a proxy to the remote agent so, when ``log_info()`` is called,
-this method is actually serialized and executed in the remote agent. Remember
-that the agent is running as a separate system process!
+Running this example from your terminal should simply show you a log message
+saying `Hello world!` but, what exactly is happening there?
 
 
-.. index:: performance
+.. index:: agents, proxies
 
-Performance
-===========
+Agents and proxies
+==================
 
-The performance of osBrain, just as the performance of any other system
-architecture, depends a lot on the actual application. The developer should
-always take this into account:
+An agent, in osBrain, is an entity that runs independly from other agents
+in the system. An agent, by default, will simply poll for incoming messages
+before executing the code defined by the developer. This means a single agent,
+as in the `Hello world!` example, makes little or no sense. Agents in a
+multi-agent system start to make sense when connected to each other.
 
-#. Pyro4 is used only for configuration and deployment, which means that
-   the actual performance of the system does not depend on this package.
-#. `ØMQ <http://zeromq.org/>`_ is used with the
-   `PyZMQ <https://github.com/zeromq/pyzmq>`_ Python bindings, which means
-   that the system performance depends on the
-   `PyZMQ <https://github.com/zeromq/pyzmq>`_ performance.
-#. osBrain uses `pickle <https://docs.python.org/library/pickle.html>`_ for
-   serialization, which means that the system performance depends on this
-   package.
-#. ØMQ transport is IPC by default. It can be changed to TCP globally or
-   configured specifically for each bind. Note, however, that in this case
-   the network may have a great impact on performance. TCP must be used, of
-   course, for distributed systems.
+The easiest way to run an agent in an osBrain architecture is by calling the
+function :func:`osbrain.run_agent`:
+
+>>> agent = run_agent(...)
+
+This function will spawn a new agent and will return a
+:class:`osbrain.Proxy` to it.
+
+Proxies are simply local objects that allow us to easily have access to the
+remote agent. The fact that agents are run independently from each other
+justifies the need of a proxy.
+
+A proxy allows us to call methods or access attributes of the remote agent in
+a very convenient way. See for example the previous call:
+
+>>> agent.log_info('Hello world')
+
+The method ``log_info()`` is implemented in :class:`osbrain.Agent` so,
+when this method is called from the proxy, this call is actually being
+serialized to the remote running agent and gets executed there. The return
+value, if any, is then serialized back and returned by the proxy. So basically
+so get the impression of being working with a local object while your code is
+executed remotely.
+
+
+.. index:: name server
+
+The name server
+===============
+
+A name server is just like any other agent, so it runs independently, but with
+a very specific role. Name servers are used as an address book. This means
+other agents can be run in the system and can be registered in the name server
+using a human-readable alias. Aliases help us accessing these agents easily
+even from remote locations.
+
+Note that when calling the :func:`osbrain.run_agent` function, we are
+passing a string parameter. This parameter is the alias the agent will use to
+register itself in the name server.
+
+When we run a name server calling the :func:`osbrain.run_nameserver`, we
+also get in return a proxy to this name server:
+
+>>> ns = run_nameserver()
+
+This proxy can be used to list the agents registered in the name server:
+
+.. literalinclude:: ../../examples/name_server_agents.py
+
+The code above should simply print the aliases of all the agents registered
+in the name server.
+
+A name server proxy can also be used to create proxies to registered agents.
+This is specially useful when accessing the multi-agent system from a different
+console or location, as it will reduce the number of addresses that we need
+to remember.
+
+.. literalinclude:: ../../examples/name_server_proxy.py
+
+The code above creates (and registers) three different agents in a name server
+and then creates, through the name server proxy, a proxy to one of those agents
+simply using its alias. Then it uses the agent proxy to remotely call a
+method to log a `Hello world!` message.

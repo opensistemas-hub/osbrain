@@ -32,15 +32,19 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   about.rst
    introduction.rst
-   install.rst
-   tutorial-1.rst
-   tutorial-2.rst
+   basic_patterns.rst
+   considerations.rst
+   complex_patterns.rst
+   timers.rst
+   transport_protocol.rst
+   serialization.rst
+   advanced_proxy_handling.rst
+   distributed_systems.rst
    security.rst
    developers.rst
-   serialization.rst
    api.rst
-   changelog.rst
    license.rst
 
 

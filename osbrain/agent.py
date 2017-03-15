@@ -166,6 +166,8 @@ class Agent():
     host : str, default is None
         Host address where the agent will bind to. When not set, `'127.0.0.1'`
         (localhost) is used.
+    transport : str, AgentAddressTransport, default is None
+        Transport protocol.
 
     Attributes
     ----------
@@ -191,13 +193,14 @@ class Agent():
     running : bool
         Set to `True` if the agent is running (executing the main loop).
     """
-    def __init__(self, name=None, host=None, serializer=None):
+    def __init__(self, name=None, host=None, serializer=None, transport=None):
         self.uuid = uuid4().hex
         self.name = name
         self.host = host
         if not self.host:
             self.host = '127.0.0.1'
         self.serializer = serializer
+        self.transport = transport
         self.socket = {}
         self.address = {}
         self.handler = {}
@@ -597,7 +600,9 @@ class Agent():
             The address where the agent binded to.
         """
         kind = guess_kind(kind)
-        transport = transport or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
+        transport = transport \
+            or self.transport \
+            or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
         serializer = serializer \
             or self.serializer \
             or os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
@@ -1240,7 +1245,7 @@ class AgentProcess(multiprocessing.Process):
     can be run independently.
     """
     def __init__(self, name, nsaddr=None, addr=None, serializer=None,
-                 base=Agent):
+                 transport=None, base=Agent):
         super().__init__()
         self.name = name
         self.daemon = None
@@ -1249,6 +1254,7 @@ class AgentProcess(multiprocessing.Process):
             self.port = 0
         self.nsaddr = nsaddr
         self.serializer = serializer
+        self.transport = transport
         self.base = base
         self.shutdown_event = multiprocessing.Event()
         self.queue = multiprocessing.Queue()
@@ -1267,7 +1273,8 @@ class AgentProcess(multiprocessing.Process):
         self.queue.put('STARTED')
 
         self.agent = self.base(name=self.name, host=self.host,
-                               serializer=self.serializer)
+                               serializer=self.serializer,
+                               transport=self.transport)
         uri = self.daemon.register(self.agent)
         ns.register(self.name, uri)
         ns.release()
@@ -1314,7 +1321,7 @@ class AgentProcess(multiprocessing.Process):
 
 
 def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
-              safe=None):
+              transport=None, safe=None):
     """
     Ease the agent creation process.
 
@@ -1329,6 +1336,8 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
         Name server address.
     addr : SocketAddress, default is None
         New agent address, if it is to be fixed.
+    transport : str, AgentAddressTransport, default is None
+        Transport protocol.
     safe : bool, default is None
         Use safe calls by default from the Proxy.
 
@@ -1340,7 +1349,7 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
     if not nsaddr:
         nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
     AgentProcess(name, nsaddr=nsaddr, addr=addr, base=base,
-                 serializer=serializer).start()
+                 serializer=serializer, transport=transport).start()
     proxy = Proxy(name, nsaddr, safe=safe)
     proxy.run()
     while not proxy.get_attr('running'):

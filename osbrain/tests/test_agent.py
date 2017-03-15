@@ -516,26 +516,51 @@ def test_agent_stop(nsaddr):
     assert not agent.get_attr('running')
 
 
-def test_agent_bind_transport(nsaddr):
+def test_agent_bind_transport_global(nsaddr):
     """
-    Test agent binding using TCP and IPC transport layers.
+    Test global default transport.
     """
-    agent = run_agent('a0')
     # Default transport
+    agent = run_agent('a0')
     address = agent.bind('PUSH')
     assert address.transport == 'ipc'
-    # Force IPC and TCP
-    address = agent.bind('PUSH', transport='ipc')
-    assert address.transport == 'ipc'
-    address = agent.bind('PUSH', transport='tcp')
-    assert address.transport == 'tcp'
-    # Set IPC and TCP through environment variable
+
+    # Changing default global transport
     os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'tcp'
+    agent = run_agent('a1')
+    address = agent.bind('PUSH')
+    assert address.transport == 'tcp'
+
+    os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'ipc'
+    agent = run_agent('a2')
+    address = agent.bind('PUSH')
+    assert address.transport == 'ipc'
+
+
+def test_agent_bind_transport_agent(nsaddr):
+    """
+    Test agent default transport.
+    """
+    agent = run_agent('a0', transport='tcp')
+    address = agent.bind('PUSH')
+    assert address.transport == 'tcp'
+
+    agent = run_agent('a1', transport='ipc')
+    address = agent.bind('PUSH')
+    assert address.transport == 'ipc'
+
+
+def test_agent_bind_transport_bind(nsaddr):
+    """
+    Test bind transport.
+    """
+    agent = run_agent('a0')
+
     address = agent.bind('PUSH', transport='tcp')
     assert address.transport == 'tcp'
-    os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'ipc'
-    address = agent.bind('PUSH', transport='ipc')
-    assert address.transport == 'ipc'
+
+    address = agent.bind('PUSH', transport='inproc')
+    assert address.transport == 'inproc'
 
 
 def test_agent_bind_given_address(nsaddr):

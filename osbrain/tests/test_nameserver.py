@@ -16,7 +16,6 @@ from osbrain import NSProxy
 from osbrain.nameserver import NameServerProcess
 from osbrain.nameserver import random_nameserver_process
 
-from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
 
 
@@ -38,14 +37,14 @@ def test_nameserver_list(nsproxy):
     assert agents[name] == 'PYRO:%s@%s' % (name, nsproxy.addr())
 
 
-def test_nameserver_proxy_list(nsaddr):
+def test_nameserver_proxy_list(nsproxy):
     """
     Verify new agents get registered in the nameserver.
     """
-    run_agent('a0', nsaddr)
-    run_agent('a1', nsaddr)
+    run_agent('a0', nsproxy.addr())
+    run_agent('a1', nsproxy.addr())
     # List registered agents
-    agent_list = NSProxy(nsaddr).list()
+    agent_list = nsproxy.list()
     assert 'a0' in agent_list
     assert 'a1' in agent_list
 
@@ -213,12 +212,12 @@ def test_random_nameserver_process():
         random_nameserver_process(port_start=22, port_stop=22, timeout=0.5)
 
 
-def test_nameserver_oserror(nsaddr):
+def test_nameserver_oserror(nsproxy):
     """
     Name server start() should raise an error if address is already in use.
     """
     with pytest.raises(RuntimeError) as error:
-        run_nameserver(nsaddr)
+        run_nameserver(nsproxy.addr())
     assert 'OSError' in str(error.value)
     assert 'Address already in use' in str(error.value)
 

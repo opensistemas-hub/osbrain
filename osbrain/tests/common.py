@@ -88,13 +88,6 @@ def agent_dies(agent, nsproxy, timeout=1.):
 
 
 @pytest.fixture(scope='function')
-def nsaddr(request):
-    ns = run_nameserver()
-    yield ns.addr()
-    ns.shutdown()
-
-
-@pytest.fixture(scope='function')
 def nsproxy(request):
     ns = run_nameserver()
     yield ns

@@ -16,10 +16,8 @@ from osbrain import Agent
 from osbrain import AgentAddress
 from osbrain import AgentProcess
 from osbrain import Proxy
-from osbrain import NSProxy
 from osbrain import SocketAddress
 
-from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
 from common import logger_received
 from common import sync_agent_logger
@@ -39,7 +37,7 @@ def test_agent_uuid():
     assert all(isinstance(identifier, str) for identifier in bunch)
 
 
-def test_early_agent_proxy(nsaddr):
+def test_early_agent_proxy(nsproxy):
     """
     It must be possible to create a Proxy when the registration of the new
     agent is imminent, even if it has not occured yet. A timeout will occur
@@ -54,7 +52,7 @@ def test_early_agent_proxy(nsaddr):
     assert a0.unsafe.ping() == 'pong'
 
 
-def test_agent_loopback(nsaddr):
+def test_agent_loopback(nsproxy):
     """
     An agent should always have a _loopback_safe inproc socket.
     """
@@ -64,7 +62,7 @@ def test_agent_loopback(nsaddr):
                      kind='REP', role='server', serializer='pickle')
 
 
-def test_ping(nsaddr):
+def test_ping(nsproxy):
     """
     Test simple agent ping.
     """
@@ -72,7 +70,7 @@ def test_ping(nsaddr):
     assert a0.ping() == 'pong'
 
 
-def test_late_runner(nsaddr):
+def test_late_runner(nsproxy):
     """
     The `run_agent` function should always make sure the agent is actually
     running before returning its proxy.
@@ -89,22 +87,21 @@ def test_late_runner(nsaddr):
     assert a0.ping() == 'pong'
 
 
-def test_agent_shutdown(nsaddr):
+def test_agent_shutdown(nsproxy):
     """
     An agent must unregister itself before shutting down.
     """
-    agent = AgentProcess('a0', nsaddr)
+    agent = AgentProcess('a0', nsproxy.addr())
     agent.start()
-    a0 = Proxy('a0', nsaddr)
+    a0 = Proxy('a0', nsproxy.addr())
     a0.run()
-    ns = NSProxy(nsaddr)
-    assert 'a0' in ns.list()
+    assert 'a0' in nsproxy.list()
     a0.shutdown()
     agent.join()
-    assert 'a0' not in ns.list()
+    assert 'a0' not in nsproxy.list()
 
 
-def test_set_method(nsaddr):
+def test_set_method(nsproxy):
     """
     Set new methods for the agent.
     """
@@ -134,7 +131,7 @@ def test_set_method(nsaddr):
     assert a0.dos() == 2
 
 
-def test_set_method_lambda(nsaddr):
+def test_set_method_lambda(nsproxy):
     """
     Set new methods for the agent using lambda functions.
     """
@@ -143,7 +140,7 @@ def test_set_method_lambda(nsaddr):
     assert a0.square(2) == 4
 
 
-def test_set_and_get_attributes(nsaddr):
+def test_set_and_get_attributes(nsproxy):
     """
     Set and get attributes through the proxy.
     """
@@ -168,7 +165,7 @@ def test_set_and_get_attributes(nsaddr):
     assert a0.two == 12
 
 
-def test_socket_creation(nsaddr):
+def test_socket_creation(nsproxy):
     """
     Test ZMQ socket creation.
     """
@@ -189,7 +186,7 @@ def test_socket_creation(nsaddr):
     (None, 'json', 'json'),
     ('pickle', 'json', 'json'),
 ])
-def test_correct_serialization(nsaddr, agent_serial, socket_serial, result):
+def test_correct_serialization(nsproxy, agent_serial, socket_serial, result):
     """
     Test that the right serializer is being used when using the different
     initialization options.
@@ -199,7 +196,7 @@ def test_correct_serialization(nsaddr, agent_serial, socket_serial, result):
     assert addr.serializer == result
 
 
-def test_pushpull(nsaddr):
+def test_pushpull(nsproxy):
     """
     Simple push-pull pattern test.
     """
@@ -215,7 +212,7 @@ def test_pushpull(nsaddr):
     assert a1.get_attr('received') == message
 
 
-def test_pubsub(nsaddr):
+def test_pubsub(nsproxy):
     """
     Simple publisher-subscriber pattern test.
     """
@@ -231,7 +228,7 @@ def test_pubsub(nsaddr):
     assert a1.get_attr('received') == message
 
 
-def test_agent_inheritance(nsaddr):
+def test_agent_inheritance(nsproxy):
     """
     Test agent inheritance; agents can be based on a custom class.
     """
@@ -240,13 +237,13 @@ def test_agent_inheritance(nsaddr):
             return 42
 
     # Test an Agent based on the new class
-    AgentProcess('new', nsaddr=nsaddr, base=NewAgent).start()
-    new = Proxy('new', nsaddr)
+    AgentProcess('new', nsaddr=nsproxy.addr(), base=NewAgent).start()
+    new = Proxy('new', nsproxy.addr())
     new.run()
     assert new.the_answer_to_life() == 42
 
     # Test the quick `run_agent` function
-    a0 = run_agent('a0', nsaddr, base=NewAgent)
+    a0 = run_agent('a0', nsproxy.addr(), base=NewAgent)
     assert a0.the_answer_to_life() == 42
 
 
@@ -274,7 +271,7 @@ def test_agent_multiproxy(nsproxy):
     assert agent.total() == 2
 
 
-def test_set_logger(nsaddr):
+def test_set_logger(nsproxy):
     """
     Setting an agent's logger should result in the agnet actually sending
     log messages to the logger.
@@ -301,7 +298,7 @@ def test_set_logger_wrong(nsproxy):
         a0.set_logger(1.4142)
 
 
-def test_agent_connect_repeat(nsaddr):
+def test_agent_connect_repeat(nsproxy):
     """
     Test connecting from an agent to the same address that the agent
     connected to just before. When no new handler is given, the agent simply
@@ -319,7 +316,7 @@ def test_agent_connect_repeat(nsaddr):
     assert client.send_recv('request1', 'Hello world') == 'OK'
 
 
-def test_agent_connect_repeat_new_handler(nsaddr):
+def test_agent_connect_repeat_new_handler(nsproxy):
     """
     Test connecting from an agent to the same address that the agent
     connected to just before. When a new handler is given, the result is
@@ -333,7 +330,7 @@ def test_agent_connect_repeat_new_handler(nsaddr):
         receiver.connect(addr, alias='pull1', handler=set_received)
 
 
-def test_method_handlers(nsaddr):
+def test_method_handlers(nsproxy):
     """
     Test handlers which are methods of a custom class.
     """
@@ -366,7 +363,7 @@ def test_method_handlers(nsaddr):
     assert server.get_attr('received')['pull'] == 'Hello world!'
 
 
-def test_list_of_handlers(nsaddr):
+def test_list_of_handlers(nsproxy):
     """
     An agent should accept a list of handlers. These handlers should be
     executed in strict order.
@@ -398,7 +395,7 @@ def test_list_of_handlers(nsaddr):
     assert receiver.get_attr('third') == '10' + message
 
 
-def test_invalid_handlers(nsaddr):
+def test_invalid_handlers(nsproxy):
     """
     Invalid handlers should raise a TypeError.
     """
@@ -407,7 +404,7 @@ def test_invalid_handlers(nsaddr):
         agent.bind('REP', handler=1.234)
 
 
-def test_log_levels(nsaddr):
+def test_log_levels(nsproxy):
     """
     Test different log levels: info, warning, error and debug. Debug messages
     are only to be logged if `_DEBUG` attribute is set in the agent.
@@ -443,7 +440,7 @@ def test_log_levels(nsaddr):
     assert logger_received(logger, 'log_history_debug', message)
 
 
-def test_running_exception(nsaddr):
+def test_running_exception(nsproxy):
     """
     An exception that occurs while the agent is running should stop the
     agent and log an error message as well.
@@ -462,28 +459,28 @@ def test_running_exception(nsaddr):
     assert not agent.get_attr('running')
 
 
-def test_agent_error_address_already_in_use(nsaddr):
+def test_agent_error_address_already_in_use(nsproxy):
     """
     Running an agent should raise an error if address is already in use.
     """
     with pytest.raises(RuntimeError) as error:
-        run_agent('a0', nsaddr=nsaddr, addr=nsaddr)
+        run_agent('a0', nsaddr=nsproxy.addr(), addr=nsproxy.addr())
     assert 'OSError' in str(error.value)
     assert 'Address already in use' in str(error.value)
 
 
-def test_agent_error_permission_denied(nsaddr):
+def test_agent_error_permission_denied(nsproxy):
     """
     Running an agent should raise an error if it has not sufficient
     permissions for binding to the address.
     """
     with pytest.raises(RuntimeError) as error:
-        run_agent('a0', nsaddr=nsaddr, addr='127.0.0.1:22')
+        run_agent('a0', nsaddr=nsproxy.addr(), addr='127.0.0.1:22')
     assert 'PermissionError' in str(error.value)
     assert 'Permission denied' in str(error.value)
 
 
-def test_agent_loopback_header_unknown(nsaddr):
+def test_agent_loopback_header_unknown(nsproxy):
     """
     Test an unknown header on loopback handler.
     """
@@ -503,7 +500,7 @@ def test_agent_loopback_header_unknown(nsaddr):
     assert 'Unrecognized loopback message' in history[-1]
 
 
-def test_agent_stop(nsaddr):
+def test_agent_stop(nsproxy):
     """
     An agent will stop running when the `stop()` method is executed.
     """
@@ -516,7 +513,7 @@ def test_agent_stop(nsaddr):
     assert not agent.get_attr('running')
 
 
-def test_agent_bind_transport_global(nsaddr):
+def test_agent_bind_transport_global(nsproxy):
     """
     Test global default transport.
     """
@@ -537,7 +534,7 @@ def test_agent_bind_transport_global(nsaddr):
     assert address.transport == 'ipc'
 
 
-def test_agent_bind_transport_agent(nsaddr):
+def test_agent_bind_transport_agent(nsproxy):
     """
     Test agent default transport.
     """
@@ -550,7 +547,7 @@ def test_agent_bind_transport_agent(nsaddr):
     assert address.transport == 'ipc'
 
 
-def test_agent_bind_transport_bind(nsaddr):
+def test_agent_bind_transport_bind(nsproxy):
     """
     Test bind transport.
     """
@@ -563,7 +560,7 @@ def test_agent_bind_transport_bind(nsaddr):
     assert address.transport == 'inproc'
 
 
-def test_agent_bind_given_address(nsaddr):
+def test_agent_bind_given_address(nsproxy):
     """
     Test agent binding to an specified address using TCP and IPC transport
     layers.

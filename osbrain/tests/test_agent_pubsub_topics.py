@@ -5,7 +5,6 @@ import pytest
 from osbrain import run_agent
 from osbrain.address import AgentAddressSerializer
 
-from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
 
 
@@ -17,7 +16,7 @@ def log_received_to_list(agent, message, topic=None):
     'serializer',
     AgentAddressSerializer.SERIALIZER_SEPARATOR
 )
-def test_pubsub_topics_separator(nsaddr, serializer):
+def test_pubsub_topics_separator(nsproxy, serializer):
     """
     Simple publisher-subscriber pattern test using serializers that
     require a separation in message composition.
@@ -94,7 +93,7 @@ def test_pubsub_topics_separator(nsaddr, serializer):
     'serializer',
     AgentAddressSerializer.SERIALIZER_SIMPLE
 )
-def test_pubsub_topics_raw(nsaddr, serializer):
+def test_pubsub_topics_raw(nsproxy, serializer):
     """
     Simple publisher-subscriber pattern test.
 

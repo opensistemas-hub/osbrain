@@ -7,7 +7,6 @@ from osbrain import Agent
 from osbrain import run_agent
 from osbrain.common import repeat
 
-from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
 
 
@@ -48,7 +47,7 @@ def test_repeat_stop():
     assert abs(bar.a - 10) <= 1
 
 
-def test_timer_non_blocking_bug(nsaddr):
+def test_timer_non_blocking_bug(nsproxy):
     """
     A timer call should never block, no matters how long it takes to execute
     the action.
@@ -69,7 +68,7 @@ def test_timer_non_blocking_bug(nsaddr):
     assert agent.get_attr('count') > 0
 
 
-def test_timer_each(nsaddr):
+def test_timer_each(nsproxy):
     """
     Test a timer executed periodically.
     """
@@ -88,7 +87,7 @@ def test_timer_each(nsaddr):
     assert abs(receiver.get_attr('received') - 20) <= 1
 
 
-def test_timer_each_oop(nsaddr):
+def test_timer_each_oop(nsproxy):
     """
     Test a timer executed periodically (using OOP).
     """
@@ -110,7 +109,7 @@ def test_timer_each_oop(nsaddr):
     assert abs(receiver.get_attr('received') - 20) <= 1
 
 
-def test_timer_each_fall_behind(nsaddr):
+def test_timer_each_fall_behind(nsproxy):
     """
     Test a timer executed periodically and falling behind the period.
 
@@ -133,7 +132,7 @@ def test_timer_each_fall_behind(nsaddr):
     assert abs(receiver.get_attr('received') - 10) <= 1
 
 
-def test_timer_each_stop_uuid(nsaddr):
+def test_timer_each_stop_uuid(nsproxy):
     """
     Test a timer executed periodically and stopped by its UUID.
     """
@@ -156,7 +155,7 @@ def test_timer_each_stop_uuid(nsaddr):
     assert uuid not in sender.list_timers()
 
 
-def test_timer_each_stop_alias(nsaddr):
+def test_timer_each_stop_alias(nsproxy):
     """
     Test a timer executed periodically and stopped by an alias.
     """
@@ -179,7 +178,7 @@ def test_timer_each_stop_alias(nsaddr):
     assert 'aliased_timer' not in sender.list_timers()
 
 
-def test_stop_all_timers(nsaddr):
+def test_stop_all_timers(nsproxy):
     """
     Calling `stop_all_timers()` should stop all currently running timers.
     """
@@ -247,7 +246,7 @@ def test_timer_after_oop(nsproxy):
     assert agent.get_attr('count') == 3
 
 
-def test_timer_after_stop_uuid(nsaddr):
+def test_timer_after_stop_uuid(nsproxy):
     """
     Test a timer executed once after a time delay and stopped by its UUID.
     """
@@ -263,7 +262,7 @@ def test_timer_after_stop_uuid(nsaddr):
     assert agent.get_attr('count') == 0
 
 
-def test_timer_after_stop_alias(nsaddr):
+def test_timer_after_stop_alias(nsproxy):
     """
     Test a timer executed once after a time delay and stopped by its alias.
     """

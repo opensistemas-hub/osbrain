@@ -12,7 +12,6 @@ from osbrain.agent import compose_message
 from osbrain.agent import TOPIC_SEPARATOR
 from osbrain.address import AgentAddressSerializer
 
-from common import nsaddr  # pragma: no flakes
 from common import nsproxy  # pragma: no flakes
 
 
@@ -97,7 +96,7 @@ def test_deserialize_message():
         deserialize_message(message=b'x', serializer='foo')
 
 
-def test_reqrep_raw(nsaddr):
+def test_reqrep_raw(nsproxy):
     """
     Simple request-reply pattern between two agents with raw serialization.
     """
@@ -112,7 +111,7 @@ def test_reqrep_raw(nsaddr):
     assert response == b'OK'
 
 
-def test_reqrep_pickle(nsaddr):
+def test_reqrep_pickle(nsproxy):
     """
     Simple request-reply pattern between two agents with pickle serialization.
     """
@@ -127,7 +126,7 @@ def test_reqrep_pickle(nsaddr):
     assert response == 'OK'
 
 
-def test_reqrep_json(nsaddr):
+def test_reqrep_json(nsproxy):
     """
     Simple request-reply pattern between two agents with json serialization.
     """
@@ -142,7 +141,7 @@ def test_reqrep_json(nsaddr):
     assert response == 'OK'
 
 
-def test_reqrep_raw_zmq_outside(nsaddr):
+def test_reqrep_raw_zmq_outside(nsproxy):
     """
     Simple request-reply pattern between an agent and a direct ZMQ connection.
     """
@@ -169,7 +168,7 @@ def test_reqrep_raw_zmq_outside(nsaddr):
     context.destroy()
 
 
-def test_pushpull_raw(nsaddr):
+def test_pushpull_raw(nsproxy):
     """
     Simple push-pull pattern test, using raw serialization between agents.
     """
@@ -185,7 +184,7 @@ def test_pushpull_raw(nsaddr):
     assert a1.get_attr('received') == message
 
 
-def test_pushpull_pickle(nsaddr):
+def test_pushpull_pickle(nsproxy):
     """
     Simple push-pull pattern test with pickle serialization.
     """
@@ -201,7 +200,7 @@ def test_pushpull_pickle(nsaddr):
     assert a1.get_attr('received') == message
 
 
-def test_pushpull_json(nsaddr):
+def test_pushpull_json(nsproxy):
     """
     Simple push-pull pattern test with json serialization.
     """
@@ -217,7 +216,7 @@ def test_pushpull_json(nsaddr):
     assert a1.get_attr('received') == message
 
 
-def test_pushpull_raw_zmq_outside(nsaddr):
+def test_pushpull_raw_zmq_outside(nsproxy):
     """
     Simple push-pull pattern test. Channel without serialization.
 
@@ -245,7 +244,7 @@ def test_pushpull_raw_zmq_outside(nsaddr):
     context.destroy()
 
 
-def test_pubsub_raw(nsaddr):
+def test_pubsub_raw(nsproxy):
     """
     Simple publisher-subscriber pattern test.
     """
@@ -261,7 +260,7 @@ def test_pubsub_raw(nsaddr):
     assert a1.get_attr('received') == message
 
 
-def test_pubsub_pickle(nsaddr):
+def test_pubsub_pickle(nsproxy):
     """
     Simple publisher-subscriber pattern test with pickle serialization.
     """
@@ -277,7 +276,7 @@ def test_pubsub_pickle(nsaddr):
     assert a1.get_attr('received') == message
 
 
-def test_pubsub_json(nsaddr):
+def test_pubsub_json(nsproxy):
     """
     Simple publisher-subscriber pattern test with json serialization.
     """
@@ -293,7 +292,7 @@ def test_pubsub_json(nsaddr):
     assert a1.get_attr('received') == message
 
 
-def test_pubsub_raw_zmq_outside(nsaddr):
+def test_pubsub_raw_zmq_outside(nsproxy):
     """
     Simple publisher-subscriber pattern test. Channel without serialization.
 

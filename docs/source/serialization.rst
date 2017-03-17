@@ -6,13 +6,14 @@
 Serialization
 ********
 
-Serialization in osBrain
-========================
+Introduction
+============
 osBrain uses :py:mod:`pickle` module for serialization when passing messages
 between agents internally and can use :py:mod:`pickle`, :py:mod:`json` and `raw`
 serialization (in which raw bytes are sent, hence the name) for serialization
-when configuring and deploying the multi-agent architectures. It is well known
-that using pickle or json for this purpose is a security risk.
+when configuring and deploying the multi-agent architectures.
+
+It is well known that using pickle or json for this purpose is a security risk.
 The main problem is that allowing a program to unpickle or unjson arbitrary
 data can cause arbitrary code execution and this may wreck or compromise your
 system.
@@ -28,34 +29,53 @@ Specifying the serializer only makes sense in `server` sockets, since `clients`
 will automatically detect and set the type they need in order to communicate
 accordingly with the server.
 
-Right now, there are three ways in which the serializer can be specified:
+There are three ways in which the serializer can be specified:
 
-- Specifying it at `per socket` level.
-- Specifying it at `per agent` level.
-- Through an environment variable.
+- Global configuration.
+- Specifying it at `per agent` configuration.
+- Specifying it at `per socket` configuration.
 
 
-The first one is manually specifying it when binding to a socket:
+Global configuration
+====================
 
-.. literalinclude:: ../../examples/explicit_serializer_socket.py
+By setting the `OSBRAIN_DEFAULT_SERIALIZER` environment variable, we can set
+the default serializer between agents.
 
-The second one is manually specifying it when creating an agent:
+For example, we could set it from our `.py` configuration file:
 
-.. literalinclude:: ../../examples/explicit_serializer_agent.py
+.. code:: python
 
-The last one is through setting the environment variable
-`OSBRAIN_DEFAULT_SERIALIZER`.
+    os.environ['OSBRAIN_DEFAULT_SERIALIZER'] = 'json'
 
-When binding, the serializer is selected in this order (if the selected one is
-not specified, it will try to select the next one):
 
-- Socket
-- Agent
-- Environment variable.
+Per agent configuration
+=======================
+
+Specifying the serializer at per agent level will override the global
+configuration. This can be done as follows:
+
+.. code:: python
+
+    a1 = run_agent('a1', serializer='json')
+
+
+Per socket configuration
+========================
+
+Finally, we can specify the serializer at per socket level. This will override
+any other configuration (global/per agent). For example:
+
+.. code:: python
+
+    a1 = run_agent('a1', serializer='json')
+    # Raw serialization will override json for this socket
+    addr1 = a1.bind('PUB', 'alias1', serializer='raw')
 
 
 PUBSUB messaging pattern
 ========================
+
 For the PUBSUB pattern, there is a special character (`b'\x80'` as of now, even
 though it could change at any time) that we use so as to let the agents know
 what is the topic and what is the message itself. Note that the special
@@ -65,6 +85,7 @@ option is NOT set to `raw` (read below for more information).
 
 Considerations when using `raw` serialization and PUBSUB pattern
 ================================================================
+
 Special care must be taken when working with `raw` serialization and the PUBSUB
 messaging pattern. Under those conditions, we decided to replicate the raw
 ZeroMQ PUBSUB communication, in which the topic is sent along with the message

@@ -117,19 +117,15 @@ def test_timer_each_fall_behind(nsproxy):
     before the next event, the repeater will simply fall behind.
     """
     def tick(agent):
-        agent.send('push', agent.count)
         time.sleep(.2)
         agent.count += 1
 
-    sender = run_agent('sender')
-    sender.set_attr(count=0)
-    receiver = run_agent('receiver')
-    addr = sender.bind('PUSH', alias='push')
-    receiver.connect(addr, handler=set_received)
+    agent = run_agent('agent')
+    agent.set_attr(count=0)
     # Start timer
-    sender.each(0., tick)
+    agent.each(0., tick)
     time.sleep(2.0)
-    assert abs(receiver.get_attr('received') - 10) <= 1
+    assert abs(agent.get_attr('count') - 10) <= 1
 
 
 def test_timer_each_stop_uuid(nsproxy):

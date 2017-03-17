@@ -75,8 +75,27 @@ def test_wrong_nameserver_address():
     """
     Locating a name server that does not exist should raise an error.
     """
+    t0 = time.time()
     with pytest.raises(TimeoutError):
         locate_ns('127.0.0.1:22', timeout=1.)
+    assert 0.5 <= time.time() - t0 <= 1.5
+
+
+def test_no_timeout_locate_ns_not_existing():
+    """
+    Locating a NS that does not exist with no timeout should raise an error.
+    """
+    t0 = time.time()
+    with pytest.raises(TimeoutError):
+        locate_ns('127.0.0.1:22', timeout=0.)
+    assert time.time() - t0 <= 0.5
+
+
+def test_no_timeout_locate_ns_existing(nsproxy):
+    """
+    Locating a NS that exists with no timeout should be OK.
+    """
+    locate_ns(nsproxy.addr(), timeout=0.)
 
 
 def test_proxy_without_nsaddr(nsproxy):

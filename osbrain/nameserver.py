@@ -93,12 +93,12 @@ class NameServerProcess(multiprocessing.Process):
         # Start broadcast responder
         bcserver = BroadcastServer(internal_uri)
         sys.stdout.write(
-            "Broadcast server running on %s" % bcserver.locationStr)
+            "Broadcast server running on %s\n" % bcserver.locationStr)
         sys.stdout.flush()
         bcserver.runInThread()
         sys.stdout.write(
-            "NS running on %s (%s)" % (self.daemon.locationStr, hostip))
-        sys.stdout.write("URI = %s" % self.uri)
+            "NS running on %s (%s)\n" % (self.daemon.locationStr, hostip))
+        sys.stdout.write("URI = %s\n" % self.uri)
         sys.stdout.flush()
         try:
             self.daemon.requestLoop(lambda: not self.shutdown_event.is_set())
@@ -106,7 +106,7 @@ class NameServerProcess(multiprocessing.Process):
             self.daemon.close()
             if bcserver is not None:
                 bcserver.close()
-        sys.stdout.write("NS shut down.")
+        sys.stdout.write("NS shut down.\n")
         sys.stdout.flush()
 
     def start(self):

@@ -2,6 +2,7 @@
 Implementation of name server.
 """
 import os
+import sys
 import time
 import random
 import multiprocessing
@@ -91,17 +92,22 @@ class NameServerProcess(multiprocessing.Process):
         hostip = self.daemon.sock.getsockname()[0]
         # Start broadcast responder
         bcserver = BroadcastServer(internal_uri)
-        print("Broadcast server running on %s" % bcserver.locationStr)
+        sys.stdout.write(
+            "Broadcast server running on %s" % bcserver.locationStr)
+        sys.stdout.flush()
         bcserver.runInThread()
-        print("NS running on %s (%s)" % (self.daemon.locationStr, hostip))
-        print("URI = %s" % self.uri)
+        sys.stdout.write(
+            "NS running on %s (%s)" % (self.daemon.locationStr, hostip))
+        sys.stdout.write("URI = %s" % self.uri)
+        sys.stdout.flush()
         try:
             self.daemon.requestLoop(lambda: not self.shutdown_event.is_set())
         finally:
             self.daemon.close()
             if bcserver is not None:
                 bcserver.close()
-        print("NS shut down.")
+        sys.stdout.write("NS shut down.")
+        sys.stdout.flush()
 
     def start(self):
         os.environ['OSBRAIN_NAMESERVER_ADDRESS'] = str(self.addr)

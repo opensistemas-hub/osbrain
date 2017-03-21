@@ -63,7 +63,7 @@ def test_yield(nsproxy):
     assert response == 'Working!'
     assert a0.get_attr('delay') == delay
     # Sleep so that the replier has had time to update
-    time.sleep(delay)
+    time.sleep(delay + 0.5)
     assert a0.get_attr('delay') == 'ok'
 
 

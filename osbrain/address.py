@@ -1,6 +1,7 @@
 """
 Implementation of address-related features.
 """
+from uuid import uuid4
 from ipaddress import ip_address
 
 import zmq
@@ -369,24 +370,29 @@ class AgentChannel():
     ----------
     kind : AgentChannelKind
         Agent kind.
-    address0 : str
+    sender : str
         First AgentAddress.
-    address1 : str
+    receiver : str
         Second AgentAddress.
 
     Attributes
     ----------
     kind : AgentChannelKind
         Agent kind.
-    address0 : str
+    sender : str
         First AgentAddress.
-    address1 : str
+    receiver : str
         Second AgentAddress.
     """
-    def __init__(self, kind, address0, address1):
+    def __init__(self, kind, receiver, sender):
         self.kind = AgentChannelKind(kind)
-        self.address0 = address0
-        self.address1 = address1
+        self.receiver = receiver
+        self.sender = sender
+        self.transport = \
+            receiver.transport if receiver else sender.transport
+        self.serializer = \
+            receiver.serializer if receiver else sender.serializer
+        self.uuid = uuid4().hex
 
     def __repr__(self):
         """
@@ -396,18 +402,18 @@ class AgentChannel():
         -------
         representation : str
         """
-        return 'AgentChannel(%s, %s, %s)' % \
-            (self.kind, self.address0, self.address1)
+        return 'AgentChannel(kind=%s, receiver=%s, sender=%s)' % \
+            (self.kind, self.receiver, self.sender)
 
     def __hash__(self):
-        return hash(self.kind) ^ hash(self.address0) ^ hash(self.address1)
+        return hash(self.kind) ^ hash(self.receiver) ^ hash(self.sender)
 
     def __eq__(self, other):
         if not isinstance(other, AgentChannel):
             return False
         return self.kind == other.kind \
-            and self.address0 == other.address0 \
-            and self.address1 == other.address1
+            and self.receiver == other.receiver \
+            and self.sender == other.sender
 
     def twin(self):
         """
@@ -417,6 +423,6 @@ class AgentChannel():
             The twin channel of the current one.
         """
         kind = self.kind.twin()
-        addr0 = self.address0.twin() if self.address0 is not None else None
-        addr1 = self.address1.twin() if self.address1 is not None else None
-        return self.__class__(kind, addr0, addr1)
+        sender = self.receiver.twin() if self.receiver is not None else None
+        receiver = self.sender.twin() if self.sender is not None else None
+        return self.__class__(kind=kind, receiver=receiver, sender=sender)

@@ -678,7 +678,7 @@ class Agent():
             addr = self._bind_socket(socket, addr=addr, transport=transport)
             server_address = AgentAddress(transport, addr, 'PULL', 'server',
                                           serializer)
-            channel = AgentChannel(kind, server_address, None)
+            channel = AgentChannel(kind, receiver=server_address, sender=None)
             self.register(socket, channel, alias, handler)
             return channel
         else:
@@ -786,7 +786,7 @@ class Agent():
     def _connect_channel_async_rep(self, channel, handler, alias=None):
         # TODO: clean-up method...
         # Connect PUSH-PULL (asynchronous REQ-REP)
-        server_address = channel.address0
+        server_address = channel.receiver
         self._connect_address(server_address, alias=alias, handler=None)
         if self.registered(channel):
             raise NotImplementedError('Tried to (re)connect a channel')
@@ -1051,8 +1051,8 @@ class Agent():
         data : bytes
             Data received on the socket.
         """
-        addr = channel.address0
-        message = deserialize_message(message=data, serializer=addr.serializer)
+        message = deserialize_message(message=data,
+                                      serializer=channel.serializer)
         address_uuid, request_uuid, data, address = message
         client_address = address.twin()
         if not self.registered(client_address):
@@ -1141,16 +1141,14 @@ class Agent():
             self.socket[address].send(message)
 
     def _send_channel(self, channel, message, topic, wait, on_error):
-        address = channel.address0
-        serializer = address.serializer
-        if not serializer == 'pickle':
-            raise NotImplementedError('Channels need high-level serializers!')
+        address = channel.receiver
         address_uuid = self._async_req_uuid[address]
         request_uuid = uuid4().hex
         self._pending_requests.add(request_uuid)
         receiver_address = self.address[address_uuid]
         message = (address_uuid, request_uuid, message, receiver_address)
-        message = serialize_message(message=message, serializer=serializer)
+        message = serialize_message(message=message,
+                                    serializer=channel.serializer)
         self.socket[channel].send(message)
         if wait:
             self.after(wait, '_check_received', request_uuid, wait, on_error)

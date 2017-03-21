@@ -239,17 +239,43 @@ def test_agentchannelkind_value_error():
         AgentChannelKind('FOO')
 
 
-def test_agentchannel():
+def test_agentchannel_async_rep():
     """
-    Test basic AgentChannel operations: initialization, equivalence and
-    basic methods.
+    Test basic ASYNC_REP AgentChannel operations: initialization, equivalence
+    and basic methods.
     """
-    address0 = AgentAddress('ipc', 'addr0', 'PULL', 'server', 'pickle')
-    address1 = None
-    channel = AgentChannel('ASYNC_REP', address0, address1)
+    receiver = AgentAddress('ipc', 'addr0', 'PULL', 'server', 'pickle')
+    channel = AgentChannel('ASYNC_REP', receiver=receiver, sender=None)
     # Equivalence
-    assert channel == AgentChannel('ASYNC_REP', address0, address1)
+    assert channel == AgentChannel('ASYNC_REP', receiver=receiver, sender=None)
     assert not channel == 'foo'
     assert channel != 'foo'
     # Basic methods
-    assert channel.twin() == AgentChannel('ASYNC_REQ', address0.twin(), None)
+    assert channel.twin() == AgentChannel('ASYNC_REQ', sender=receiver.twin(),
+                                          receiver=None)
+    # Other attributes
+    assert hasattr(channel, 'uuid')
+    assert channel.transport == 'ipc'
+    assert channel.serializer == 'pickle'
+
+
+def test_agentchannel_sync_pub():
+    """
+    Test basic SYNC_PUB AgentChannel operations: initialization, equivalence
+    and basic methods.
+    """
+    sender = AgentAddress('ipc', 'addr0', 'PUB', 'server', 'pickle')
+    receiver = AgentAddress('ipc', 'addr0', 'PULL', 'server', 'pickle')
+    channel = AgentChannel('SYNC_PUB', sender=sender, receiver=receiver)
+    # Equivalence
+    assert channel == AgentChannel('SYNC_PUB', sender=sender,
+                                   receiver=receiver)
+    assert not channel == 'foo'
+    assert channel != 'foo'
+    # Basic methods
+    assert channel.twin() == AgentChannel('SYNC_SUB', sender=receiver.twin(),
+                                          receiver=sender.twin())
+    # Other attributes
+    assert hasattr(channel, 'uuid')
+    assert channel.transport == 'ipc'
+    assert channel.serializer == 'pickle'

@@ -11,6 +11,10 @@ from common import sync_agent_logger
 from common import logger_received
 
 
+def on_error(agent):
+    agent.error_count += 1
+
+
 def test_return(nsproxy):
     """
     Asynchronous request-reply pattern with a reply handler that returns.
@@ -170,9 +174,6 @@ def test_wait_on_error(nsproxy):
     """
     Asynchronous request-reply pattern maximum wait with an error handler.
     """
-    def on_error(agent):
-        agent.error_count += 1
-
     def late_reply(agent, delay):
         agent.received.append(delay)
         time.sleep(delay)

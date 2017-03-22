@@ -206,7 +206,7 @@ class Agent():
         self.handler = {}
         self._async_req_uuid = {}
         self._async_req_handler = {}
-        self._pending_requests = set()
+        self._pending_requests = {}
         self._timer = {}
         self.poll_timeout = 1000
         self.keep_alive = True
@@ -681,8 +681,27 @@ class Agent():
             channel = AgentChannel(kind, receiver=server_address, sender=None)
             self.register(socket, channel, alias, handler)
             return channel
+        if kind == 'SYNC_PUB':
+            if addr:
+                raise NotImplementedError()
+            if not addr:
+                addr = (None, None)
+            pull_address = self.bind('PULL_SYNC_PUB',
+                                     addr=addr[0],
+                                     handler=handler,
+                                     transport=transport,
+                                     serializer=serializer)
+            pub_socket = self.context.socket(zmq.PUB)
+            aux = self._bind_socket(pub_socket, addr=addr[1],
+                                    transport=transport)
+            pub_address = AgentAddress(transport, aux, 'PUB', 'server',
+                                       serializer)
+            channel = AgentChannel(kind, receiver=pull_address,
+                                   sender=pub_address)
+            self.register(pub_socket, channel, alias=alias)
+            return channel
         else:
-            raise NotImplementedError('Unsupported channel kind!')
+            raise NotImplementedError('Unsupported channel kind %s!' % kind)
 
     def _bind_socket(self, socket, addr=None, transport=None):
         """
@@ -761,6 +780,7 @@ class Agent():
             if not alias:
                 alias = client_address
             self.subscribe(alias, handler)
+        return client_address
 
     def _connect_channel(self, channel, alias=None, handler=None):
         """
@@ -776,30 +796,87 @@ class Agent():
             If the new socket receives input messages, the handler/s is/are to
             be set with this parameter.
         """
-        if channel.kind == 'ASYNC_REP':
-            self._connect_channel_async_rep(channel,
-                                            handler=handler,
-                                            alias=alias)
-        else:
-            raise NotImplementedError('Unsupported channel kind!')
+        kind = channel.kind
+        if kind == 'ASYNC_REP':
+            return self._connect_channel_async_rep(channel,
+                                                   handler=handler,
+                                                   alias=alias)
+        if kind == 'SYNC_PUB':
+            return self._connect_channel_sync_pub(channel,
+                                                  handler=handler,
+                                                  alias=alias)
+        raise NotImplementedError('Unsupported channel kind %s!' % kind)
 
     def _connect_channel_async_rep(self, channel, handler, alias=None):
-        # TODO: clean-up method...
+        """
+        Connect to a server agent ASYNC_REP channel.
+
+        Parameters
+        ----------
+        channel : AgentChannel
+            Agent channel to connect to.
+        alias : str, default is None
+            Optional alias for the new channel.
+        handler, default is None
+            If the new socket receives input messages, the handler/s is/are to
+            be set with this parameter.
+        """
         # Connect PUSH-PULL (asynchronous REQ-REP)
-        server_address = channel.receiver
-        self._connect_address(server_address, alias=alias, handler=None)
+        pull_address = channel.receiver
+        self._connect_address(pull_address, alias=alias, handler=None)
         if self.registered(channel):
             raise NotImplementedError('Tried to (re)connect a channel')
-        self._connect_and_register(server_address.twin(), alias=alias,
+        self._connect_and_register(pull_address.twin(), alias=alias,
                                    register_as=channel)
         # Create socket for receiving responses
         uuid = uuid4().hex
         addr = self.bind('PULL', alias=uuid,
                          handler=self._handle_async_requests)
-        self._async_req_uuid[server_address] = uuid
-        self._async_req_uuid[server_address.twin()] = uuid
+        self._async_req_uuid[pull_address] = uuid
+        self._async_req_uuid[pull_address.twin()] = uuid
         self._async_req_uuid[addr] = uuid
         self._async_req_handler[uuid] = handler
+
+    def _connect_channel_sync_pub(self, channel, handler, alias=None):
+        """
+        Connect to a server agent SYNC_PUB channel.
+
+        Parameters
+        ----------
+        channel : AgentChannel
+            Agent channel to connect to.
+        alias : str, default is None
+            Optional alias for the new channel.
+        handler, default is None
+            If the new socket receives input messages, the handler/s is/are to
+            be set with this parameter.
+        """
+        # Connect PUSH-PULL (synchronous PUB-SUB)
+        client_channel = channel.twin()
+        self._connect_address(channel.receiver, alias=alias, handler=None)
+        if self.registered(channel):
+            raise NotImplementedError('Tried to (re)connect a channel')
+        self._connect_and_register(client_channel.sender, alias=alias,
+                                   register_as=client_channel)
+        # Create socket for receiving responses
+        pub_address = channel.sender
+        assert pub_address.kind == 'PUB'
+        uuid = uuid4().hex
+        topic_handlers = {}
+        if isinstance(handler, dict):
+            for key, value in handler.items():
+                topic_handlers[channel.uuid + key] = value
+        else:
+            topic_handlers[channel.uuid] = handler
+        topic_handlers[uuid] = self._handle_async_requests
+        addr = self.connect(pub_address, alias=uuid,
+                            handler=topic_handlers)
+        assert addr.kind == 'SUB'
+        self._async_req_uuid[channel.receiver] = uuid
+        self._async_req_uuid[client_channel.sender] = uuid
+        self._async_req_uuid[addr] = uuid
+        self._async_req_handler[uuid] = handler
+        return client_channel
 
     def _connect_old(self, client_address, alias=None, handler=None):
         if handler is not None:
@@ -824,8 +901,8 @@ class Agent():
             error = 'Received response for an unknown request! %s' % uuid
             self.log_warning(error)
             return
-        self._pending_requests.remove(uuid)
-        self._async_req_handler[address_uuid](self, response)
+        handler = self._pending_requests.pop(uuid)
+        handler(self, response)
 
     def subscribe(self, alias, handlers):
         """
@@ -861,7 +938,7 @@ class Agent():
         ----
         The timeout is set by the agent's `poll_timeout` attribute.
         """
-        pass
+        self.log_info('Iddle...')
 
     def set_attr(self, **kwargs):
         """
@@ -1010,10 +1087,30 @@ class Agent():
             self._process_sub_event(socket, address, data)
         elif address.kind == 'PULL':
             self._process_pull_event(socket, address, data)
-        elif address.kind == 'ASYNC_REP':
-            self._process_async_rep_event(socket, address, data)
-        else:
+        elif address.kind == 'REP':
             self._process_rep_event(socket, address, data)
+        else:
+            self._process_single_event_complex(address, socket, data)
+
+    def _process_single_event_complex(self, address, socket, data):
+        """
+        Process a socket's event for complex sockets (channels).
+
+        Parameters
+        ----------
+        address : AgentAddress or AgentChannel
+            Agent address or channel associated to the socket.
+        socket : zmq.Socket
+            Socket that generated the event.
+        data
+            Received in the socket.
+        """
+        if address.kind == 'ASYNC_REP':
+            self._process_async_rep_event(socket, address, data)
+        elif address.kind == 'PULL_SYNC_PUB':
+            self._process_sync_pub_event(socket, address.channel, data)
+        else:
+            raise NotImplementedError('Unsupported kind %s!' % address.kind)
 
     def _process_rep_event(self, socket, addr, data):
         """
@@ -1058,16 +1155,46 @@ class Agent():
         if not self.registered(client_address):
             self.connect(address)
         handler = self.handler[socket]
-        if inspect.isgeneratorfunction(handler):
+        is_generator = inspect.isgeneratorfunction(handler)
+        if is_generator:
             generator = handler(self, data)
             reply = next(generator)
-            self.send(client_address, (address_uuid, request_uuid, reply))
-            execute_code_after_yield(generator)
         else:
             reply = handler(self, data)
-            # TODO: use socket instead of `self` just like in
-            #       `_process_rep_event`?
-            self.send(client_address, (address_uuid, request_uuid, reply))
+        self.send(client_address, (address_uuid, request_uuid, reply))
+        if is_generator:
+            execute_code_after_yield(generator)
+
+    def _process_sync_pub_event(self, socket, channel, data):
+        """
+        Process a SYNC_PUB socket's event.
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket that generated the event.
+        channel : AgentChannel
+            AgentChannel associated with the socket that generated the event.
+        data : bytes
+            Data received on the socket.
+        """
+        message = deserialize_message(message=data,
+                                      serializer=channel.serializer)
+        address_uuid, request_uuid, data = message
+        handler = self.handler[socket]
+        is_generator = inspect.isgeneratorfunction(handler)
+        if is_generator:
+            generator = handler(self, data)
+            reply = next(generator)
+        else:
+            reply = handler(self, data)
+        message = (address_uuid, request_uuid, reply)
+        self._send_channel_sync_pub(channel=channel,
+                                    message=message,
+                                    topic=address_uuid,
+                                    general=False)
+        if is_generator:
+            execute_code_after_yield(generator)
 
     def _process_pull_event(self, socket, addr, data):
         """
@@ -1118,42 +1245,118 @@ class Agent():
             elif nparams == 3:
                 handler(self, message, str_topic)
 
-    def send(self, address, message, topic='', wait=None, on_error=None):
+    def send(self, address, message, topic=None, handler=None, wait=None,
+             on_error=None):
         """
         Send a message through the specified address.
 
         Note that replies in a REQREP pattern do not use this function in
         order to be sent.
+
+        Parameters
+        ----------
+        address : AgentAddress or AgentChannel
+            The address to send the message through.
+        message
+            The message to be sent.
+        topic : str
+            The topic, in case it is relevant (i.e.: for PUB sockets).
+        handler : function, method or string
+            Code that will be executed on input messages if relevant (i.e.:
+            for PULL sockets).
+        wait : float
+            For channel requests, wait at most this number of seconds for a
+            response from the server.
+        on_error : function, method or string
+            Code to be executed if `wait` is passed and the response is not
+            received.
         """
-        # TODO: clean-up send() method
         address = self.address[address]
         if isinstance(address, AgentChannel):
-            self._send_channel(channel=address, message=message, topic=topic,
-                               wait=wait, on_error=on_error)
-        else:
-            assert isinstance(address, AgentAddress)
-            serializer = address.serializer
-            message = serialize_message(message=message, serializer=serializer)
-            if self.address[address].kind == 'PUB':
-                message = compose_message(message=message,
-                                          topic=topic,
-                                          serializer=serializer)
-            self.socket[address].send(message)
+            return self._send_channel(channel=address,
+                                      message=message,
+                                      topic=topic,
+                                      handler=handler,
+                                      wait=wait,
+                                      on_error=on_error)
+        if isinstance(address, AgentAddress):
+            return self._send_address(address=address,
+                                      message=message,
+                                      topic=topic)
+        raise NotImplementedError('Unsupported address type %s!' % address)
 
-    def _send_channel(self, channel, message, topic, wait, on_error):
+    def _send_address(self, address, message, topic=None):
+        message = serialize_message(message=message,
+                                    serializer=address.serializer)
+        if address.kind == 'PUB':
+            if topic is None:
+                topic = ''
+            message = compose_message(message=message,
+                                      topic=topic,
+                                      serializer=address.serializer)
+        self.socket[address].send(message)
+
+    def _send_channel(self, channel, message, topic, handler, wait, on_error):
+        kind = channel.kind
+        if kind == 'ASYNC_REP':
+            return self._send_channel_async_rep(channel=channel,
+                                                message=message,
+                                                wait=wait,
+                                                on_error=on_error)
+        if kind == 'SYNC_PUB':
+            if topic is None:
+                topic = ''
+            return self._send_channel_sync_pub(channel=channel,
+                                               message=message,
+                                               topic=topic)
+        if kind == 'SYNC_SUB':
+            address = channel.receiver
+            address_uuid = self._async_req_uuid[address]
+            request_uuid = uuid4().hex
+            self._pending_requests[request_uuid] = handler
+            message = (address_uuid, request_uuid, message)
+            self._send_address(channel.sender, message)
+            self._wait_received(wait, uuid=request_uuid, on_error=on_error)
+            return
+        raise NotImplementedError('Unsupported channel kind %s!' % kind)
+
+    def _send_channel_async_rep(self, channel, message, wait, on_error):
         address = channel.receiver
         address_uuid = self._async_req_uuid[address]
         request_uuid = uuid4().hex
-        self._pending_requests.add(request_uuid)
+        self._pending_requests[request_uuid] = \
+            self._async_req_handler[address_uuid]
         receiver_address = self.address[address_uuid]
         message = (address_uuid, request_uuid, message, receiver_address)
         message = serialize_message(message=message,
                                     serializer=channel.serializer)
         self.socket[channel].send(message)
-        if wait:
-            self.after(wait, '_check_received', request_uuid, wait, on_error)
+        self._wait_received(wait, uuid=request_uuid, on_error=on_error)
+
+    def _send_channel_sync_pub(self, channel, message, topic, general=True):
+        if general:
+            topic = channel.uuid + topic
+        message = serialize_message(message=message,
+                                    serializer=channel.serializer)
+        message = compose_message(message=message,
+                                  topic=topic,
+                                  serializer=channel.serializer)
+        self.socket[channel].send(message)
 
     def _check_received(self, uuid, wait, on_error):
+        """
+        Check if the requested information has been received.
+
+        Parameters
+        ----------
+        uuid : str
+            Request identifier.
+        wait : float
+            The total number of seconds since the request was made.
+        on_error : function, method or string
+            Code to be executed in case a response was not received for the
+            request in time. If not provided, it will simply log a warning.
+        """
         if uuid not in self._pending_requests:
             return
         if not on_error:
@@ -1162,6 +1365,25 @@ class Agent():
             self.log_warning(warning)
             return
         on_error(self)
+
+    def _wait_received(self, wait, uuid, on_error):
+        """
+        Set up a timer to check a response was received for a given request
+        after a defined time lapse.
+
+        Parameters
+        ----------
+        uuid : str
+            Request identifier.
+        wait : float
+            The total number of seconds to wait for the response.
+        on_error : function, method or string
+            Code to be executed in case a response was not received for the
+            request in time. If not provided, it will simply log a warning.
+        """
+        if not wait:
+            return
+        return self.after(wait, '_check_received', uuid, wait, on_error)
 
     def recv(self, address):
         """

@@ -130,6 +130,8 @@ class AgentAddressKind(str):
         'PULL': 'PUSH',
         'PUB': 'SUB',
         'SUB': 'PUB',
+        'PULL_SYNC_PUB': 'PUSH_SYNC_SUB',
+        'PUSH_SYNC_SUB': 'PULL_SYNC_PUB',
     }
     ZMQ_KIND_CONVERSION = {
         'REQ': zmq.REQ,
@@ -138,8 +140,10 @@ class AgentAddressKind(str):
         'PULL': zmq.PULL,
         'PUB': zmq.PUB,
         'SUB': zmq.SUB,
+        'PULL_SYNC_PUB': zmq.PULL,
+        'PUSH_SYNC_SUB': zmq.PUSH,
     }
-    REQUIRE_HANDLER = ('REP', 'PULL', 'SUB')
+    REQUIRE_HANDLER = ('REP', 'PULL', 'SUB', 'PULL_SYNC_PUB')
 
     def __new__(cls, kind):
         if kind not in cls.TWIN.keys():
@@ -393,6 +397,11 @@ class AgentChannel():
         self.serializer = \
             receiver.serializer if receiver else sender.serializer
         self.uuid = uuid4().hex
+        # Set up pairs
+        if sender:
+            self.sender.channel = self
+        if receiver:
+            self.receiver.channel = self
 
     def __repr__(self):
         """

@@ -274,7 +274,7 @@ class AgentAddress():
     ----------
     transport : str, AgentAddressTransport
         Agent transport protocol.
-    address : int
+    address : str, SocketAddress
         Agent address.
     kind : AgentAddressKind
         Agent kind.

@@ -27,6 +27,10 @@ def set_received(agent, message, topic=None):
     agent.received = message
 
 
+def _handler(agent, message, topic=None):
+    agent.received = True
+
+
 def test_agent_uuid():
     """
     All agent identifiers should be unique strings.
@@ -194,6 +198,49 @@ def test_correct_serialization(nsproxy, agent_serial, socket_serial, result):
     agent = run_agent('a0', serializer=agent_serial)
     addr = agent.bind('PUB', serializer=socket_serial)
     assert addr.serializer == result
+
+
+@pytest.mark.parametrize('linger_ms, sleep_time, should_receive', [
+    (2000, 1, True),
+    (500, 1, False),
+    (0, 1, False),
+    (-1, 1, True),
+])
+def test_linger(nsproxy, linger_ms, sleep_time, should_receive):
+    '''
+    Test linger works when closing the sockets of an agent.
+    '''
+    class AgentTest(Agent):
+        def on_init(self):
+            self.received = False
+
+    os.environ["OSBRAIN_DEFAULT_LINGER"] = str(linger_ms)
+
+    puller = run_agent('puller', base=AgentTest)
+    pusher = run_agent('pusher', base=AgentTest)
+
+    address = puller.bind('PULL', alias='pull', handler=_handler,
+                          transport='tcp')
+    address2 = address.address
+
+    pusher.connect(address, alias='push')
+    time.sleep(sleep_time)
+
+    puller.shutdown()
+    time.sleep(sleep_time)
+
+    pusher.send('push', 'Hello world!')
+    time.sleep(sleep_time)
+
+    pusher.close_sockets()
+    time.sleep(sleep_time)
+
+    puller = run_agent('puller', base=AgentTest)
+    puller.bind('PULL', alias='pull', handler=_handler, addr=address2,
+                transport='tcp')
+    time.sleep(sleep_time)
+
+    assert puller.get_attr('received') == should_receive
 
 
 def test_pushpull(nsproxy):

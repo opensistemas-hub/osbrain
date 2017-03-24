@@ -721,7 +721,6 @@ class Agent():
         addr : str
             The address where the socket binded to.
         """
-        socket.setsockopt(zmq.LINGER, int(os.getenv('OSBRAIN_DEFAULT_LINGER')))
         if transport == 'tcp':
             if not addr:
                 uri = 'tcp://%s' % self.host

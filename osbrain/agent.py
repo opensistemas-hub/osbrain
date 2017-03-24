@@ -721,6 +721,7 @@ class Agent():
         addr : str
             The address where the socket binded to.
         """
+        socket.setsockopt(zmq.LINGER, int(os.getenv('OSBRAIN_DEFAULT_LINGER')))
         if transport == 'tcp':
             if not addr:
                 uri = 'tcp://%s' % self.host
@@ -1445,10 +1446,23 @@ class Agent():
         self._pyroDaemon.shutdown()
 
     def close_sockets(self):
+        reserved = ('loopback', '_loopback_safe', 'inproc://loopback',
+                    'inproc://_loopback_safe')
         for address in self.socket:
-            if address in ('loopback', '_loopback_safe', 'inproc://loopback',
-                           'inproc://_loopback_safe'):
+            if isinstance(address, AgentAddress):
+                if address.address in reserved:
+                    continue
+            if address in reserved:
                 continue
+            if isinstance(address, str):
+                continue
+            self.log_info('> Closing socket: {}'.format(address))
+            try:
+                self.socket[address].setsockopt(
+                    zmq.LINGER,
+                    int(os.getenv('OSBRAIN_DEFAULT_LINGER')))
+            except:
+                pass
             self.socket[address].close()
 
     def ping(self):

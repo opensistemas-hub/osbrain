@@ -11,6 +11,7 @@ Pyro4.config.DETAILED_TRACEBACK = True
 os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'ipc'
 os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'
 os.environ['OSBRAIN_DEFAULT_SERIALIZER'] = 'pickle'
+os.environ['OSBRAIN_DEFAULT_LINGER'] = '-1'
 
 __version__ = '0.4.0'
 

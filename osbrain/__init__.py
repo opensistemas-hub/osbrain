@@ -12,7 +12,7 @@ os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'ipc'
 os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'
 os.environ['OSBRAIN_DEFAULT_SERIALIZER'] = 'pickle'
 
-__version__ = '0.3.1'
+__version__ = '0.4.0'
 
 from .agent import Agent, AgentProcess, run_agent
 from .nameserver import run_nameserver

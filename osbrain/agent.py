@@ -25,6 +25,7 @@ from .common import unbound_method
 from .common import LogLevel
 from .common import repeat
 from .common import after
+from .common import get_linger
 from .address import AgentAddress
 from .address import AgentAddressKind
 from .address import AgentChannel
@@ -1444,25 +1445,43 @@ class Agent():
         self.close_sockets()
         self._pyroDaemon.shutdown()
 
-    def close_sockets(self):
+    def get_unique_external_zmq_sockets(self):
+        """
+        Return an iterable containing all the zmq.Socket objects from
+        `self.socket` which are not internal, without repetition.
+
+        Originally, a socket was internal if its alias was one of the
+        following:
+            - loopback
+            - _loopback_safe
+            - inproc://loopback
+            - inproc://_loopback_safe
+
+        However, since we are storing more than one entry in the `self.socket`
+        dictionary per zmq.socket (by storing its AgentAddress, for example),
+        we need a way to simply get all non-internal zmq.socket objects, and
+        this is precisely what this function does.
+        """
         reserved = ('loopback', '_loopback_safe', 'inproc://loopback',
                     'inproc://_loopback_safe')
-        for address in self.socket:
-            if isinstance(address, AgentAddress):
-                if address.address in reserved:
-                    continue
-            if address in reserved:
+        external_sockets = []
+
+        for k, v in self.socket.items():
+            if isinstance(k, AgentAddress) and k.address in reserved:
                 continue
-            if isinstance(address, str):
+            if k in reserved:
                 continue
-            self.log_info('> Closing socket: {}'.format(address))
-            try:
-                self.socket[address].setsockopt(
-                    zmq.LINGER,
-                    int(os.getenv('OSBRAIN_DEFAULT_LINGER')))
-            except:
-                pass
-            self.socket[address].close()
+
+            external_sockets.append(v)
+
+        return set(external_sockets)
+
+    def close_sockets(self):
+        """
+        Close all non-internal zmq sockets.
+        """
+        for sock in self.get_unique_external_zmq_sockets():
+            sock.close(linger=get_linger())
 
     def ping(self):
         """

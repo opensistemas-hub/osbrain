@@ -1,6 +1,7 @@
 """
 Miscellaneous utilities.
 """
+import os
 import time
 from threading import Event
 from threading import Thread
@@ -123,3 +124,15 @@ def after(delay, action, *args):
     event.stop = event.set
 
     return event
+
+
+def get_linger():
+    """
+    Wrapper to get the linger option from the environment variable.
+
+    Returns
+    -------
+    int
+        Number of ms to linger.
+    """
+    return int(os.getenv('OSBRAIN_DEFAULT_LINGER'))

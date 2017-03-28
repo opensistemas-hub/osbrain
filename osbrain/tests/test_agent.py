@@ -17,12 +17,12 @@ from osbrain import AgentAddress
 from osbrain import AgentProcess
 from osbrain import Proxy
 from osbrain import SocketAddress
+from osbrain.helper import agent_dies
+from osbrain.helper import logger_received
+from osbrain.helper import sync_agent_logger
+from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
-from common import agent_dies
-from common import logger_received
-from common import sync_agent_logger
-from common import wait_agent_attr
 
 
 def set_received(agent, message, topic=None):

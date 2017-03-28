@@ -6,13 +6,13 @@ import pytest
 from osbrain import run_agent
 from osbrain import run_logger
 from osbrain import Agent
+from osbrain.helper import logger_received
+from osbrain.helper import sync_agent_logger
+from osbrain.helper import agent_dies
+from osbrain.helper import attribute_match
+from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
-from common import logger_received
-from common import sync_agent_logger
-from common import agent_dies
-from common import attribute_match
-from common import wait_agent_attr
 
 
 def test_agent_dies(nsproxy):

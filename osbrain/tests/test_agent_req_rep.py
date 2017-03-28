@@ -5,11 +5,11 @@ import time
 
 from osbrain import run_agent
 from osbrain import run_logger
+from osbrain.helper import logger_received
+from osbrain.helper import sync_agent_logger
+from osbrain.helper import agent_dies
 
 from common import nsproxy  # pragma: no flakes
-from common import logger_received
-from common import sync_agent_logger
-from common import agent_dies
 
 
 def test_return(nsproxy):

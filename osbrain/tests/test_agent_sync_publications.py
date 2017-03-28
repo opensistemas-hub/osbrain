@@ -12,6 +12,7 @@ from osbrain import run_logger
 from common import nsproxy  # pragma: no flakes
 from common import sync_agent_logger
 from common import logger_received
+from common import wait_agent_list
 
 
 class Server(Agent):
@@ -50,21 +51,6 @@ class ServerLate(Server):
 class Client(Agent):
     def on_init(self):
         self.received = []
-
-
-def wait_agent_list(agent, name='received', length=None, data=None,
-                    timeout=3):
-    t0 = time.time()
-    while True:
-        received = agent.get_attr('received')
-        if length is not None and len(received) >= length:
-            return True
-        if data is not None and data in received:
-            return True
-        if time.time() - t0 > timeout:
-            break
-        time.sleep(0.01)
-    return False
 
 
 def receive(agent, response):

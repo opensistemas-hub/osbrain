@@ -87,6 +87,38 @@ def agent_dies(agent, nsproxy, timeout=1.):
     return True
 
 
+def wait_agent_list(agent, name='received', length=None, data=None,
+                    timeout=3):
+    """
+    Wait for an agent's attribute, thich is a list, to contain a particular
+    item or to reach a particular size.
+
+    Parameters
+    ----------
+    agent : Proxy
+        A proxy to the agent.
+    name : str, default is `'received'`
+        Name of the agent's attribute to look for (should be a list).
+    length : int, default is None
+        If specified, wait until the attribute reaches this length.
+    data : anything, default is None
+        If scpecified, wait until the attribute contains this element.
+    timeout : float, default is 3
+        After this number of seconds the function will return `False`.
+    """
+    t0 = time.time()
+    while True:
+        received = agent.get_attr('received')
+        if length is not None and len(received) >= length:
+            return True
+        if data is not None and data in received:
+            return True
+        if time.time() - t0 > timeout:
+            break
+        time.sleep(0.01)
+    return False
+
+
 @pytest.fixture(scope='function')
 def nsproxy(request):
     ns = run_nameserver()

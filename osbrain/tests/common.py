@@ -87,11 +87,49 @@ def agent_dies(agent, nsproxy, timeout=1.):
     return True
 
 
-def wait_agent_list(agent, name='received', length=None, data=None,
+def attribute_match(attribute, length=None, data=None, value=None):
+    """
+    Check if an attribute matches any condition:
+
+    - Minimum length.
+    - Contains an item.
+    - Is exactly a value.
+
+    Parameters
+    ----------
+    attribute : anything
+        The attribute to match against.
+    length : int, default is None
+        Return True if the attribute has this minimum length.
+    data : anything, default is None
+        Return True if the attribute contains this value.
+    value : anything, default is None
+        Return True if the attribute contains this value.
+
+    Returns
+    -------
+    bool
+        Whether the attribute matches any condition.
+    """
+    assert length is not None or data is not None or value is not None, \
+        'No condition passed! will return False always...'
+    if length is not None and len(attribute) >= length:
+        return True
+    if data is not None and data in attribute:
+        return True
+    if value is not None and attribute == value:
+        return True
+    return False
+
+
+def wait_agent_attr(agent, name='received', length=None, data=None, value=None,
                     timeout=3):
     """
-    Wait for an agent's attribute, which is a list, to contain a particular
-    item or to reach a particular size.
+    Wait for an agent's attribute, to:
+
+    - Reach a minimum length.
+    - Contain a particular item.
+    - Become a given value.
 
     Parameters
     ----------
@@ -102,18 +140,16 @@ def wait_agent_list(agent, name='received', length=None, data=None,
     length : int, default is None
         If specified, wait until the attribute reaches this length.
     data : anything, default is None
-        If scpecified, wait until the attribute contains this element.
+        If specified, wait until the attribute contains this element.
+    value : anything, default is None
+        If specified, wait until the attribute becomes this value.
     timeout : float, default is 3
         After this number of seconds the function will return `False`.
     """
-    assert length is not None or data is not None, \
-        'No condition passed, wait_agent_list will return False always'
     t0 = time.time()
     while True:
-        received = agent.get_attr(name)
-        if length is not None and len(received) >= length:
-            return True
-        if data is not None and data in received:
+        attribute = agent.get_attr(name)
+        if attribute_match(attribute, length=length, data=data, value=value):
             return True
         if time.time() - t0 > timeout:
             break

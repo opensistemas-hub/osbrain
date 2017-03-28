@@ -22,7 +22,7 @@ from common import nsproxy  # pragma: no flakes
 from common import agent_dies
 from common import logger_received
 from common import sync_agent_logger
-from common import wait_agent_list
+from common import wait_agent_attr
 
 
 def set_received(agent, message, topic=None):
@@ -238,7 +238,7 @@ def test_linger(nsproxy, linger_ms, sleep_time, should_receive):
     puller.bind('PULL', alias='pull', handler=receive, addr=address.address,
                 transport='tcp')
 
-    assert should_receive == wait_agent_list(puller, data='foo', timeout=.2)
+    assert should_receive == wait_agent_attr(puller, data='foo', timeout=.2)
 
 
 def test_pushpull(nsproxy):

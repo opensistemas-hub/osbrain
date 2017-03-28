@@ -12,7 +12,7 @@ from osbrain import run_logger
 from common import nsproxy  # pragma: no flakes
 from common import sync_agent_logger
 from common import logger_received
-from common import wait_agent_list
+from common import wait_agent_attr
 
 
 class Server(Agent):
@@ -90,8 +90,8 @@ def test_simple_pub(nsproxy):
 
     # Wait for clients to receive some data
     N = 10
-    assert wait_agent_list(both, length=N)
-    assert wait_agent_list(positive, length=N)
+    assert wait_agent_attr(both, length=N)
+    assert wait_agent_attr(positive, length=N)
 
     # both
     received = [int(x) for x in both.get_attr('received')]
@@ -137,14 +137,14 @@ def test_request(nsproxy, server):
 
     # Wait for clients to receive some data
     N = 10
-    assert wait_agent_list(active, length=N)
-    assert wait_agent_list(passive, length=N)
+    assert wait_agent_attr(active, length=N)
+    assert wait_agent_attr(passive, length=N)
 
     # Send request from active client
     active.send('sub', 'request!', handler=receive_negate)
 
     # Server request processing
-    assert wait_agent_list(server, length=1)
+    assert wait_agent_attr(server, length=1)
     received = server.get_attr('received')
     assert len(received) == 1
     assert received[0][1] == 'request!'
@@ -152,7 +152,7 @@ def test_request(nsproxy, server):
 
     # Make sure active gets response
     N = len(active.get_attr('received')) + 2
-    assert wait_agent_list(active, length=N)
+    assert wait_agent_attr(active, length=N)
 
     # Check active client received data
     received = active.get_attr('received')
@@ -165,7 +165,7 @@ def test_request(nsproxy, server):
     assert received == list(range(received[0], received[-1] + 1))
 
     # Check passive client received data
-    assert wait_agent_list(passive, data=received[-1])
+    assert wait_agent_attr(passive, data=received[-1])
     received = passive.get_attr('received')
     assert -response not in received
     assert received == list(range(received[0], received[-1] + 1))
@@ -194,7 +194,7 @@ def test_wait(nsproxy):
 
     # Wait for client to receive some data
     N = 10
-    assert wait_agent_list(client, length=N)
+    assert wait_agent_attr(client, length=N)
 
     # Response received in time
     fast = 0
@@ -216,6 +216,6 @@ def test_wait(nsproxy):
     # Response not received in time with error handler
     slow = 1
     client.send('sub', slow, handler=receive, wait=0.1, on_error=on_error)
-    assert wait_agent_list(client, name='error_log', length=1, timeout=0.5)
+    assert wait_agent_attr(client, name='error_log', length=1, timeout=0.5)
     assert server.get_attr('received') == [fast, slow]
     assert 'x' + str(slow) not in client.get_attr('received')

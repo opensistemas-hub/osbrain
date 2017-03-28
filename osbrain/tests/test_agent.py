@@ -203,8 +203,8 @@ def test_correct_serialization(nsproxy, agent_serial, socket_serial, result):
 
 
 @pytest.mark.parametrize('linger_ms, sleep_time, should_receive', [
-    (2000, 1, True),
-    (500, 1, False),
+    (2, 1, True),
+    (0.5, 1, False),
     (0, 1, False),
     (-1, 1, True),
 ])

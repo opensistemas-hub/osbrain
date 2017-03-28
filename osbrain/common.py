@@ -133,6 +133,11 @@ def get_linger():
     Returns
     -------
     int
-        Number of ms to linger.
+        Number of seconds to linger.
+        Note that -1 means linger forever.
     """
-    return int(os.getenv('OSBRAIN_DEFAULT_LINGER'))
+    value = os.getenv('OSBRAIN_DEFAULT_LINGER')
+
+    if value == '-1':
+        return -1
+    return int(float(value) * 1000)

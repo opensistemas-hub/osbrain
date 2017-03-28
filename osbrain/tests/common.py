@@ -90,7 +90,7 @@ def agent_dies(agent, nsproxy, timeout=1.):
 def wait_agent_list(agent, name='received', length=None, data=None,
                     timeout=3):
     """
-    Wait for an agent's attribute, thich is a list, to contain a particular
+    Wait for an agent's attribute, which is a list, to contain a particular
     item or to reach a particular size.
 
     Parameters
@@ -106,9 +106,11 @@ def wait_agent_list(agent, name='received', length=None, data=None,
     timeout : float, default is 3
         After this number of seconds the function will return `False`.
     """
+    assert length is not None or data is not None, \
+        'No condition passed, wait_agent_list will return False always'
     t0 = time.time()
     while True:
-        received = agent.get_attr('received')
+        received = agent.get_attr(name)
         if length is not None and len(received) >= length:
             return True
         if data is not None and data in received:

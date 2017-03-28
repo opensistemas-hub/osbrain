@@ -51,6 +51,7 @@ class ServerLate(Server):
 class Client(Agent):
     def on_init(self):
         self.received = []
+        self.error_log = []
 
 
 def receive(agent, response):
@@ -62,7 +63,7 @@ def receive_negate(agent, response):
 
 
 def on_error(agent):
-    agent.error_count += 1
+    agent.error_log.append('error')
 
 
 def test_simple_pub(nsproxy):
@@ -215,6 +216,6 @@ def test_wait(nsproxy):
     # Response not received in time with error handler
     slow = 1
     client.send('sub', slow, handler=receive, wait=0.1, on_error=on_error)
-    assert wait_agent_list(client, name='error_count', data=1, timeout=0.5)
+    assert wait_agent_list(client, name='error_log', length=1, timeout=0.5)
     assert server.get_attr('received') == [fast, slow]
     assert 'x' + str(slow) not in client.get_attr('received')

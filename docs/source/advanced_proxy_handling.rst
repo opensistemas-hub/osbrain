@@ -74,3 +74,25 @@ Or when creating a new :class:`Proxy <osbrain.proxy.Proxy>` to the agent:
 It is also possible, although totally unadvisable, to change the default proxy
 behavior globally. Setting the ``OSBRAIN_DEFAULT_SAFE`` environment variable to
 ``false`` would result in all proxies making unsafe calls by default.
+
+
+.. index:: proxy, oneway, concurrent
+
+Executing one-way, unsafe calls
+===============================
+
+In some situations, you might want to execute unsafe calls in parallel without
+waiting for any return. In that case, you can make use of the ``oneway`` proxy
+attribute:
+
+.. code-block:: python
+
+   agent_proxy.oneway.method_call()
+
+This method call will return immediately, and the code will be executed in the
+remote agent concurrently with the main thread and any other unsafe or one-way
+calls.
+
+.. warning:: Do note that ``oneway`` calls are actually executed in a separate
+   thread, which means they behave like ``unsafe`` calls. If not used with
+   care, this concurrency may result in unexpected hard-to-debug behavior.

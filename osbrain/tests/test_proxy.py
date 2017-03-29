@@ -11,6 +11,7 @@ from osbrain import Agent
 from osbrain import Proxy
 from osbrain import NSProxy
 from osbrain.proxy import locate_ns
+from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
 
@@ -276,3 +277,36 @@ def test_agent_proxy_safe_and_unsafe_calls_environ_unsafe(nsproxy):
     while worker.get_attr('bussy'):
         time.sleep(0.01)
     assert since(t0, passed=2., tolerance=0.1)
+
+
+def test_agent_proxy_oneway(nsproxy):
+    """
+    User can force a one-way from the proxy.
+    """
+    class OneWayne(Agent):
+        def on_init(self):
+            target = self.bind('PULL', alias='target', handler=self.receive,
+                               transport='inproc')
+            self.target = target
+            self.received = []
+
+        def shoot(self):
+            self.connect(self.target, alias='gun')
+            for i in range(10):
+                self.send('gun', 'bang!')
+                time.sleep(0.1)
+
+        def receive(self, message):
+            self.received.append(message)
+
+    wayne = run_agent('wayne', base=OneWayne)
+
+    # Execute one-way call, which should return soon
+    assert not wayne._next_oneway
+    t0 = time.time()
+    assert not wayne.oneway.shoot()  # No return expected
+    assert not wayne.oneway.shoot()  # No return expected
+    assert time.time() - t0 < 0.2
+    assert not wayne._next_oneway
+
+    assert wait_agent_attr(wayne, value=20*['bang!'], timeout=1.2)

@@ -74,6 +74,7 @@ class Proxy(Pyro4.core.Proxy):
             self._default_safe = \
                 os.environ['OSBRAIN_DEFAULT_SAFE'].lower() != 'false'
         self._safe = self._default_safe
+        self._next_oneway = False
         while not self._ready_or_timeout(time0, timeout):
             continue
 
@@ -98,15 +99,17 @@ class Proxy(Pyro4.core.Proxy):
         return True
 
     def __getstate__(self):
-        return super().__getstate__() + (self._default_safe, self._safe)
+        return super().__getstate__() + \
+            (self._next_oneway, self._default_safe, self._safe)
 
     def __setstate__(self, state):
         super().__setstate__(state)
+        self._next_oneway = state[-3]
         self._default_safe = state[-2]
         self._safe = state[-1]
 
     def __setattr__(self, name, value):
-        if name in ('_safe', '_default_safe'):
+        if name in ('_safe', '_default_safe', '_next_oneway'):
             return super(Pyro4.core.Proxy, self).__setattr__(name, value)
         if name.startswith('_'):
             return super().__setattr__(name, value)
@@ -143,6 +146,11 @@ class Proxy(Pyro4.core.Proxy):
         self._safe = False
         return self
 
+    @property
+    def oneway(self):
+        self._next_oneway = True
+        return self
+
     def _pyroInvoke(self, methodname, args, kwargs, flags=0, objectId=None):
         try:
             result = self._remote_call(
@@ -153,6 +161,7 @@ class Proxy(Pyro4.core.Proxy):
             raise
         finally:
             self._safe = self._default_safe
+            self._next_oneway = False
         self._post_invoke(methodname, args, kwargs)
         return result
 
@@ -172,12 +181,20 @@ class Proxy(Pyro4.core.Proxy):
         """
         return (methodname in self._pyroMethods and
                 not methodname.startswith('_') and
-                methodname not in ('run', 'get_attr', 'kill', 'safe_call'))
+                methodname not in ('run', 'get_attr', 'kill', 'safe_call',
+                                   'concurrent'))
 
     def _remote_call(self, methodname, args, kwargs, flags, objectId):
         """
         Call a remote method from the proxy.
         """
+        if self._next_oneway:
+            # Hardcoded Pyro4.core.MessageFactory flag (cannot be imported)
+            pyro4_FLAGS_ONEWAY = 1 << 2
+            flags |= pyro4_FLAGS_ONEWAY
+            result = super()._pyroInvoke(
+                methodname, args, kwargs, flags=flags, objectId=objectId)
+            return result
         if self._safe and self._is_safe_method(methodname):
             safe_args = [methodname] + list(args)
             result = super()._pyroInvoke(

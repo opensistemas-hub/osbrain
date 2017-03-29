@@ -939,7 +939,7 @@ class Agent():
         ----
         The timeout is set by the agent's `poll_timeout` attribute.
         """
-        self.log_info('Iddle...')
+        pass
 
     def set_attr(self, **kwargs):
         """

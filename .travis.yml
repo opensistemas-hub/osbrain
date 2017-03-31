@@ -4,7 +4,6 @@ python:
   - 3.6
   - 3.5
   - 3.4.4
-  - 3.3
 
 install:
   - pip install tox tox-travis

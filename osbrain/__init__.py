@@ -1,4 +1,17 @@
 import os
+import sys
+from pathlib import Path
+
+# While Python 3.4 is supported...
+if sys.version_info < (3, 5):
+    def mkdir(directory, **kwargs):
+        directory = str(directory)
+        os.makedirs(directory, exist_ok=kwargs['exist_ok'])
+
+    from os.path import expanduser
+    Path.home = lambda: Path(expanduser('~'))
+    Path.mkdir = lambda directory, **kwargs: mkdir(directory, **kwargs)
+
 import Pyro4
 Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
 Pyro4.config.SERIALIZERS_ACCEPTED.add('dill')
@@ -14,6 +27,11 @@ config['SAFE'] = os.environ.get('OSBRAIN_DEFAULT_SAFE', 'true') != 'false'
 config['SERIALIZER'] = os.environ.get('OSBRAIN_DEFAULT_SERIALIZER', 'pickle')
 config['LINGER'] = float(os.environ.get('OSBRAIN_DEFAULT_LINGER', '1'))
 config['TRANSPORT'] = os.environ.get('OSBRAIN_DEFAULT_TRANSPORT', 'ipc')
+
+# Set storage folder for IPC socket files
+config['IPC_DIR'] = \
+    Path(os.environ.get('XDG_RUNTIME_DIR', Path.home())) / '.osbrain_ipc'
+config['IPC_DIR'].mkdir(exist_ok=True, parents=True)
 
 
 __version__ = '0.4.1'

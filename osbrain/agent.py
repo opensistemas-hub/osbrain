@@ -733,6 +733,8 @@ class Agent():
         else:
             if not addr:
                 addr = str(uuid4())
+            if transport == 'ipc':
+                addr = config['IPC_DIR'] / addr
             socket.bind('%s://%s' % (transport, addr))
         return addr
 

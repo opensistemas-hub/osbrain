@@ -34,7 +34,7 @@ config['IPC_DIR'] = \
 config['IPC_DIR'].mkdir(exist_ok=True, parents=True)
 
 
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 
 from .agent import Agent, AgentProcess, run_agent
 from .nameserver import run_nameserver

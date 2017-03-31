@@ -1,10 +1,10 @@
 """
 Test file for communication transport.
 """
-import os
 import random
 from uuid import uuid4
 
+import osbrain
 from osbrain import run_agent
 from osbrain import SocketAddress
 
@@ -21,12 +21,12 @@ def test_agent_bind_transport_global(nsproxy):
     assert address.transport == 'ipc'
 
     # Changing default global transport
-    os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'tcp'
+    osbrain.config['TRANSPORT'] = 'tcp'
     agent = run_agent('a1')
     address = agent.bind('PUSH')
     assert address.transport == 'tcp'
 
-    os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'ipc'
+    osbrain.config['TRANSPORT'] = 'ipc'
     agent = run_agent('a2')
     address = agent.bind('PUSH')
     assert address.transport == 'ipc'

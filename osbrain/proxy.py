@@ -4,8 +4,11 @@ Implementation of proxy-related features.
 import os
 import sys
 import time
+
 import Pyro4
 from Pyro4.errors import NamingError
+
+from . import config
 from .address import address_to_host_port
 from .address import SocketAddress
 
@@ -57,8 +60,8 @@ class Proxy(Pyro4.core.Proxy):
     timeout : float
         Timeout, in seconds, to wait until the agent is discovered.
     safe : bool, default is None
-        Use safe calls by default. When not set, environment's
-        OSBRAIN_DEFAULT_SAFE is used.
+        Use safe calls by default. When not set, osbrain default's
+        `osbrain.config['SAFE']` is used.
     """
     def __init__(self, name, nsaddr=None, timeout=3., safe=None):
         if not nsaddr:
@@ -71,8 +74,7 @@ class Proxy(Pyro4.core.Proxy):
         if safe is not None:
             self._default_safe = safe
         else:
-            self._default_safe = \
-                os.environ['OSBRAIN_DEFAULT_SAFE'].lower() != 'false'
+            self._default_safe = config['SAFE']
         self._safe = self._default_safe
         self._next_oneway = False
         while not self._ready_or_timeout(time0, timeout):

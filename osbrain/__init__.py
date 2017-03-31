@@ -8,10 +8,13 @@ Pyro4.config.SERVERTYPE = 'thread'
 Pyro4.config.REQUIRE_EXPOSE = False
 Pyro4.config.COMMTIMEOUT = 0.
 Pyro4.config.DETAILED_TRACEBACK = True
-os.environ['OSBRAIN_DEFAULT_TRANSPORT'] = 'ipc'
-os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'
-os.environ['OSBRAIN_DEFAULT_SERIALIZER'] = 'pickle'
-os.environ['OSBRAIN_DEFAULT_LINGER'] = '1'
+
+config = {}
+config['SAFE'] = os.environ.get('OSBRAIN_DEFAULT_SAFE', 'true') != 'false'
+config['SERIALIZER'] = os.environ.get('OSBRAIN_DEFAULT_SERIALIZER', 'pickle')
+config['LINGER'] = float(os.environ.get('OSBRAIN_DEFAULT_LINGER', '1'))
+config['TRANSPORT'] = os.environ.get('OSBRAIN_DEFAULT_TRANSPORT', 'ipc')
+
 
 __version__ = '0.4.1'
 

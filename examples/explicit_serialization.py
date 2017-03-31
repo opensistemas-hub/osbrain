@@ -2,8 +2,7 @@
 A simple example in which the different serialization setting
 options are shown.
 '''
-import os
-
+import osbrain
 from osbrain import run_nameserver
 from osbrain import run_agent
 
@@ -15,7 +14,7 @@ def set_received(agent, message, topic=None):
 if __name__ == '__main__':
     # We can define the default serializer through environment variables.
     # This will be the preferred method from now on, unless overriden.
-    os.environ['OSBRAIN_DEFAULT_SERIALIZER'] = 'pickle'
+    osbrain.config['SERIALIZER'] = 'pickle'
 
     ns = run_nameserver()
 

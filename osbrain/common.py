@@ -1,11 +1,12 @@
 """
 Miscellaneous utilities.
 """
-import os
 import time
 from threading import Event
 from threading import Thread
 import traceback
+
+from . import config
 
 
 def format_exception():
@@ -136,8 +137,8 @@ def get_linger():
         Number of seconds to linger.
         Note that -1 means linger forever.
     """
-    value = os.getenv('OSBRAIN_DEFAULT_LINGER')
+    value = config['LINGER']
 
-    if value == '-1':
+    if value < 0:
         return -1
     return int(float(value) * 1000)

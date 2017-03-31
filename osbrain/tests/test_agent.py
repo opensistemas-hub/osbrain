@@ -1,7 +1,6 @@
 """
 Test file for agents.
 """
-import os
 import time
 from uuid import uuid4
 from threading import Timer
@@ -9,6 +8,7 @@ from threading import Timer
 import pytest
 import Pyro4
 
+import osbrain
 from osbrain import run_logger
 from osbrain import run_agent
 from osbrain import Agent
@@ -182,31 +182,13 @@ def test_socket_creation(nsproxy):
     assert a0.addr('alias2') == addr2
 
 
-@pytest.mark.parametrize('agent_serial,socket_serial,result', [
-    (None, None, os.getenv('OSBRAIN_DEFAULT_SERIALIZER')),
-    ('raw', None, 'raw'),
-    ('pickle', None, 'pickle'),
-    (None, 'raw', 'raw'),
-    (None, 'json', 'json'),
-    ('pickle', 'json', 'json'),
-])
-def test_correct_serialization(nsproxy, agent_serial, socket_serial, result):
-    """
-    Test that the right serializer is being used when using the different
-    initialization options.
-    """
-    agent = run_agent('a0', serializer=agent_serial)
-    addr = agent.bind('PUB', serializer=socket_serial)
-    assert addr.serializer == result
-
-
-@pytest.mark.parametrize('linger_ms, sleep_time, should_receive', [
+@pytest.mark.parametrize('linger, sleep_time, should_receive', [
     (2, 1, True),
     (0.5, 1, False),
     (0, 1, False),
     (-1, 1, True),
 ])
-def test_linger(nsproxy, linger_ms, sleep_time, should_receive):
+def test_linger(nsproxy, linger, sleep_time, should_receive):
     '''
     Test linger works when closing the sockets of an agent.
     '''
@@ -214,7 +196,7 @@ def test_linger(nsproxy, linger_ms, sleep_time, should_receive):
         def on_init(self):
             self.received = []
 
-    os.environ["OSBRAIN_DEFAULT_LINGER"] = str(linger_ms)
+    osbrain.config['LINGER'] = linger
 
     puller = run_agent('puller', base=AgentTest)
     pusher = run_agent('pusher', base=AgentTest)

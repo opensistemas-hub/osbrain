@@ -39,14 +39,15 @@ There are three ways in which the serializer can be specified:
 Global configuration
 ====================
 
-By setting the `OSBRAIN_DEFAULT_SERIALIZER` environment variable, we can set
-the default serializer between agents.
-
-For example, we could set it from our `.py` configuration file:
+By setting the ``osbrain.config['SERIALIZER']`` configuration variable, we
+can change the default serializer. For example:
 
 .. code:: python
 
-    os.environ['OSBRAIN_DEFAULT_SERIALIZER'] = 'json'
+    osbrain.config['SERIALIZER'] = 'json'
+
+.. note:: It is also possible to change the global default serializer by
+   setting the ``OSBRAIN_DEFAULT_SERIALIZER`` environment variable.
 
 
 Per agent configuration

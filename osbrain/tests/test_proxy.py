@@ -1,11 +1,11 @@
 """
 Proxy module tests.
 """
-import os
 import time
 
 import pytest
 
+import osbrain
 from osbrain import run_agent
 from osbrain import Agent
 from osbrain import Proxy
@@ -169,13 +169,13 @@ def test_agent_proxy_safe_and_unsafe_property(nsproxy):
     """
     run_agent('foo', base=DelayAgent)
     # Safe environment
-    os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'
+    osbrain.config['SAFE'] = True
     proxy = Proxy('foo')
     assert proxy._safe
     assert proxy.safe._safe
     assert not proxy.unsafe._safe
     # Unsafe environment
-    os.environ['OSBRAIN_DEFAULT_SAFE'] = 'false'
+    osbrain.config['SAFE'] = False
     proxy = Proxy('foo')
     assert not proxy._safe
     assert proxy.safe._safe
@@ -200,13 +200,13 @@ def test_agent_proxy_safe_and_unsafe_parameter(nsproxy):
     """
     run_agent('foo', base=DelayAgent)
     # Safe environment
-    os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'
+    osbrain.config['SAFE'] = True
     proxy = Proxy('foo')
     assert proxy._safe
     proxy = Proxy('foo', safe=False)
     assert not proxy._safe
     # Unsafe environment
-    os.environ['OSBRAIN_DEFAULT_SAFE'] = 'false'
+    osbrain.config['SAFE'] = False
     proxy = Proxy('foo')
     assert not proxy._safe
     proxy = Proxy('foo', safe=True)
@@ -219,7 +219,7 @@ def test_agent_proxy_safe_and_unsafe_calls_property_safe(nsproxy):
     When using the `safe` property, calls are expected to wait until the main
     thread is able to process them to avoid concurrency.
     """
-    os.environ['OSBRAIN_DEFAULT_SAFE'] = 'false'
+    osbrain.config['SAFE'] = False
     worker = setup_bussy_worker(nsproxy)
     assert not worker._safe
     t0 = time.time()
@@ -236,7 +236,7 @@ def test_agent_proxy_safe_and_unsafe_calls_property_unsafe(nsproxy):
     When using the `unsafe` property, calls are not expected to wait until
     the main thread is able to process them (concurrency is allowed).
     """
-    os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'
+    osbrain.config['SAFE'] = True
     worker = setup_bussy_worker(nsproxy)
     assert worker._safe
     t0 = time.time()
@@ -255,7 +255,7 @@ def test_agent_proxy_safe_and_unsafe_calls_environ_safe(nsproxy):
     When using the `safe` property, calls are expected to wait until the main
     thread is able to process them to avoid concurrency.
     """
-    os.environ['OSBRAIN_DEFAULT_SAFE'] = 'true'
+    osbrain.config['SAFE'] = True
     worker = setup_bussy_worker(nsproxy)
     t0 = time.time()
     assert worker.listen() == 'OK'
@@ -269,7 +269,7 @@ def test_agent_proxy_safe_and_unsafe_calls_environ_unsafe(nsproxy):
     When using the `unsafe` property, calls are not expected to wait until
     the main thread is able to process them (concurrency is allowed).
     """
-    os.environ['OSBRAIN_DEFAULT_SAFE'] = 'false'
+    osbrain.config['SAFE'] = False
     worker = setup_bussy_worker(nsproxy)
     t0 = time.time()
     assert worker.listen() == 'OK'

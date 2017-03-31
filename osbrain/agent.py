@@ -19,6 +19,7 @@ import Pyro4
 from Pyro4.errors import PyroError
 import zmq
 
+from . import config
 from .common import format_exception
 from .common import format_method_exception
 from .common import unbound_method
@@ -603,10 +604,10 @@ class Agent():
         kind = guess_kind(kind)
         transport = transport \
             or self.transport \
-            or os.environ.get('OSBRAIN_DEFAULT_TRANSPORT')
+            or config['TRANSPORT']
         serializer = serializer \
             or self.serializer \
-            or os.getenv('OSBRAIN_DEFAULT_SERIALIZER')
+            or config['SERIALIZER']
         if isinstance(kind, AgentAddressKind):
             return self._bind_address(kind, alias, handler, addr, transport,
                                       serializer)

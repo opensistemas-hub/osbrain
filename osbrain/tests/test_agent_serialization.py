@@ -5,6 +5,7 @@ import json
 import zmq
 import pytest
 
+import osbrain
 from osbrain import run_agent
 from osbrain.agent import serialize_message
 from osbrain.agent import deserialize_message
@@ -40,6 +41,24 @@ def test_message_composer():
     # Raise with wrong serializer
     with pytest.raises(Exception):
         compose_message(message, topic, 'foo')
+
+
+@pytest.mark.parametrize('agent_serial,socket_serial,result', [
+    (None, None, osbrain.config['SERIALIZER']),
+    ('raw', None, 'raw'),
+    ('pickle', None, 'pickle'),
+    (None, 'raw', 'raw'),
+    (None, 'json', 'json'),
+    ('pickle', 'json', 'json'),
+])
+def test_correct_serialization(nsproxy, agent_serial, socket_serial, result):
+    """
+    Test that the right serializer is being used when using the different
+    initialization options.
+    """
+    agent = run_agent('a0', serializer=agent_serial)
+    addr = agent.bind('PUB', serializer=socket_serial)
+    assert addr.serializer == result
 
 
 def test_serialize_message():

@@ -50,12 +50,14 @@ def sync_agent_logger(agent, logger):
     logger : Proxy
         Proxy to the logger.
     """
-    while not len(logger.get_attr('log_history_info')):
+    message = str(uuid4())
+    delay = 0.01
+    while not len(logger.get_attr('log_history_info')) or \
+            message not in logger.get_attr('log_history_info')[-1]:
         message = str(uuid4())
         agent.log_info(message)
-        time.sleep(0.01)
-    while message not in logger.get_attr('log_history_info')[-1]:
-        time.sleep(0.01)
+        time.sleep(delay)
+        delay *= 2
 
 
 def agent_dies(agent, nsproxy, timeout=1.):

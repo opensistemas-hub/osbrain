@@ -15,12 +15,7 @@ from osbrain.helper import wait_agent_attr
 from common import nsproxy  # pragma: no flakes
 
 
-class Server(Agent):
-    def on_init(self):
-        self.count = 0
-        self.received = []
-        self.bind('SYNC_PUB', alias='publish', handler='reply')
-
+class BaseServer(Agent):
     def publish(self):
         self.count += 1
         self.send('publish', self.count)
@@ -29,10 +24,25 @@ class Server(Agent):
         self.count += 1
         self.send('publish', str(self.count), topic='positive')
         self.send('publish', str(-self.count), topic='negative')
+        self.send('publish', 'bytes...', topic=b'\xeb')
 
     def reply(self, request):
         self.received.append((self.count, request))
         return self.count + 0.5
+
+
+class Server(BaseServer):
+    def on_init(self):
+        self.count = 0
+        self.received = []
+        self.bind('SYNC_PUB', alias='publish', handler='reply')
+
+
+class PubServer(BaseServer):
+    def on_init(self):
+        self.count = 0
+        self.received = []
+        self.bind('PUB', alias='publish', handler='reply')
 
 
 class ServerYield(Server):
@@ -66,24 +76,72 @@ def on_error(agent):
     agent.error_log.append('error')
 
 
-def test_simple_pub(nsproxy):
+@pytest.mark.parametrize('server', [Server, PubServer])
+def test_simple_pub_single_handler(nsproxy, server):
     """
-    SYNC_PUB should work just like a normal PUB.
+    SYNC_PUB should work just like a normal PUB. This test checks normal
+    behavior when using a single handler (i.e.: no filtering).
 
     When clients connect to a SYNC_PUB server, as long as they do not make
     requests, this communication pattern should behave exactly like a normal
     PUB-SUB pattern.
     """
-    server = run_agent('server', base=Server)
-    both = run_agent('both', base=Client)
-    positive = run_agent('positive', base=Client)
+    server = run_agent('server', base=server)
+    alltopics = run_agent('alltopics', base=Client)
 
     # Connect clients
     addr = server.addr('publish')
-    addr_both = both.connect(addr, handler=receive)
+    addr_alltopics = alltopics.connect(addr, handler=receive)
+    assert addr_alltopics == addr.twin()
+
+    # Publish from server
+    server.each(0, 'publish_str')
+
+    # Wait for clients to receive some data
+    N = 10
+    assert wait_agent_attr(alltopics, length=N)
+
+    # alltopics
+    received = [int(x) for x in alltopics.get_attr('received')
+                if x != 'bytes...']
+    assert len(received) >= N
+    for i in range(2, len(received)):
+        if received[i] > 0:
+            if received[i - 1] == 'bytes...':
+                assert received[i - 2] == 1 - received[i]
+            else:
+                assert received[i - 1] == 1 - received[i]
+        else:
+            if received[i - 1] == 'bytes...':
+                assert received[i - 2] == -received[i]
+            else:
+                assert received[i - 1] == -received[i]
+
+
+@pytest.mark.parametrize('server', [Server, PubServer])
+def test_simple_pub_dict_handler(nsproxy, server):
+    """
+    SYNC_PUB should work just like a normal PUB. This test checks normal
+    behavior when using multiple handlers (i.e.: filtering).
+
+    When clients connect to a SYNC_PUB server, as long as they do not make
+    requests, this communication pattern should behave exactly like a normal
+    PUB-SUB pattern.
+    """
+    server = run_agent('server', base=server)
+    both = run_agent('both', base=Client)
+    positive = run_agent('positive', base=Client)
+    bytestopic = run_agent('bytestopic', base=Client)
+
+    # Connect clients
+    addr = server.addr('publish')
+    addr_both = both.connect(addr, handler={'positive': receive,
+                                            'negative': receive})
     addr_positive = positive.connect(addr, handler={'positive': receive})
+    addr_bytestopic = bytestopic.connect(addr, handler={b'\xeb': receive})
     assert addr_both == addr.twin()
     assert addr_positive == addr.twin()
+    assert addr_bytestopic == addr.twin()
 
     # Publish from server
     server.each(0, 'publish_str')
@@ -92,6 +150,7 @@ def test_simple_pub(nsproxy):
     N = 10
     assert wait_agent_attr(both, length=N)
     assert wait_agent_attr(positive, length=N)
+    assert wait_agent_attr(bytestopic, length=N)
 
     # both
     received = [int(x) for x in both.get_attr('received')]
@@ -106,6 +165,11 @@ def test_simple_pub(nsproxy):
     received = [int(x) for x in positive.get_attr('received')]
     assert len(received) >= N
     assert received == list(range(received[0], received[-1] + 1))
+
+    # bytestopic
+    received = bytestopic.get_attr('received')
+    assert len(received) >= N
+    assert all(x == 'bytes...' for x in received)
 
 
 @pytest.mark.parametrize('server', [Server, ServerYield])

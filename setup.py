@@ -12,10 +12,9 @@ with open(pjoin('osbrain', '__init__.py')) as f:
     version = re.match('__version__ = [\'"]([^\'"]+)[\'"]', line).group(1)
 
 # While Python 3.4 is supported...
+install_requires_compat = []
 if sys.version_info < (3, 5):
     install_requires_compat = ['typing']
-else:
-    install_requires_compat = []
 
 setup(
     name='osbrain',

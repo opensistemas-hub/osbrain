@@ -10,6 +10,7 @@ exclude_lines =
     def __hash__
     if .debug:
     raise NotImplementedError
+    if sys.version_info
     if __name__ == .__main__.:
 omit =
     setup.py

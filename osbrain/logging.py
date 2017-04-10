@@ -38,6 +38,7 @@ class Logger(Agent):
         """
         Handle incoming log messages.
         """
+        topic = topic.decode()
         if topic == 'ERROR':
             self.log_history_error.append(message)
         elif topic == 'WARNING':

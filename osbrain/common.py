@@ -5,8 +5,20 @@ import time
 from threading import Event
 from threading import Thread
 import traceback
+from uuid import uuid4
 
 from . import config
+
+
+def unique_identifier() -> bytes:
+    """
+    Returns
+    -------
+        A unique identifier that is safe to use in PUB-SUB communication
+        patterns (i.e.: does not contain the `osbrain.TOPIC_SEPARATOR`
+        character).
+    """
+    return uuid4().hex.encode()
 
 
 def format_exception():

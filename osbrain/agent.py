@@ -12,7 +12,9 @@ import signal
 import sys
 import time
 import types
-from uuid import uuid4
+from typing import Any
+from typing import Dict
+from typing import Union
 
 import dill
 import Pyro4
@@ -27,8 +29,10 @@ from .common import LogLevel
 from .common import repeat
 from .common import after
 from .common import get_linger
+from .common import unique_identifier
 from .address import AgentAddress
 from .address import AgentAddressKind
+from .address import AgentAddressSerializer
 from .address import AgentChannel
 from .address import address_to_host_port
 from .address import guess_kind
@@ -37,14 +41,6 @@ from .proxy import NSProxy
 
 
 TOPIC_SEPARATOR = b'\x80'
-
-
-def str2bytes(message):
-    return message.encode('ascii')
-
-
-def bytes2str(message):
-    return message.decode('ascii')
 
 
 def serialize_message(message, serializer):
@@ -68,7 +64,7 @@ def serialize_message(message, serializer):
     if serializer == 'pickle':
         return pickle.dumps(message, -1)
     if serializer == 'json':
-        return str2bytes(json.dumps(message))
+        return json.dumps(message).encode()
     if serializer == 'raw':
         return message
     raise ValueError('Serializer not supported for serialization')
@@ -95,13 +91,14 @@ def deserialize_message(message, serializer):
     if serializer == 'pickle':
         return pickle.loads(message)
     if serializer == 'json':
-        return json.loads(bytes2str(bytes(message)))
+        return json.loads(bytes(message).decode())
     if serializer == 'raw':
         return message
     raise ValueError('Serializer not supported for deserialization')
 
 
-def compose_message(message, topic, serializer):
+def compose_message(message: bytes, topic: bytes,
+                    serializer: AgentAddressSerializer) -> bytes:
     """
     Compose a message and leave it ready to be sent through a socket.
 
@@ -110,20 +107,17 @@ def compose_message(message, topic, serializer):
 
     Parameters
     ----------
-    message : bytes
+    message
         Message to be composed.
-    topic : str
+    topic
         Topic to combine the message with.
-    serializer : AgentAddressSerializer
+    serializer
         Serialization for the message part.
 
     Returns
     -------
-    bytes
         The bytes representation of the final message to be sent.
     """
-    assert isinstance(topic, str), 'Topic must be of `str` type!'
-    topic = str2bytes(topic)
     if serializer.requires_separator:
         return topic + TOPIC_SEPARATOR + message
     return topic + message
@@ -196,7 +190,7 @@ class Agent():
         Set to `True` if the agent is running (executing the main loop).
     """
     def __init__(self, name=None, host=None, serializer=None, transport=None):
-        self.uuid = uuid4().hex
+        self.uuid = unique_identifier()
         self.name = name
         self.host = host
         if not self.host:
@@ -341,7 +335,7 @@ class Agent():
         timer = repeat(period, self._loopback,
                        'EXECUTE_METHOD', (method, args, kwargs))
         if not alias:
-            alias = uuid4().hex
+            alias = unique_identifier()
         self._timer[alias] = timer
         return alias
 
@@ -372,7 +366,7 @@ class Agent():
         timer = after(delay, self._loopback,
                       'EXECUTE_METHOD', (method, args, kwargs))
         if not alias:
-            alias = uuid4().hex
+            alias = unique_identifier()
         self._timer[alias] = timer
         return alias
 
@@ -732,7 +726,7 @@ class Agent():
                 socket.bind('tcp://%s' % (addr))
         else:
             if not addr:
-                addr = str(uuid4())
+                addr = str(unique_identifier())
             if transport == 'ipc':
                 addr = config['IPC_DIR'] / addr
             socket.bind('%s://%s' % (transport, addr))
@@ -833,7 +827,7 @@ class Agent():
         self._connect_and_register(pull_address.twin(), alias=alias,
                                    register_as=channel)
         # Create socket for receiving responses
-        uuid = uuid4().hex
+        uuid = unique_identifier()
         addr = self.bind('PULL', alias=uuid,
                          handler=self._handle_async_requests)
         self._async_req_uuid[pull_address] = uuid
@@ -865,10 +859,12 @@ class Agent():
         # Create socket for receiving responses
         pub_address = channel.sender
         assert pub_address.kind == 'PUB'
-        uuid = uuid4().hex
+        uuid = unique_identifier()
         topic_handlers = {}
         if isinstance(handler, dict):
             for key, value in handler.items():
+                if isinstance(key, str):
+                    key = key.encode()
                 topic_handlers[channel.uuid + key] = value
         else:
             topic_handlers[channel.uuid] = handler
@@ -908,15 +904,15 @@ class Agent():
         handler = self._pending_requests.pop(uuid)
         handler(self, response)
 
-    def subscribe(self, alias, handlers):
+    def subscribe(self, alias: str, handlers: Dict[Union[bytes, str], Any]):
         """
         Subscribe the agent to another agent.
 
         Parameters
         ----------
-        alias : str
+        alias
             Alias of the new subscriber socket.
-        handlers : dict
+        handlers
             A dictionary in which the keys represent the different topics
             and the values the actual handlers. If ,instead of a dictionary,
             a single handler is given, it will be used to subscribe the agent
@@ -924,12 +920,17 @@ class Agent():
         """
         if not isinstance(handlers, dict):
             handlers = {'': handlers}
-        for topic in handlers.keys():
-            assert isinstance(topic, str), 'Topic must be of type `str`!'
-            topic = str2bytes(topic)
+        # Convert all topics to bytes
+        curated_handlers = {}
+        for topic, value in handlers.items():
+            if isinstance(topic, str):
+                topic = topic.encode()
+            curated_handlers[topic] = value
+        # Subscribe to topics
+        for topic in curated_handlers.keys():
             self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
         # Reset handlers
-        self._set_handler(self.socket[alias], handlers)
+        self._set_handler(self.socket[alias], curated_handlers)
 
     def iddle(self):
         """
@@ -1237,17 +1238,16 @@ class Agent():
 
         message = self._process_sub_message(addr.serializer, data)
 
-        for str_topic in handlers:
-            btopic = str2bytes(str_topic)
-            if not data.startswith(btopic):
+        for topic in handlers:
+            if not data.startswith(topic):
                 continue
             # Call the handler (with or without the topic)
-            handler = handlers[str_topic]
+            handler = handlers[topic]
             nparams = len(inspect.signature(handler).parameters)
             if nparams == 2:
                 handler(self, message)
             elif nparams == 3:
-                handler(self, message, str_topic)
+                handler(self, message, topic)
 
     def send(self, address, message, topic=None, handler=None, wait=None,
              on_error=None):
@@ -1295,6 +1295,8 @@ class Agent():
         if address.kind == 'PUB':
             if topic is None:
                 topic = ''
+            if isinstance(topic, str):
+                topic = topic.encode()
             message = compose_message(message=message,
                                       topic=topic,
                                       serializer=address.serializer)
@@ -1316,7 +1318,7 @@ class Agent():
         if kind == 'SYNC_SUB':
             address = channel.receiver
             address_uuid = self._async_req_uuid[address]
-            request_uuid = uuid4().hex
+            request_uuid = unique_identifier()
             self._pending_requests[request_uuid] = handler
             message = (address_uuid, request_uuid, message)
             self._send_address(channel.sender, message)
@@ -1327,7 +1329,7 @@ class Agent():
     def _send_channel_async_rep(self, channel, message, wait, on_error):
         address = channel.receiver
         address_uuid = self._async_req_uuid[address]
-        request_uuid = uuid4().hex
+        request_uuid = unique_identifier()
         self._pending_requests[request_uuid] = \
             self._async_req_handler[address_uuid]
         receiver_address = self.address[address_uuid]
@@ -1338,10 +1340,12 @@ class Agent():
         self._wait_received(wait, uuid=request_uuid, on_error=on_error)
 
     def _send_channel_sync_pub(self, channel, message, topic, general=True):
-        if general:
-            topic = channel.uuid + topic
         message = serialize_message(message=message,
                                     serializer=channel.serializer)
+        if isinstance(topic, str):
+            topic = topic.encode()
+        if general:
+            topic = channel.uuid + topic
         message = compose_message(message=message,
                                   topic=topic,
                                   serializer=channel.serializer)

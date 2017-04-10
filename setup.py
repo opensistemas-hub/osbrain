@@ -2,6 +2,7 @@
 Setup module.
 """
 import re
+import sys
 from os.path import join as pjoin
 from setuptools import setup
 
@@ -9,6 +10,12 @@ from setuptools import setup
 with open(pjoin('osbrain', '__init__.py')) as f:
     line = next(l for l in f if l.startswith('__version__'))
     version = re.match('__version__ = [\'"]([^\'"]+)[\'"]', line).group(1)
+
+# While Python 3.4 is supported...
+if sys.version_info < (3, 5):
+    install_requires_compat = ['typing']
+else:
+    install_requires_compat = []
 
 setup(
     name='osbrain',
@@ -35,7 +42,11 @@ setup(
     ],
     keywords='osbrain multi-agent system',
     packages=['osbrain'],
-    install_requires=['Pyro4>=4.42', 'pyzmq>=15.2.0', 'dill>=0.2.0'],
+    install_requires=[
+        'Pyro4>=4.42',
+        'pyzmq>=15.2.0',
+        'dill>=0.2.0',
+    ] + install_requires_compat,
     extras_require={
         'dev': [],
         'test': ['tox'],

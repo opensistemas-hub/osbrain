@@ -20,23 +20,22 @@ def set_received(agent, message, topic=None):
     agent.received = message
 
 
-def test_message_composer():
+def test_compose_message():
     """
     Test correct message composing.
     """
     message = b'message'
-    topic = 'test topic'
-    topic_bytes = b'test topic'
+    topic = b'test topic'
 
     # Basic composing
     for serializer in AgentAddressSerializer.SERIALIZER_SIMPLE:
         serializer = AgentAddressSerializer(serializer)
         assert compose_message(message, topic, serializer) \
-            == topic_bytes + message
+            == topic + message
     for serializer in AgentAddressSerializer.SERIALIZER_SEPARATOR:
         serializer = AgentAddressSerializer(serializer)
         assert compose_message(message, topic, serializer) \
-            == topic_bytes + TOPIC_SEPARATOR + message
+            == topic + TOPIC_SEPARATOR + message
 
     # Raise with wrong serializer
     with pytest.raises(Exception):

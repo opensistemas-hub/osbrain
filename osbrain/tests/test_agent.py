@@ -38,7 +38,7 @@ def test_agent_uuid():
     N = 1000
     bunch = set(Agent().uuid for i in range(N))
     assert len(bunch) == N
-    assert all(isinstance(identifier, str) for identifier in bunch)
+    assert all(isinstance(identifier, bytes) for identifier in bunch)
 
 
 def test_early_agent_proxy(nsproxy):

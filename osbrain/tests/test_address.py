@@ -6,6 +6,7 @@ from collections import namedtuple
 import zmq
 import pytest
 
+from osbrain.agent import TOPIC_SEPARATOR
 from osbrain.address import address_to_host_port
 from osbrain.address import guess_kind
 from osbrain.address import SocketAddress
@@ -237,6 +238,21 @@ def test_agentchannelkind_value_error():
     # Value error exceptions
     with pytest.raises(ValueError):
         AgentChannelKind('FOO')
+
+
+def test_agentchannel_uuid():
+    """
+    An AgentChannel's unique identifier must never contain the
+    `osbrain.TOPIC_SEPARATOR` to avoid errors when using this identifier as
+    topic in PUB-SUB communication patterns.
+    """
+    sender = AgentAddress('ipc', 'addr0', 'PUB', 'server', 'pickle')
+    receiver = AgentAddress('ipc', 'addr0', 'PULL', 'server', 'pickle')
+    for i in range(1000):
+        channel = AgentChannel('SYNC_PUB', sender=sender, receiver=receiver)
+        identifier = channel.uuid
+        assert isinstance(identifier, bytes)
+        assert TOPIC_SEPARATOR not in identifier
 
 
 def test_agentchannel_async_rep():

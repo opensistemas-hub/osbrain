@@ -1,10 +1,11 @@
 """
 Implementation of address-related features.
 """
-from uuid import uuid4
 from ipaddress import ip_address
 
 import zmq
+
+from .common import unique_identifier
 
 
 def address_to_host_port(addr):
@@ -396,7 +397,7 @@ class AgentChannel():
             receiver.transport if receiver else sender.transport
         self.serializer = \
             receiver.serializer if receiver else sender.serializer
-        self.uuid = uuid4().hex
+        self.uuid = unique_identifier()
         # Set up pairs
         if sender:
             self.sender.channel = self

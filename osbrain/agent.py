@@ -1507,7 +1507,7 @@ class AgentProcess(multiprocessing.Process):
                  transport=None, base=Agent):
         super().__init__()
         self.name = name
-        self.daemon = None
+        self._daemon = None
         self.host, self.port = address_to_host_port(addr)
         if self.port is None:
             self.port = 0
@@ -1525,7 +1525,7 @@ class AgentProcess(multiprocessing.Process):
 
         try:
             ns = NSProxy(self.nsaddr)
-            self.daemon = Pyro4.Daemon(self.host, self.port)
+            self._daemon = Pyro4.Daemon(self.host, self.port)
         except Exception:
             self.queue.put(format_exception())
             return
@@ -1534,12 +1534,12 @@ class AgentProcess(multiprocessing.Process):
         self.agent = self.base(name=self.name, host=self.host,
                                serializer=self.serializer,
                                transport=self.transport)
-        uri = self.daemon.register(self.agent)
+        uri = self._daemon.register(self.agent)
         ns.register(self.name, uri)
         ns.release()
 
-        self.daemon.requestLoop(lambda: not self.shutdown_event.is_set())
-        self.daemon.unregister(self.agent)
+        self._daemon.requestLoop(lambda: not self.shutdown_event.is_set())
+        self._daemon.unregister(self.agent)
 
         self._teardown()
 
@@ -1556,7 +1556,7 @@ class AgentProcess(multiprocessing.Process):
                 raise
         finally:
             self.agent._killed = True
-            self.daemon.close()
+            self._daemon.close()
 
     def start(self):
         super().start()
@@ -1568,8 +1568,8 @@ class AgentProcess(multiprocessing.Process):
 
     def kill(self):
         self.shutdown_event.set()
-        if self.daemon:
-            self.daemon.shutdown()
+        if self._daemon:
+            self._daemon.shutdown()
 
     def sigint_handler(self, signal, frame):
         """

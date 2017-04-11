@@ -1,6 +1,7 @@
 """
 Test file for agents.
 """
+import multiprocessing
 import time
 from uuid import uuid4
 from threading import Timer
@@ -536,3 +537,20 @@ def test_agent_stop(nsproxy):
     while agent.get_attr('running'):
         time.sleep(0.01)
     assert not agent.get_attr('running')
+
+
+def test_agent_spawn_process(nsproxy):
+    """
+    An agent should be able to spawn child processes.
+
+    It is a way to make sure agents are run as non-daemonic processes, which
+    are not allowed to have children.
+    """
+    class Spawner(Agent):
+        def spawn_process(self):
+            p = multiprocessing.Process()
+            p.start()
+            return True
+
+    agent = run_agent('a0', base=Spawner)
+    assert agent.spawn_process()

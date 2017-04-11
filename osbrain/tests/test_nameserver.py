@@ -12,6 +12,7 @@ from osbrain import SocketAddress
 from osbrain import run_agent
 from osbrain import run_nameserver
 from osbrain import Agent
+from osbrain import NameServer
 from osbrain import NSProxy
 from osbrain.nameserver import NameServerProcess
 from osbrain.nameserver import random_nameserver_process
@@ -231,3 +232,17 @@ def test_nameserver_permissionerror():
         run_nameserver('127.0.0.1:22')
     assert 'PermissionError' in str(error.value)
     assert 'Permission denied' in str(error.value)
+
+
+def test_run_nameserver_base():
+    """
+    The `run_nameserver` function should accept a `base` parameter to specify
+    the base NameServer class.
+    """
+    class BobMarley(NameServer):
+        def get_up(self):
+            return 'stand up!'
+
+    ns = run_nameserver(base=BobMarley)
+    assert ns.get_up() == 'stand up!'
+    ns.shutdown()

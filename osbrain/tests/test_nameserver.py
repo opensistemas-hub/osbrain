@@ -4,6 +4,7 @@ Test file for nameserver.
 import os
 import time
 import random
+import multiprocessing
 from threading import Timer
 
 import pytest
@@ -245,4 +246,22 @@ def test_run_nameserver_base():
 
     ns = run_nameserver(base=BobMarley)
     assert ns.get_up() == 'stand up!'
+    ns.shutdown()
+
+
+def test_nameserver_spawn_process(nsproxy):
+    """
+    A name server should be able to spawn child processes.
+
+    It is a way to make sure name servers are run as non-daemonic processes,
+    which are not allowed to have children.
+    """
+    class Spawner(NameServer):
+        def spawn_process(self):
+            p = multiprocessing.Process()
+            p.start()
+            return True
+
+    ns = run_nameserver(base=Spawner)
+    assert ns.spawn_process()
     ns.shutdown()

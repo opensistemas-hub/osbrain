@@ -63,6 +63,7 @@ class NameServerProcess(multiprocessing.Process):
     """
     def __init__(self, addr=None, base=NameServer):
         super().__init__()
+        self._daemon = None
         self.base = base
         if isinstance(addr, int):
             addr = '127.0.0.1:%s' % addr
@@ -77,18 +78,18 @@ class NameServerProcess(multiprocessing.Process):
 
         try:
             Pyro4.naming.NameServer = self.base
-            self.daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
+            self._daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
         except Exception:
             self.queue.put(format_exception())
             return
         self.queue.put('STARTED')
-        self.uri = self.daemon.uriFor(self.daemon.nameserver)
+        self.uri = self._daemon.uriFor(self._daemon.nameserver)
         self.host = self.uri.host
         self.port = self.uri.port
         self.addr = SocketAddress(self.host, self.port)
-        internal_uri = self.daemon.uriFor(self.daemon.nameserver, nat=False)
+        internal_uri = self._daemon.uriFor(self._daemon.nameserver, nat=False)
         bcserver = None
-        hostip = self.daemon.sock.getsockname()[0]
+        hostip = self._daemon.sock.getsockname()[0]
         # Start broadcast responder
         bcserver = BroadcastServer(internal_uri)
         sys.stdout.write(
@@ -96,13 +97,13 @@ class NameServerProcess(multiprocessing.Process):
         sys.stdout.flush()
         bcserver.runInThread()
         sys.stdout.write(
-            "NS running on %s (%s)\n" % (self.daemon.locationStr, hostip))
+            "NS running on %s (%s)\n" % (self._daemon.locationStr, hostip))
         sys.stdout.write("URI = %s\n" % self.uri)
         sys.stdout.flush()
         try:
-            self.daemon.requestLoop(lambda: not self.shutdown_event.is_set())
+            self._daemon.requestLoop(lambda: not self.shutdown_event.is_set())
         finally:
-            self.daemon.close()
+            self._daemon.close()
             if bcserver is not None:
                 bcserver.close()
         sys.stdout.write("NS shut down.\n")

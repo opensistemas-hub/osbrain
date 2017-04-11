@@ -128,6 +128,34 @@ def test_timer_each_fall_behind(nsproxy):
     assert abs(agent.get_attr('count') - 10) <= 1
 
 
+def test_timer_each_fall_behind_catch_up(nsproxy):
+    """
+    Test a timer executed periodically and falling behind the period that
+    catches-up.
+
+    If a sequence of events takes longer to run than the time available
+    before the next event, the repeater will simply fall behind.
+
+    If a timer catches-up, then old executions that fell behind will be lost
+    (i.e.: the defined period will be the minimum time between executions).
+    """
+    def tick(agent):
+        if agent.count < 5:
+            time.sleep(.2)
+        agent.count += 1
+
+    agent = run_agent('agent')
+    agent.set_attr(count=0)
+    # Start timer
+    agent.each(0.1, tick)
+    time.sleep(1.0)
+    assert abs(agent.get_attr('count') - 5) <= 1
+    # Now there will be no delay on tick execution, and old ticks that fell
+    # behind will not be executed (the timer goes back to normal operation)
+    time.sleep(1.0)
+    assert abs(agent.get_attr('count') - 15) <= 1
+
+
 def test_timer_each_stop_uuid(nsproxy):
     """
     Test a timer executed periodically and stopped by its UUID.

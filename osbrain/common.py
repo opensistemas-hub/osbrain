@@ -93,12 +93,14 @@ def repeat(interval, action, *args):
     event = Event()
 
     def loop():
+        starttime = time.time()
         while True:
-            starttime = time.time()
+            nexttime = starttime + interval
             action(*args)
-            delay = interval - (time.time() - starttime)
-            if event.wait(delay):
+            after_action = time.time()
+            if event.wait(nexttime - after_action):
                 break
+            starttime = max(after_action, nexttime)
 
     Thread(target=loop).start()
     event.stop = event.set

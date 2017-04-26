@@ -105,7 +105,7 @@ class Proxy(Pyro4.core.Proxy):
             (self._next_oneway, self._default_safe, self._safe)
 
     def __setstate__(self, state):
-        super().__setstate__(state)
+        super().__setstate__(state[:-3])
         self._next_oneway = state[-3]
         self._default_safe = state[-2]
         self._safe = state[-1]

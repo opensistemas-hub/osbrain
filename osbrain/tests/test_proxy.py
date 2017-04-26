@@ -3,6 +3,7 @@ Proxy module tests.
 """
 import time
 
+import pickle
 import pytest
 
 import osbrain
@@ -108,6 +109,20 @@ def test_proxy_without_nsaddr(nsproxy):
     agent0.set_attr(x=1.)
     agent1 = Proxy('foo')
     assert agent1.get_attr('x') == 1.
+
+
+def test_proxy_pickle_serialization(nsproxy):
+    """
+    Make sure proxies can be (de)serialized using pickle.
+    """
+    agent0 = run_agent('foo')
+    agent0.set_attr(x=1.)
+    proxy = Proxy('foo')
+    serialized = pickle.dumps(proxy)
+    assert serialized
+    deserialized = pickle.loads(serialized)
+    assert deserialized
+    assert deserialized.get_attr('x') == 1.
 
 
 def test_agent_proxy_remote_exceptions(nsproxy):

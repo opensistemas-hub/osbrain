@@ -4,15 +4,14 @@ Test file for functionality implemented in `osbrain/tests/common.py`.
 import pytest
 
 from osbrain import run_agent
-from osbrain import run_logger
 from osbrain import Agent
 from osbrain.helper import logger_received
-from osbrain.helper import sync_agent_logger
 from osbrain.helper import agent_dies
 from osbrain.helper import attribute_match
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
+from common import agent_logger  # pragma: no flakes
 
 
 def test_agent_dies(nsproxy):
@@ -24,40 +23,31 @@ def test_agent_dies(nsproxy):
     assert not agent_dies('a0', nsproxy, timeout=0.5)
 
 
-def test_sync_agent_logger(nsproxy):
+def test_sync_agent_logger(agent_logger):
     """
     After synchronizing and agent and a logger, a message logged should
     always be received by the logger.
     """
-    a0 = run_agent('a0')
-    logger = run_logger('logger')
-    a0.set_logger(logger)
-    sync_agent_logger(agent=a0, logger=logger)
+    a0, logger = agent_logger
     a0.log_info('asdf')
     assert logger_received(logger, message='asdf')
 
 
-def test_logger_received(nsproxy):
+def test_logger_received(agent_logger):
     """
     The function `logger_received` should return `False` if the message is
     not received after a timeout.
     """
-    a0 = run_agent('a0')
-    logger = run_logger('logger')
-    a0.set_logger(logger)
-    sync_agent_logger(agent=a0, logger=logger)
+    a0, logger = agent_logger
     assert not logger_received(logger, 'asdf', log_name='log_history_error')
 
 
-def test_logger_received_position(nsproxy):
+def test_logger_received_position(agent_logger):
     """
     The function `logger_received` should accept a parameter to specify the
     exact position where the regular expression should be matching.
     """
-    a0 = run_agent('a0')
-    logger = run_logger('logger')
-    a0.set_logger(logger)
-    sync_agent_logger(agent=a0, logger=logger)
+    a0, logger = agent_logger
     a0.log_info('m0')
     a0.log_info('m1')
     a0.log_info('m2')
@@ -79,28 +69,22 @@ def test_logger_received_position(nsproxy):
     assert not logger_received(logger, message='m0', position=0, timeout=0.1)
 
 
-def test_logger_received_newline(nsproxy):
+def test_logger_received_newline(agent_logger):
     """
     The `'.'` special character in `logger_received` regular expressions
     should match newline characters too.
     """
-    a0 = run_agent('a0')
-    logger = run_logger('logger')
-    a0.set_logger(logger)
-    sync_agent_logger(agent=a0, logger=logger)
+    a0, logger = agent_logger
     a0.log_info('foo\nbar')
     assert logger_received(logger, message='foo.*bar')
 
 
-def test_logger_received_count(nsproxy):
+def test_logger_received_count(agent_logger):
     """
     The function `logger_received` actually returns an integer with the total
     number of matches.
     """
-    a0 = run_agent('a0')
-    logger = run_logger('logger')
-    a0.set_logger(logger)
-    sync_agent_logger(agent=a0, logger=logger)
+    a0, logger = agent_logger
     a0.log_info('foo bar')
     a0.log_info('foo beer')
     a0.log_info('foo asdf bar')

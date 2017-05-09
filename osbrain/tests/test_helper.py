@@ -34,7 +34,7 @@ def test_sync_agent_logger(nsproxy):
     a0.set_logger(logger)
     sync_agent_logger(agent=a0, logger=logger)
     a0.log_info('asdf')
-    assert logger_received(logger, 'log_history_info', message='asdf')
+    assert logger_received(logger, message='asdf')
 
 
 def test_logger_received(nsproxy):
@@ -46,7 +46,72 @@ def test_logger_received(nsproxy):
     logger = run_logger('logger')
     a0.set_logger(logger)
     sync_agent_logger(agent=a0, logger=logger)
-    assert not logger_received(logger, 'log_history_error', message='asdf')
+    assert not logger_received(logger, 'asdf', log_name='log_history_error')
+
+
+def test_logger_received_position(nsproxy):
+    """
+    The function `logger_received` should accept a parameter to specify the
+    exact position where the regular expression should be matching.
+    """
+    a0 = run_agent('a0')
+    logger = run_logger('logger')
+    a0.set_logger(logger)
+    sync_agent_logger(agent=a0, logger=logger)
+    a0.log_info('m0')
+    a0.log_info('m1')
+    a0.log_info('m2')
+    # Any position
+    assert logger_received(logger, message='m2')
+    assert logger_received(logger, message='m1')
+    assert logger_received(logger, message='m0')
+    # -1 position
+    assert logger_received(logger, message='m2', position=-1, timeout=0.1)
+    assert not logger_received(logger, message='m1', position=-1, timeout=0.1)
+    assert not logger_received(logger, message='m0', position=-1, timeout=0.1)
+    # -2 position
+    assert not logger_received(logger, message='m2', position=-2, timeout=0.1)
+    assert logger_received(logger, message='m1', position=-2, timeout=0.1)
+    assert not logger_received(logger, message='m0', position=-2, timeout=0.1)
+    # 0 position (important to test vs. None)
+    assert not logger_received(logger, message='m2', position=0, timeout=0.1)
+    assert not logger_received(logger, message='m1', position=0, timeout=0.1)
+    assert not logger_received(logger, message='m0', position=0, timeout=0.1)
+
+
+def test_logger_received_newline(nsproxy):
+    """
+    The `'.'` special character in `logger_received` regular expressions
+    should match newline characters too.
+    """
+    a0 = run_agent('a0')
+    logger = run_logger('logger')
+    a0.set_logger(logger)
+    sync_agent_logger(agent=a0, logger=logger)
+    a0.log_info('foo\nbar')
+    assert logger_received(logger, message='foo.*bar')
+
+
+def test_logger_received_count(nsproxy):
+    """
+    The function `logger_received` actually returns an integer with the total
+    number of matches.
+    """
+    a0 = run_agent('a0')
+    logger = run_logger('logger')
+    a0.set_logger(logger)
+    sync_agent_logger(agent=a0, logger=logger)
+    a0.log_info('foo bar')
+    a0.log_info('foo beer')
+    a0.log_info('foo asdf bar')
+    # Make sure logger receives the last message
+    assert logger_received(logger, message='foo asdf bar')
+    # Start counting...
+    assert logger_received(logger, message='foo') == 3
+    assert logger_received(logger, message='foo b') == 2
+    assert logger_received(logger, message='foo beer') == 1
+    assert logger_received(logger, message='bar') == 2
+    assert logger_received(logger, message='foo.*bar') == 2
 
 
 @pytest.mark.parametrize('attribute,length,data,value,match', [

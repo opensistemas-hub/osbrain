@@ -88,6 +88,6 @@ def test_multiple_yield(nsproxy):
     # Response is received successfully
     assert response == 'Hello world!'
     # Replier should crash
-    assert logger_received(logger, 'log_history_error',
+    assert logger_received(logger, log_name='log_history_error',
                            message='yielded more than once')
     assert agent_dies(a0, nsproxy)

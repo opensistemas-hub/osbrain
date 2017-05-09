@@ -442,28 +442,28 @@ def test_log_levels(nsproxy):
     # Log info
     message = str(uuid4())
     agent.log_info(message)
-    assert logger_received(logger, 'log_history_info', message)
+    assert logger_received(logger, message, log_name='log_history_info')
     # Log warning
     message = str(uuid4())
     agent.log_warning(message)
-    assert logger_received(logger, 'log_history_warning', message)
+    assert logger_received(logger, message, log_name='log_history_warning')
     # Log error
     message = str(uuid4())
     agent.log_error(message)
-    assert logger_received(logger, 'log_history_error', message)
+    assert logger_received(logger, message, log_name='log_history_error')
     # Log debug
     message = str(uuid4())
     agent.set_attr(_DEBUG=True)
     agent.log_debug(message)
-    assert logger_received(logger, 'log_history_debug', message)
+    assert logger_received(logger, message, log_name='log_history_debug')
     message = str(uuid4())
     agent.set_attr(_DEBUG=False)
     agent.log_debug(message)
-    assert not logger_received(logger, 'log_history_debug', message)
+    assert not logger_received(logger, message, log_name='log_history_debug')
     message = str(uuid4())
     agent.set_attr(_DEBUG=True)
     agent.log_debug(message)
-    assert logger_received(logger, 'log_history_debug', message)
+    assert logger_received(logger, message, log_name='log_history_debug')
 
 
 def test_running_exception(nsproxy):
@@ -481,7 +481,7 @@ def test_running_exception(nsproxy):
     with pytest.raises(RuntimeError):
         agent.raise_exception()
     message = 'User raised an exception'
-    assert logger_received(logger, 'log_history_error', message)
+    assert logger_received(logger, message, log_name='log_history_error')
     assert not agent.get_attr('running')
 
 

@@ -1,11 +1,28 @@
 """
 Helper functions for osbrain (usually for testing purposes).
 """
+import re
 import time
 from uuid import uuid4
 
 
-def logger_received(logger, log_name, message, timeout=1.):
+def regex_count_in_list(regex, strings):
+    """
+    Returns
+    -------
+    int
+        The number of times a regular expression was found in a list of
+        strings.
+    """
+    matches = 0
+    for candidate in strings:
+        if re.findall(regex, candidate, re.DOTALL):
+            matches += 1
+    return matches
+
+
+def logger_received(logger, message, log_name='log_history_info',
+                    position=None, timeout=1.):
     """
     Check if a logger receives a message.
 
@@ -13,27 +30,34 @@ def logger_received(logger, log_name, message, timeout=1.):
     ----------
     logger : Proxy
         Proxy to the logger.
-    log_name : str
+    log_name : str, default is `'log_history_info'`
         The name of the attribue to look for in the logger.
     message : anything
-        Message to look for in the log. Can be a partial match.
+        Message to look for in the log. Can be a partial match. Regular
+        expressions are allowed.
+    position : int, default is None
+        Where to look for the message in the log. If not set, the message
+        will be searched for through all the log.
     timeout : float
         After this number of seconds the function will return `False`.
 
     Returns
     -------
-    bool
-        Whether the logger received the message or not.
+    int
+        The number of times the logger received a message that matched the
+        expression. Can be higher than 1 if `position` is not set.
     """
     t0 = time.time()
     while True:
         time.sleep(0.01)
         log_history = logger.get_attr(log_name)
-        if len(log_history) and message in log_history[-1]:
-            break
+        if position is not None:
+            log_history = [log_history[position]]
+        matches = regex_count_in_list(message, log_history)
+        if matches:
+            return matches
         if timeout and time.time() - t0 > timeout:
-            return False
-    return True
+            return 0
 
 
 def sync_agent_logger(agent, logger):

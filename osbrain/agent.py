@@ -566,7 +566,7 @@ class Agent():
         method_type = (types.MethodType, types.BuiltinMethodType)
         if isinstance(handler, method_type):
             return unbound_method(handler)
-        raise TypeError('Unknow handler type "%s"' % type(handler))
+        raise TypeError('Unknown handler type "%s"' % type(handler))
 
     def registered(self, address):
         return address in self.socket
@@ -902,7 +902,12 @@ class Agent():
             self.log_warning(error)
             return
         handler = self._pending_requests.pop(uuid)
-        handler(self, response)
+
+        if isinstance(handler, str):
+            handler = getattr(self, handler)
+            handler(response)
+        else:
+            handler(self, response)
 
     def subscribe(self, alias: str, handlers: Dict[Union[bytes, str], Any]):
         """
@@ -914,7 +919,7 @@ class Agent():
             Alias of the new subscriber socket.
         handlers
             A dictionary in which the keys represent the different topics
-            and the values the actual handlers. If ,instead of a dictionary,
+            and the values the actual handlers. If, instead of a dictionary,
             a single handler is given, it will be used to subscribe the agent
             to any topic.
         """
@@ -1308,30 +1313,28 @@ class Agent():
             return self._send_channel_async_rep(channel=channel,
                                                 message=message,
                                                 wait=wait,
-                                                on_error=on_error)
+                                                on_error=on_error,
+                                                handler=handler)
         if kind == 'SYNC_PUB':
-            if topic is None:
-                topic = ''
             return self._send_channel_sync_pub(channel=channel,
                                                message=message,
                                                topic=topic)
         if kind == 'SYNC_SUB':
-            address = channel.receiver
-            address_uuid = self._async_req_uuid[address]
-            request_uuid = unique_identifier()
-            self._pending_requests[request_uuid] = handler
-            message = (address_uuid, request_uuid, message)
-            self._send_address(channel.sender, message)
-            self._wait_received(wait, uuid=request_uuid, on_error=on_error)
-            return
+            return self._send_channel_sync_sub(channel, message, topic,
+                                               handler, wait, on_error)
+
         raise NotImplementedError('Unsupported channel kind %s!' % kind)
 
-    def _send_channel_async_rep(self, channel, message, wait, on_error):
+    def _send_channel_async_rep(self, channel, message, wait, on_error,
+                                handler=None):
         address = channel.receiver
         address_uuid = self._async_req_uuid[address]
         request_uuid = unique_identifier()
-        self._pending_requests[request_uuid] = \
-            self._async_req_handler[address_uuid]
+        if handler is not None:
+            self._pending_requests[request_uuid] = handler
+        else:
+            self._pending_requests[request_uuid] = \
+                self._async_req_handler[address_uuid]
         receiver_address = self.address[address_uuid]
         message = (address_uuid, request_uuid, message, receiver_address)
         message = serialize_message(message=message,
@@ -1339,9 +1342,12 @@ class Agent():
         self.socket[channel].send(message)
         self._wait_received(wait, uuid=request_uuid, on_error=on_error)
 
-    def _send_channel_sync_pub(self, channel, message, topic, general=True):
+    def _send_channel_sync_pub(self, channel, message, topic=None,
+                               general=True):
         message = serialize_message(message=message,
                                     serializer=channel.serializer)
+        if topic is None:
+            topic = ''
         if isinstance(topic, str):
             topic = topic.encode()
         if general:
@@ -1350,6 +1356,19 @@ class Agent():
                                   topic=topic,
                                   serializer=channel.serializer)
         self.socket[channel].send(message)
+
+    def _send_channel_sync_sub(self, channel, message, topic, handler, wait,
+                               on_error):
+        address = channel.receiver
+        address_uuid = self._async_req_uuid[address]
+        request_uuid = unique_identifier()
+        if handler is None:
+            raise ValueError('No handler for SYNC_PUB request')
+        self._pending_requests[request_uuid] = handler
+        message = (address_uuid, request_uuid, message)
+        self._send_address(channel.sender, message)
+        self._wait_received(wait, uuid=request_uuid, on_error=on_error)
+        return
 
     def _check_received(self, uuid, wait, on_error):
         """

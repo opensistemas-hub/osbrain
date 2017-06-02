@@ -1,12 +1,11 @@
 '''
 Test file for synchronized publications handlers.
 '''
-import time
-
 import pytest
 
 from osbrain import Agent
 from osbrain import run_agent
+from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
 
@@ -61,8 +60,7 @@ def test_connect_handler_types(nsproxy, params):
 
     client.connect(addr, alias='sub', handler=handler)
     server.publish()
-    time.sleep(1)
-    assert len(client.get_attr('received')) == 1
+    assert wait_agent_attr(client, length=1)
 
     if check_function:
         # Check that the function was not stored as a method for the object
@@ -96,8 +94,7 @@ def test_sync_pub_send_handlers(nsproxy, params):
             client.send('sub', 'request!')
     else:
         client.send('sub', 'request!', handler=handler)
-        time.sleep(1)
-        assert len(client.get_attr('received')) == 1
+        assert wait_agent_attr(client, length=1)
 
         if check_function:
             # Check that the function was not stored as a method for the object

@@ -39,11 +39,11 @@ def receive_function(agent, response):
 
 
 @pytest.mark.parametrize(
-    'params',
+    'handler, check_function',
     [('receive_method', False),
      (receive_function, True),
      (lambda a, x: a.received.append(x), False)])
-def test_connect_handler_types(nsproxy, params):
+def test_connect_handler_types(nsproxy, handler, check_function):
     '''
     The handler for the normal PUB/SUB communication is specified in the
     `connect` call.
@@ -51,8 +51,6 @@ def test_connect_handler_types(nsproxy, params):
     We should be able to specify this in various ways: method, functions,
     lambda expressions...
     '''
-    handler, check_function = params
-
     server = run_agent('server', base=Server_SYNC_PUB)
     client = run_agent('client', base=ClientWithHandler)
 
@@ -69,18 +67,17 @@ def test_connect_handler_types(nsproxy, params):
 
 
 @pytest.mark.parametrize(
-    'params',
+    'handler, check_function, should_crash',
     [('receive_method', False, False),
      (receive_function, True, False),
      (lambda a, x: a.received.append(x), False, False),
      (None, False, True)])
-def test_sync_pub_send_handlers(nsproxy, params):
+def test_sync_pub_send_handlers(nsproxy, handler, check_function,
+                                should_crash):
     '''
     The handler for the requests MUST be specified in the `send` call.
     It can be specified in different ways: method, functions...
     '''
-    handler, check_function, should_crash = params
-
     server = run_agent('server', base=Server_SYNC_PUB)
     client = run_agent('client', base=ClientWithHandler)
 

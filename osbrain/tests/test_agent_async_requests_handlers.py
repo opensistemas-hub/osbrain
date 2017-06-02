@@ -36,11 +36,11 @@ def receive_function(agent, response):
 
 
 @pytest.mark.parametrize(
-    'params',
+    'handler, check_function',
     [('receive_method', False),
      (receive_function, True),
      (lambda a, x: a.received.append(x), False)])
-def test_connect_handler_types(nsproxy, params):
+def test_connect_handler_types(nsproxy, handler, check_function):
     '''
     We should be able to specify the handler in the `connect` call in
     different ways: method, functions, lambda expressions...
@@ -49,8 +49,6 @@ def test_connect_handler_types(nsproxy, params):
     parameter in the `send` call. However, that is specifically checked in
     other test.
     '''
-    handler, check_function = params
-
     server = run_agent('server', base=Server_ASYNC_REP)
     client = run_agent('client', base=ClientWithHandler)
 
@@ -67,17 +65,15 @@ def test_connect_handler_types(nsproxy, params):
 
 
 @pytest.mark.parametrize(
-    'params',
+    'handler, check_function',
     [('receive_method', False),
      (receive_function, True),
      (lambda a, x: a.received.append(x), False)])
-def test_send_handler_types(nsproxy, params):
+def test_send_handler_types(nsproxy, handler, check_function):
     '''
     We should be able to override the handler in the `send` call in
     different ways: method, functions...
     '''
-    handler, check_function = params
-
     server = run_agent('server', base=Server_ASYNC_REP)
     client = run_agent('client', base=ClientWithHandler)
 

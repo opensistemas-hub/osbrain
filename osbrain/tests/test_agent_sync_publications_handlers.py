@@ -38,12 +38,39 @@ def receive_function(agent, response):
     agent.received.append(response)
 
 
+def test_sync_pub_handler_exists(nsproxy):
+    '''
+    When binding a SYNC_PUB socket without a handler, an exception must be
+    thrown, letting the user know that a handler must be specified.
+    '''
+    server = run_agent('server', base=Agent)
+
+    with pytest.raises(AssertionError) as error:
+        server.bind('SYNC_PUB', alias='should_crash')
+    assert 'This socket requires a handler!' in str(error.value)
+
+
+@pytest.mark.parametrize(
+    'handler',
+    ['reply', receive_function, lambda a, x: a.received.append(x)]
+)
+def test_sync_pub_handler_types(nsproxy, handler):
+    '''
+    When binding a SYNC_PUB socket, we must accept different types of
+    handlers: methods, functions, lambda expressions...
+    '''
+    server = run_agent('server', base=Server_SYNC_PUB)
+
+    assert server.bind('SYNC_PUB', alias='should_not_crash',
+                       handler=handler)
+
+
 @pytest.mark.parametrize(
     'handler, check_function',
     [('receive_method', False),
      (receive_function, True),
      (lambda a, x: a.received.append(x), False)])
-def test_connect_handler_types(nsproxy, handler, check_function):
+def test_sync_pub_connect_handler_types(nsproxy, handler, check_function):
     '''
     The handler for the normal PUB/SUB communication is specified in the
     `connect` call.

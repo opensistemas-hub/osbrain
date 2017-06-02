@@ -35,12 +35,39 @@ def receive_function(agent, response):
     agent.received.append(response)
 
 
+def test_async_rep_handler_exists(nsproxy):
+    '''
+    When binding an ASYNC_REP socket without a handler, an exception must be
+    thrown, letting the user know that a handler must be specified.
+    '''
+    server = run_agent('server', base=Agent)
+
+    with pytest.raises(AssertionError) as error:
+        server.bind('ASYNC_REP', alias='should_crash')
+    assert 'This socket requires a handler!' in str(error.value)
+
+
+@pytest.mark.parametrize(
+    'handler',
+    ['reply', receive_function, lambda a, x: a.received.append(x)]
+)
+def test_async_rep_handler_types(nsproxy, handler):
+    '''
+    When binding an ASYNC_REP socket, we must accept different types of
+    handlers: methods, functions, lambda expressions...
+    '''
+    server = run_agent('server', base=Server_ASYNC_REP)
+
+    assert server.bind('ASYNC_REP', alias='should_not_crash',
+                       handler=handler)
+
+
 @pytest.mark.parametrize(
     'handler, check_function',
     [('receive_method', False),
      (receive_function, True),
      (lambda a, x: a.received.append(x), False)])
-def test_connect_handler_types(nsproxy, handler, check_function):
+def test_async_rep_connect_handler_types(nsproxy, handler, check_function):
     '''
     We should be able to specify the handler in the `connect` call in
     different ways: method, functions, lambda expressions...
@@ -70,18 +97,18 @@ def test_connect_handler_types(nsproxy, handler, check_function):
     [('receive_method', False),
      (receive_function, True),
      (lambda a, x: a.received.append(x), False)])
-def test_send_handler_types(nsproxy, handler, check_function):
+def test_async_rep_send_handler_types(nsproxy, handler, check_function):
     '''
-    We should be able to override the handler in the `send` call in
-    different ways: method, functions...
+    We should be able to make requests even if we do not specify a handler
+    on the `connect` call, as long as we specify it on the `send` call.
     '''
     server = run_agent('server', base=Server_ASYNC_REP)
     client = run_agent('client', base=ClientWithHandler)
 
     addr = server.addr('publish')
 
-    # Default handler should not be called when specifying a handler on `send`
-    client.connect(addr, alias='sub', handler='crash_handler')
+    # Connect without a handler
+    client.connect(addr, alias='sub')
 
     client.send('sub', 'request!', handler=handler)
     assert wait_agent_attr(client, length=1)

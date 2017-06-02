@@ -62,8 +62,9 @@ def test_connect_handler_types(nsproxy, handler, check_function):
 
     if check_function:
         # Check that the function was not stored as a method for the object
-        with pytest.raises(Exception):
+        with pytest.raises(AttributeError) as error:
             assert client.get_attr('receive_function')
+        assert 'object has no attribute' in str(error.value)
 
 
 @pytest.mark.parametrize(
@@ -95,5 +96,6 @@ def test_sync_pub_send_handlers(nsproxy, handler, check_function,
 
         if check_function:
             # Check that the function was not stored as a method for the object
-            with pytest.raises(Exception):
+            with pytest.raises(AttributeError) as error:
                 assert client.get_attr('receive_function')
+            assert 'object has no attribute' in str(error.value)

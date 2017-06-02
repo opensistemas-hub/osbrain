@@ -25,6 +25,7 @@ from . import config
 from .common import format_exception
 from .common import format_method_exception
 from .common import unbound_method
+from .common import validate_handler
 from .common import LogLevel
 from .common import repeat
 from .common import after
@@ -633,8 +634,7 @@ class Agent():
         AgentAddress
             The address where the agent binded to.
         """
-        assert not kind.requires_handler() or handler is not None, \
-            'This socket requires a handler!'
+        validate_handler(handler, required=kind.requires_handler())
         socket = self.context.socket(kind.zmq())
         addr = self._bind_socket(socket, addr=addr, transport=transport)
         server_address = AgentAddress(transport, addr, kind, 'server',
@@ -670,7 +670,7 @@ class Agent():
             The channel where the agent binded to.
         """
         if kind == 'ASYNC_REP':
-            assert handler is not None, 'This socket requires a handler!'
+            validate_handler(handler, required=True)
             socket = self.context.socket(zmq.PULL)
             addr = self._bind_socket(socket, addr=addr, transport=transport)
             server_address = AgentAddress(transport, addr, 'PULL', 'server',
@@ -769,8 +769,8 @@ class Agent():
         assert server_address.role == 'server', \
             'Incorrect address! A server address must be provided!'
         client_address = server_address.twin()
-        assert not client_address.kind.requires_handler() or \
-            handler is not None, 'This socket requires a handler!'
+        validate_handler(handler,
+                         required=client_address.kind.requires_handler())
         if self.registered(client_address):
             self._connect_old(client_address, alias, handler)
         else:

@@ -42,7 +42,7 @@ def test_async_rep_handler_exists(nsproxy):
     '''
     server = run_agent('server', base=Agent)
 
-    with pytest.raises(AssertionError) as error:
+    with pytest.raises(ValueError) as error:
         server.bind('ASYNC_REP', alias='should_crash')
     assert 'This socket requires a handler!' in str(error.value)
 

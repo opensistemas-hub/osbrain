@@ -45,7 +45,7 @@ def test_sync_pub_handler_exists(nsproxy):
     '''
     server = run_agent('server', base=Agent)
 
-    with pytest.raises(AssertionError) as error:
+    with pytest.raises(ValueError) as error:
         server.bind('SYNC_PUB', alias='should_crash')
     assert 'This socket requires a handler!' in str(error.value)
 

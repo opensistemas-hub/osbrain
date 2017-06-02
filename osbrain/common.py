@@ -47,6 +47,14 @@ def format_method_exception(error, method, args, kwargs):
     return type(error)(message)
 
 
+def validate_handler(handler, required):
+    '''
+    Raises a ValueError exception when a required is handler but not present.
+    '''
+    if required and handler is None:
+        raise ValueError('This socket requires a handler!')
+
+
 class LogLevel(str):
     """
     Identifies the log level: ERROR, WARNING, INFO, DEBUG.

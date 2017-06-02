@@ -670,6 +670,7 @@ class Agent():
             The channel where the agent binded to.
         """
         if kind == 'ASYNC_REP':
+            assert handler is not None, 'This socket requires a handler!'
             socket = self.context.socket(zmq.PULL)
             addr = self._bind_socket(socket, addr=addr, transport=transport)
             server_address = AgentAddress(transport, addr, 'PULL', 'server',

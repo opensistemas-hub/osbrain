@@ -64,6 +64,8 @@ def serialize_message(message, serializer):
     """
     if serializer == 'pickle':
         return pickle.dumps(message, -1)
+    if serializer == 'dill':
+        return dill.dumps(message, -1)
     if serializer == 'json':
         return json.dumps(message).encode()
     if serializer == 'raw':
@@ -91,6 +93,8 @@ def deserialize_message(message, serializer):
     """
     if serializer == 'pickle':
         return pickle.loads(message)
+    if serializer == 'dill':
+        return dill.loads(message)
     if serializer == 'json':
         return json.loads(bytes(message).decode())
     if serializer == 'raw':

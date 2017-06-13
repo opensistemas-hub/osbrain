@@ -102,20 +102,18 @@ def test_simple_pub_single_handler(nsproxy, server):
     assert wait_agent_attr(alltopics, length=N)
 
     # alltopics
-    received = [int(x) for x in alltopics.get_attr('received')
-                if x != 'bytes...']
+    received = [int(x) if x != 'bytes...' else x
+                for x in alltopics.get_attr('received')]
     assert len(received) >= N
     for i in range(2, len(received)):
-        if received[i] > 0:
-            if received[i - 1] == 'bytes...':
-                assert received[i - 2] == 1 - received[i]
-            else:
-                assert received[i - 1] == 1 - received[i]
+        if received[i] == 'bytes...':
+            assert received[i - 1] == -received[i - 2]
+        elif received[i] > 0:
+            assert received[i - 1] == 'bytes...'
+            assert received[i - 2] == -received[i] + 1
         else:
-            if received[i - 1] == 'bytes...':
-                assert received[i - 2] == -received[i]
-            else:
-                assert received[i - 1] == -received[i]
+            assert received[i - 1] == -received[i]
+            assert received[i - 2] == 'bytes...'
 
 
 @pytest.mark.parametrize('server', [Server, PubServer])

@@ -26,12 +26,13 @@ class Server_SYNC_PUB(Agent):
 class ClientWithHandler(Agent):
     def on_init(self):
         self.received = []
-
-    def crash_handler(self, response):
-        raise Exception()
+        self.alternative_received = []
 
     def receive_method(self, response):
         self.received.append(response)
+
+    def alternative_receive(self, response):
+        self.alternative_received.append(response)
 
 
 def receive_function(agent, response):
@@ -84,8 +85,8 @@ def test_sync_pub_connect_handler_types(nsproxy, handler, check_function):
     addr = server.addr('publish')
 
     client.connect(addr, alias='sub', handler=handler)
-    server.publish()
-    assert wait_agent_attr(client, length=1)
+    server.each(0.01, 'publish')
+    assert wait_agent_attr(client, length=2, data='publication!')
 
     if check_function:
         # Check that the function was not stored as a method for the object
@@ -111,8 +112,11 @@ def test_sync_pub_send_handlers(nsproxy, handler, check_function,
 
     addr = server.addr('publish')
 
-    # PUB/SUB handler should not be used in the requests at all
-    client.connect(addr, alias='sub', handler='crash_handler')
+    # Use an alternative handler so as to guarantee connection is stablished
+    client.connect(addr, alias='sub', handler='alternative_receive')
+    server.each(0.01, 'publish')
+    assert wait_agent_attr(client, name='alternative_received', length=2,
+                           data='publication!')
 
     if should_crash:
         with pytest.raises(ValueError):

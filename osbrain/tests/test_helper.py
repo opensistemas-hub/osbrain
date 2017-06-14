@@ -7,7 +7,7 @@ from osbrain import run_agent
 from osbrain import Agent
 from osbrain.helper import logger_received
 from osbrain.helper import agent_dies
-from osbrain.helper import attribute_match
+from osbrain.helper import attribute_match_all
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
@@ -102,17 +102,21 @@ def test_logger_received_count(agent_logger):
     ([], 1, None, None, False),
     ([], None, 1, None, False),
     ([], None, None, [], True),
+    ([1, 2], 2, 2, None, True),
+    ([1, 2], 2, 3, None, False),
+    ([1, 2], 3, 2, None, False),
     ({'foo'}, 1, None, None, True),
     ({'foo'}, None, 'foo', None, True),
     ({'foo'}, None, None, {'foo'}, True),
     (42, None, None, 14, False),
     (42, None, None, 42, True),
 ])
-def test_attribute_match(attribute, length, data, value, match):
+def test_attribute_match_all(attribute, length, data, value, match):
     """
-    Test `attribute_match` function.
+    Test `attribute_match_all` function.
     """
-    result = attribute_match(attribute, length=length, data=data, value=value)
+    result = attribute_match_all(attribute, length=length, data=data,
+                                 value=value)
     assert result == match
 
 

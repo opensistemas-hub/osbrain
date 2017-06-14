@@ -113,24 +113,26 @@ def agent_dies(agent, nsproxy, timeout=1.):
     return True
 
 
-def attribute_match(attribute, length=None, data=None, value=None):
+def attribute_match_all(attribute, length=None, data=None, value=None):
     """
-    Check if an attribute matches any condition:
+    Check if an attribute matches all of the following specified conditions:
 
     - Minimum length.
     - Contains an item.
     - Is exactly a value.
+
+    Note that only those conditions explicitly passed will be checked.
 
     Parameters
     ----------
     attribute : anything
         The attribute to match against.
     length : int, default is None
-        Return True if the attribute has this minimum length.
+        If specified, the attribute must reach this length (or higher).
     data : anything, default is None
-        Return True if the attribute contains this value.
+        If specified, the attribute must contain this value.
     value : anything, default is None
-        Return True if the attribute contains this value.
+        If specified, the attribute must be this value.
 
     Returns
     -------
@@ -138,24 +140,27 @@ def attribute_match(attribute, length=None, data=None, value=None):
         Whether the attribute matches any condition.
     """
     assert length is not None or data is not None or value is not None, \
-        'No condition passed! will return False always...'
-    if length is not None and len(attribute) >= length:
-        return True
-    if data is not None and data in attribute:
-        return True
-    if value is not None and attribute == value:
-        return True
-    return False
+        'No condition passed! Will return True always...'
+    if length is not None and len(attribute) < length:
+        return False
+    if data is not None and data not in attribute:
+        return False
+    if value is not None and attribute != value:
+        return False
+    return True
 
 
 def wait_agent_attr(agent, name='received', length=None, data=None, value=None,
                     timeout=3):
     """
-    Wait for an agent's attribute, to:
+    Wait for an agent's attribute to match all of the following specified
+    conditions:
 
     - Reach a minimum length.
     - Contain a particular item.
     - Become a given value.
+
+    Note that only those conditions explicitly passed will be checked.
 
     Parameters
     ----------
@@ -164,18 +169,24 @@ def wait_agent_attr(agent, name='received', length=None, data=None, value=None,
     name : str, default is `'received'`
         Name of the agent's attribute to look for (should be a list).
     length : int, default is None
-        If specified, wait until the attribute reaches this length.
+        If specified, wait until the attribute reaches this length or higher.
     data : anything, default is None
         If specified, wait until the attribute contains this element.
     value : anything, default is None
         If specified, wait until the attribute becomes this value.
     timeout : float, default is 3
         After this number of seconds the function will return `False`.
+
+    Returns
+    -------
+    bool
+        Whether the specified conditions where met within the given time.
     """
     t0 = time.time()
     while True:
         attribute = agent.get_attr(name)
-        if attribute_match(attribute, length=length, data=data, value=value):
+        if attribute_match_all(attribute, length=length, data=data,
+                               value=value):
             return True
         if time.time() - t0 > timeout:
             break

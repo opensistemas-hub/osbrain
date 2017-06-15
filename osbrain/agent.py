@@ -187,7 +187,7 @@ class Agent():
         handlers for each socket.
     poll_timeout : int
         Polling timeout, in milliseconds. After this timeout, if no message
-        is received, the agent executes de `iddle()` method before going back
+        is received, the agent executes de `idle()` method before going back
         to polling.
     keep_alive : bool
         When set to `True`, the agent will continue executing the main loop.
@@ -942,9 +942,9 @@ class Agent():
         # Reset handlers
         self._set_handler(self.socket[alias], curated_handlers)
 
-    def iddle(self):
+    def idle(self):
         """
-        This function is to be executed when the agent is iddle.
+        This function is to be executed when the agent is idle.
 
         After a timeout occurs when the agent's poller receives no data in
         any of its sockets, the agent may execute this function.
@@ -1024,7 +1024,7 @@ class Agent():
         This iteration is normally executed inside the main loop.
 
         The agent is polling all its sockets for input data. It will wait
-        for `poll_timeout`; after this period, the method `iddle` will be
+        for `poll_timeout`; after this period, the method `idle` will be
         executed before polling again.
 
         Returns
@@ -1044,8 +1044,8 @@ class Agent():
             raise
 
         if not events:
-            # Agent is iddle
-            self.iddle()
+            # Agent is idle
+            self.idle()
             return 0
 
         self._process_events(events)

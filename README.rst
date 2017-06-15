@@ -10,7 +10,7 @@ Agents run independently as system processes and communicate with each
 other using message passing.
 
 osBrain uses `ØMQ <http://zeromq.org/>`__ for efficient and flexible
-messsage passing between agents. It also uses
+message passing between agents. It also uses
 `Pyro4 <https://pythonhosted.org/Pyro4/>`__
 to ease the configuration and deployment of complex systems.
 

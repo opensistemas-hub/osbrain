@@ -233,9 +233,7 @@ def test_pushpull(nsproxy):
     a0.connect(addr, 'push')
     message = 'Hello world'
     a0.send('push', message)
-    while not a1.get_attr('received'):
-        time.sleep(0.01)
-    assert a1.get_attr('received') == message
+    assert wait_agent_attr(a1, name='received', value=message)
 
 
 def test_pubsub(nsproxy):
@@ -384,9 +382,8 @@ def test_method_handlers(nsproxy):
     # Push
     client.connect(server.addr('pull'), 'push')
     client.send('push', 'Hello world!')
-    while not server.get_attr('received').get('pull'):
-        time.sleep(0.01)
-    assert server.get_attr('received')['pull'] == 'Hello world!'
+    received = {'rep': 'This is a request', 'pull': 'Hello world!'}
+    assert wait_agent_attr(server, name='received', value=received)
 
 
 def test_list_of_handlers(nsproxy):
@@ -414,8 +411,7 @@ def test_list_of_handlers(nsproxy):
     sender.connect(receiver.addr('pull'), 'push')
     message = 'Hello world'
     sender.send('push', message)
-    while not receiver.get_attr('third'):
-        time.sleep(0.01)
+    assert wait_agent_attr(receiver, name='third', value='10'+message)
     assert receiver.get_attr('received') == message
     assert receiver.get_attr('second') == '0' + message
     assert receiver.get_attr('third') == '10' + message
@@ -534,9 +530,7 @@ def test_agent_stop(nsproxy):
     assert agent.get_attr('running')
     agent.stop()
     assert not agent.get_attr('keep_alive')
-    while agent.get_attr('running'):
-        time.sleep(0.01)
-    assert not agent.get_attr('running')
+    assert wait_agent_attr(agent, name='running', value=False)
 
 
 def test_agent_spawn_process(nsproxy):

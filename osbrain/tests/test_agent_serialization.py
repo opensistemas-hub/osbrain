@@ -12,6 +12,7 @@ from osbrain.agent import deserialize_message
 from osbrain.agent import compose_message
 from osbrain.agent import TOPIC_SEPARATOR
 from osbrain.address import AgentAddressSerializer
+from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
 
@@ -197,9 +198,7 @@ def test_pushpull_raw(nsproxy):
     a0.connect(addr, 'push')
     message = b'Hello world'
     a0.send('push', message)
-    while not a1.get_attr('received'):
-        time.sleep(0.01)
-    assert a1.get_attr('received') == message
+    assert wait_agent_attr(a1, name='received', value=message)
 
 
 def test_pushpull_pickle(nsproxy):
@@ -213,9 +212,7 @@ def test_pushpull_pickle(nsproxy):
     a0.connect(addr, 'push')
     message = 'Hello world'
     a0.send('push', message)
-    while not a1.get_attr('received'):
-        time.sleep(0.01)
-    assert a1.get_attr('received') == message
+    assert wait_agent_attr(a1, name='received', value=message)
 
 
 def test_pushpull_json(nsproxy):
@@ -229,9 +226,7 @@ def test_pushpull_json(nsproxy):
     a0.connect(addr, 'push')
     message = 'Hello world'
     a0.send('push', message)
-    while not a1.get_attr('received'):
-        time.sleep(0.01)
-    assert a1.get_attr('received') == message
+    assert wait_agent_attr(a1, name='received', value=message)
 
 
 def test_pushpull_raw_zmq_outside(nsproxy):
@@ -254,9 +249,7 @@ def test_pushpull_raw_zmq_outside(nsproxy):
     # Send the message
     message = b'Hello world'
     socket.send(message)
-    while not a1.get_attr('received'):
-        time.sleep(0.01)
-    assert a1.get_attr('received') == message
+    assert wait_agent_attr(a1, name='received', value=message)
 
     socket.close()
     context.destroy()

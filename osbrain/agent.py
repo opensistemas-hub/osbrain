@@ -647,7 +647,7 @@ class Agent():
         self.register(socket, server_address, alias, handler)
         # SUB sockets are a special case
         if kind == 'SUB':
-            self.subscribe(server_address, handler)
+            self._subscribe(server_address, handler)
         return server_address
 
     def _bind_channel(self, kind, alias=None, handler=None, addr=None,
@@ -783,7 +783,7 @@ class Agent():
         if client_address.kind == 'SUB':
             if not alias:
                 alias = client_address
-            self.subscribe(alias, handler)
+            self._subscribe(alias, handler)
         return client_address
 
     def _connect_channel(self, channel, alias=None, handler=None):
@@ -912,7 +912,7 @@ class Agent():
         else:
             handler(self, response)
 
-    def subscribe(self, alias: str, handlers: Dict[Union[bytes, str], Any]):
+    def _subscribe(self, alias: str, handlers: Dict[Union[bytes, str], Any]):
         """
         Subscribe the agent to another agent.
 

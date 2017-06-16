@@ -24,6 +24,7 @@ import zmq
 from . import config
 from .common import format_exception
 from .common import format_method_exception
+from .common import topics_to_bytes
 from .common import unbound_method
 from .common import validate_handler
 from .common import LogLevel
@@ -867,10 +868,7 @@ class Agent():
         uuid = unique_identifier()
         topic_handlers = {}
         if isinstance(handler, dict):
-            for key, value in handler.items():
-                if isinstance(key, str):
-                    key = key.encode()
-                topic_handlers[channel.uuid + key] = value
+            topic_handlers = topics_to_bytes(handler, uuid=channel.uuid)
         else:
             topic_handlers[channel.uuid] = handler
         topic_handlers[uuid] = self._handle_async_requests
@@ -930,12 +928,8 @@ class Agent():
         """
         if not isinstance(handlers, dict):
             handlers = {'': handlers}
-        # Convert all topics to bytes
-        curated_handlers = {}
-        for topic, value in handlers.items():
-            if isinstance(topic, str):
-                topic = topic.encode()
-            curated_handlers[topic] = value
+
+        curated_handlers = topics_to_bytes(handlers)
         # Subscribe to topics
         for topic in curated_handlers.keys():
             self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)

@@ -6,6 +6,9 @@ from threading import Event
 from threading import Thread
 import traceback
 from uuid import uuid4
+from typing import Any
+from typing import Dict
+from typing import Union
 
 from . import config
 
@@ -45,6 +48,33 @@ def format_method_exception(error, method, args, kwargs):
         (str(method), str(args), str(kwargs))
     message += format_exception()
     return type(error)(message)
+
+
+def topics_to_bytes(handlers: Dict[Union[bytes, str], Any], uuid: bytes = b''):
+    '''
+    Given some pairs topic/handler, leaves them prepared for making the actual
+    ZeroMQ subscription.
+
+    Parameters
+    ----------
+    handlers
+        Contains pairs "topic - handler".
+    uuid
+        uuid of the SYNC_PUB/SYNC_SUB channel (if applies). For normal
+        PUB/SUB communication, this should be `b''`.
+
+    Returns
+    -------
+    Dict[bytes, Any]
+    '''
+    curated_handlers = {}
+
+    for topic, value in handlers.items():
+        if isinstance(topic, str):
+            topic = topic.encode()
+        curated_handlers[uuid + topic] = value
+
+    return curated_handlers
 
 
 def validate_handler(handler, required):

@@ -6,6 +6,7 @@ import pytest
 from osbrain.agent import TOPIC_SEPARATOR
 from osbrain.common import unique_identifier
 from osbrain.common import LogLevel
+from osbrain.common import topics_to_bytes
 
 
 def test_unique_identifier():
@@ -30,3 +31,34 @@ def test_loglevel():
     # Invalid initialization
     with pytest.raises(ValueError):
         LogLevel('FOO')
+
+
+def test_topics_to_bytes_without_uuid():
+    """
+    Test topics_to_bytes basic usage, without specifying a uuid.
+    """
+    handlers = {'topic_one': 'handler', b'topic_two': 'handler'}
+
+    curated = topics_to_bytes(handlers)
+    assert isinstance(curated, dict)
+
+    for k, v in curated.items():
+        assert isinstance(k, bytes)
+        assert k.startswith(b'topic_')
+        assert v == 'handler'
+
+
+@pytest.mark.parametrize('uuid', [b'', b'U'])
+def test_topics_to_bytes_with_uuid(uuid):
+    """
+    Test topics_to_bytes basic usage, specifying different uuid's.
+    """
+    handlers = {'topic_one': 'handler', b'topic_two': 'handler'}
+
+    curated = topics_to_bytes(handlers, uuid=uuid)
+    assert isinstance(curated, dict)
+
+    for k, v in curated.items():
+        assert isinstance(k, bytes)
+        assert k.startswith(uuid + b'topic_')
+        assert v == 'handler'

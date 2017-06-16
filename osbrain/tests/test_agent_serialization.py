@@ -115,49 +115,24 @@ def test_deserialize_message():
         deserialize_message(message=b'x', serializer='foo')
 
 
-def test_reqrep_raw(nsproxy):
+@pytest.mark.parametrize('serializer, message, response', [
+    ('raw', b'Hello world', b'OK'),
+    ('pickle', 'Hello world', 'OK'),
+    ('json', 'Hello world', 'OK'),
+])
+def test_reqrep(nsproxy, serializer, message, response):
     """
-    Simple request-reply pattern between two agents with raw serialization.
+    Simple request-reply pattern between two agents with different
+    serializations.
     """
     def rep_handler(agent, message):
-        return b'OK'
+        return response
 
     a0 = run_agent('a0')
     a1 = run_agent('a1')
-    addr = a0.bind('REP', 'reply', rep_handler, serializer='raw')
+    addr = a0.bind('REP', 'reply', rep_handler, serializer=serializer)
     a1.connect(addr, 'request')
-    response = a1.send_recv('request', b'Hello world')
-    assert response == b'OK'
-
-
-def test_reqrep_pickle(nsproxy):
-    """
-    Simple request-reply pattern between two agents with pickle serialization.
-    """
-    def rep_handler(agent, message):
-        return 'OK'
-
-    a0 = run_agent('a0')
-    a1 = run_agent('a1')
-    addr = a0.bind('REP', 'reply', rep_handler, serializer='pickle')
-    a1.connect(addr, 'request')
-    response = a1.send_recv('request', 'Hello world')
-    assert response == 'OK'
-
-
-def test_reqrep_json(nsproxy):
-    """
-    Simple request-reply pattern between two agents with json serialization.
-    """
-    def rep_handler(agent, message):
-        return 'OK'
-
-    a0 = run_agent('a0')
-    a1 = run_agent('a1')
-    addr = a0.bind('REP', 'reply', rep_handler, serializer='json')
-    a1.connect(addr, 'request')
-    response = a1.send_recv('request', 'Hello world')
-    assert response == 'OK'
+    assert a1.send_recv('request', message) == response
 
 
 def test_reqrep_raw_zmq_outside(nsproxy):
@@ -187,44 +162,20 @@ def test_reqrep_raw_zmq_outside(nsproxy):
     context.destroy()
 
 
-def test_pushpull_raw(nsproxy):
+@pytest.mark.parametrize('serializer, message', [
+    ('raw', b'Hello world'),
+    ('pickle', 'Hello world'),
+    ('json', 'Hello world'),
+])
+def test_pushpull(nsproxy, serializer, message):
     """
-    Simple push-pull pattern test, using raw serialization between agents.
-    """
-    a0 = run_agent('a0')
-    a1 = run_agent('a1')
-    a1.set_attr(received=None)
-    addr = a1.bind('PULL', handler=set_received, serializer='raw')
-    a0.connect(addr, 'push')
-    message = b'Hello world'
-    a0.send('push', message)
-    assert wait_agent_attr(a1, name='received', value=message)
-
-
-def test_pushpull_pickle(nsproxy):
-    """
-    Simple push-pull pattern test with pickle serialization.
+    Simple push-pull pattern test, using different serializations.
     """
     a0 = run_agent('a0')
     a1 = run_agent('a1')
     a1.set_attr(received=None)
-    addr = a1.bind('PULL', handler=set_received, serializer='pickle')
+    addr = a1.bind('PULL', handler=set_received, serializer=serializer)
     a0.connect(addr, 'push')
-    message = 'Hello world'
-    a0.send('push', message)
-    assert wait_agent_attr(a1, name='received', value=message)
-
-
-def test_pushpull_json(nsproxy):
-    """
-    Simple push-pull pattern test with json serialization.
-    """
-    a0 = run_agent('a0')
-    a1 = run_agent('a1')
-    a1.set_attr(received=None)
-    addr = a1.bind('PULL', handler=set_received, serializer='json')
-    a0.connect(addr, 'push')
-    message = 'Hello world'
     a0.send('push', message)
     assert wait_agent_attr(a1, name='received', value=message)
 
@@ -255,48 +206,20 @@ def test_pushpull_raw_zmq_outside(nsproxy):
     context.destroy()
 
 
-def test_pubsub_raw(nsproxy):
+@pytest.mark.parametrize('serializer, message', [
+    ('raw', b'Hello world'),
+    ('pickle', 'Hello world'),
+    ('json', 'Hello world'),
+])
+def test_pubsub(nsproxy, serializer, message):
     """
-    Simple publisher-subscriber pattern test.
-    """
-    a0 = run_agent('a0')
-    a1 = run_agent('a1')
-    a1.set_attr(received=None)
-    addr = a0.bind('PUB', alias='pub', serializer='raw')
-    a1.connect(addr, handler=set_received)
-    message = b'Hello world'
-    while not a1.get_attr('received'):
-        a0.send('pub', message)
-        time.sleep(0.1)
-    assert a1.get_attr('received') == message
-
-
-def test_pubsub_pickle(nsproxy):
-    """
-    Simple publisher-subscriber pattern test with pickle serialization.
+    Simple publisher-subscriber pattern test with different serializations.
     """
     a0 = run_agent('a0')
     a1 = run_agent('a1')
     a1.set_attr(received=None)
-    addr = a0.bind('PUB', alias='pub', serializer='pickle')
+    addr = a0.bind('PUB', alias='pub', serializer=serializer)
     a1.connect(addr, handler=set_received)
-    message = 'Hello world'
-    while not a1.get_attr('received'):
-        a0.send('pub', message)
-        time.sleep(0.1)
-    assert a1.get_attr('received') == message
-
-
-def test_pubsub_json(nsproxy):
-    """
-    Simple publisher-subscriber pattern test with json serialization.
-    """
-    a0 = run_agent('a0')
-    a1 = run_agent('a1')
-    a1.set_attr(received=None)
-    addr = a0.bind('PUB', alias='pub', serializer='json')
-    a1.connect(addr, handler=set_received)
-    message = 'Hello world'
     while not a1.get_attr('received'):
         a0.send('pub', message)
         time.sleep(0.1)

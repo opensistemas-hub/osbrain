@@ -11,6 +11,7 @@ from osbrain import run_logger
 from osbrain.helper import sync_agent_logger
 from osbrain.helper import logger_received
 from osbrain.helper import wait_agent_attr
+from osbrain.helper import wait_agent_condition
 
 from common import nsproxy  # pragma: no flakes
 from common import append_received
@@ -59,6 +60,13 @@ class ServerLate(Server):
         return 'x' + str(delay)
 
 
+class ServerNumbers(Agent):
+    def publish(self):
+        self.send('pub', 1, topic='negate')
+        self.send('pub', 2, topic=b'normal')
+        self.send('pub', 'not received', topic='topic_C')
+
+
 class Client(Agent):
     def on_init(self):
         self.received = []
@@ -71,6 +79,226 @@ def receive_negate(agent, response):
 
 def on_error(agent):
     agent.error_log.append('error')
+
+
+def match_tail(agent, data):
+    return agent.received[-len(data):] == data
+
+
+@pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
+def test_unsubscribe(nsproxy, socket_type):
+    '''
+    Test that unsubscribing from topics works fine.
+
+    The server will be publishing the natural numbers, in ascending order,
+    starting at one. Odd numbers will be sent with `odd` topic and even
+    numbers with `even` topic.
+
+    A subscriber will subscribe to all numbers, and then it will unsubscribe
+    from the odd numbers.
+
+    Two non consecutive numbers must be received consecutively at that point,
+    since they both will be even.
+    '''
+    def check_non_consecutive(agent):
+        """
+        Check whether the last two received numbers are non-consecutive.
+        """
+        return agent.received[-1] - agent.received[-2] != 1
+
+    def publish(agent):
+        assert agent.count % 2 == 1
+        agent.send('pub', agent.count, topic='odd')
+        agent.send('pub', agent.count + 1, topic='even')
+        agent.count += 2
+
+    # Set up the agents
+    server = run_agent('server')
+    client = run_agent('client', base=Client)
+
+    server.set_attr(count=1)
+    addr = server.bind(socket_type, alias='pub', handler=append_received)
+    client.connect(addr, alias='sub', handler={'odd': append_received,
+                                               'even': append_received})
+
+    # Make sure the connection is established
+    server.each(0.1, 'send', 'pub', 'connecting...', topic='odd', alias='tmp')
+    assert wait_agent_attr(client, data='connecting...')
+    server.stop_timer('tmp')
+
+    # Wait until client receives some numbers
+    client.set_attr(received=[])
+    server.each(0.1, publish)
+    assert wait_agent_attr(client, length=5)
+    assert not client.execute_as_method(check_non_consecutive)
+
+    # Unsubscribe from odd numbers (receiving only even numbers)
+    client.unsubscribe('sub', 'odd')
+
+    assert wait_agent_condition(client, check_non_consecutive)
+    assert client.get_attr('received')[-1] % 2 == 0
+
+
+@pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
+def test_unsubscribe_various(nsproxy, socket_type):
+    '''
+    Test that unsubscribing from various topics works fine.
+
+    The server will be publishing zeroes through two topics quickly, and
+    ones through a single topic slowly.
+
+    A subscriber will subscribe to all numbers, and then unsubscribe from the
+    topics related to the zeroes, therefore receiving three (or more) ones in
+    a row.
+    '''
+    def check_sum_three(agent):
+        """
+        Check whether the last three received numbers sum to three.
+
+        For this test in particular, the last three numbers should be one,
+        received through the 'one' topic.
+        """
+        return sum(agent.received[-3:]) == 3
+
+    def publish_zeroes(agent):
+        agent.send('pub', 0, topic='zero')
+        agent.send('pub', 0, topic='other_zero')
+
+    def publish_one(agent):
+        agent.send('pub', 1, topic='one')
+
+    # Set up the agents
+    server = run_agent('server')
+    client = run_agent('client', base=Client)
+
+    addr = server.bind(socket_type, alias='pub', handler=append_received)
+    client.connect(addr, alias='sub', handler={'zero': append_received,
+                                               'other_zero': append_received,
+                                               'one': append_received})
+
+    # Make sure the connection is established
+    server.each(0.1, 'send', 'pub', 'connecting...', topic='zero', alias='tmp')
+    assert wait_agent_attr(client, data='connecting...')
+    server.stop_timer('tmp')
+
+    # Wait until client receives some numbers
+    client.set_attr(received=[])
+    server.each(0.1, publish_zeroes)
+    server.each(0.2, publish_one)
+    assert wait_agent_attr(client, length=5)
+    assert not client.execute_as_method(check_sum_three)
+
+    # Unsubscribe from zeroes numbers (receiving only ones)
+    client.unsubscribe('sub', ('zero', 'other_zero'))
+
+    assert wait_agent_condition(client, check_sum_three)
+
+
+@pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
+@pytest.mark.parametrize('subscribe_separately', [True, False])
+def test_subscribe(nsproxy, socket_type, subscribe_separately):
+    '''
+    Test subscribing to various topics/handlers works fine.
+    '''
+    server = run_agent('server', base=ServerNumbers)
+    client = run_agent('client')
+
+    addr = server.bind(socket_type, alias='pub', handler=append_received)
+    client.set_attr(received=[])
+    client.connect(addr, alias='sub', handler=append_received)
+
+    # Establish a connection
+    server.each(0.1, 'send', 'pub', 'connecting...', alias='tmp')
+    assert wait_agent_attr(client, data='connecting...')
+    server.stop_timer('tmp')
+
+    # Subscribe to two topics. Client should only receive -1 and 2.
+    client.unsubscribe('sub', '')
+    if subscribe_separately:
+        client.subscribe('sub', handlers={'negate': receive_negate})
+        client.subscribe('sub', handlers={'normal': append_received})
+    else:
+        client.subscribe('sub', handlers={'negate': receive_negate,
+                                          'normal': append_received})
+
+    server.each(0.1, 'publish')
+
+    assert wait_agent_condition(client, match_tail, [-1, 2] * 4)
+
+
+@pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
+def test_resubscribe(nsproxy, socket_type):
+    '''
+    After subscribing to the same topic with a different handler after a
+    subscription to that topic was already made, we should override the
+    original handler.
+
+    Note that we will only override explicitly given topics (previous
+    subscriptions of other topics will remain untouched).
+    '''
+    server = run_agent('server', base=ServerNumbers)
+    client = run_agent('client')
+
+    addr = server.bind(socket_type, alias='pub', handler=append_received)
+    client.set_attr(received=[])
+    client.connect(addr, alias='sub', handler=append_received)
+
+    # Establish a connection
+    server.each(0.1, 'send', 'pub', 'connecting...', alias='tmp')
+    assert wait_agent_attr(client, data='connecting...')
+    server.stop_timer('tmp')
+
+    # Subscribe to two topics
+    client.unsubscribe('sub', '')
+    client.subscribe('sub', handler={'negate': receive_negate,
+                                     'normal': append_received})
+
+    server.each(0.1, 'publish')
+
+    assert wait_agent_condition(client, match_tail, [-1, 2] * 4)
+
+    # Resubscribe, so as to store the 'normal' (2) messages negated
+    client.subscribe('sub', handler={'normal': receive_negate})
+
+    assert wait_agent_condition(client, match_tail, [-1, -2] * 4)
+
+
+@pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
+def test_unsubscribe_and_subscribe_again(nsproxy, socket_type):
+    '''
+    Test resubscribing to topics after unsubscribing works fine.
+    '''
+    server = run_agent('server', base=ServerNumbers)
+    client = run_agent('client')
+
+    addr = server.bind(socket_type, alias='pub', handler=append_received)
+    client.set_attr(received=[])
+    client.connect(addr, alias='sub', handler=append_received)
+
+    # Establish a connection
+    server.each(0.1, 'send', 'pub', 'connecting...', alias='tmp')
+    assert wait_agent_attr(client, data='connecting...')
+    server.stop_timer('tmp')
+
+    # Subscribe to two topics
+    client.unsubscribe('sub', '')
+    client.subscribe('sub', handlers={'negate': receive_negate,
+                                      'normal': append_received})
+
+    # Make server to start publishing messages
+    server.each(0.1, 'publish')
+
+    assert wait_agent_condition(client, match_tail, [-1, 2] * 4)
+
+    # Unsubscribe from one topic
+    client.unsubscribe('sub', 'negate')
+
+    assert wait_agent_condition(client, match_tail, [2] * 8)
+
+    # Subscribe again
+    client.subscribe('sub', handler={'negate': receive_negate})
+
+    assert wait_agent_condition(client, match_tail, [-1, 2] * 4)
 
 
 @pytest.mark.parametrize('server', [Server, PubServer])

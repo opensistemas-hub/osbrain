@@ -112,7 +112,8 @@ always take this into account:
 #. osBrain uses `pickle <https://docs.python.org/library/pickle.html>`_ for
    serialization by default, which means that the system performance may as
    well depend on this package. Serialization is configurable, though.
-#. osBrain default transport is IPC by default, but :ref:`it can be changed
+#. osBrain default transport is IPC for operating systems that provide UNIX
+   domain sockets, and TCP for the rest. :ref:`It can be changed
    globally or configured specifically for each bind <transport_protocol>`.
    Note, however, that when using TCP, the network may have a great impact
    on performance.

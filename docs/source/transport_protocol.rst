@@ -12,7 +12,8 @@ Transport protocol
 Available transports
 ====================
 
-Althought the default transport protocol is IPC, there are other transport
+Althought the default transport protocol is IPC for operating systems that
+provide UNIX domain sockets and TCP for the rest, there are other transport
 protocols that can be used in osBrain:
 
 - ``tcp``: common `TCP <https://en.wikipedia.org/wiki/Transmission_Control_Protocol>`_. Can always be used, and must be used to communicate agents running in

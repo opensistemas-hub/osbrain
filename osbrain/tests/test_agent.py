@@ -297,18 +297,19 @@ def test_agent_multiproxy(nsproxy):
 
 def test_set_logger(nsproxy):
     """
-    Setting an agent's logger should result in the agnet actually sending
+    Setting an agent's logger should result in the agent actually sending
     log messages to the logger.
     """
     logger = run_logger('logger')
     a0 = run_agent('a0')
     a0.set_logger(logger)
+
     message = 'Hello world'
-    while True:
-        a0.log_info(message)
-        history = logger.get_attr('log_history')
-        if len(history):
-            break
+    a0.each(0.1, 'log_info', message)
+
+    assert wait_agent_attr(logger, name='log_history', length=1)
+
+    history = logger.get_attr('log_history')
     assert message in history[0]
 
 

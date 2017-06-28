@@ -8,6 +8,7 @@ from osbrain import run_agent
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
+from common import receive
 
 
 class Server_ASYNC_REP(Agent):
@@ -31,10 +32,6 @@ class ClientWithHandler(Agent):
         self.received.append(response)
 
 
-def receive_function(agent, response):
-    agent.received.append(response)
-
-
 def test_async_rep_handler_exists(nsproxy):
     '''
     When binding an ASYNC_REP socket without a handler, an exception must be
@@ -49,7 +46,7 @@ def test_async_rep_handler_exists(nsproxy):
 
 @pytest.mark.parametrize(
     'handler',
-    ['reply', receive_function, lambda a, x: a.received.append(x)]
+    ['reply', receive, lambda a, x: a.received.append(x)]
 )
 def test_async_rep_handler_types(nsproxy, handler):
     '''
@@ -65,7 +62,7 @@ def test_async_rep_handler_types(nsproxy, handler):
 @pytest.mark.parametrize(
     'handler, check_function',
     [('receive_method', False),
-     (receive_function, True),
+     (receive, True),
      (lambda a, x: a.received.append(x), False)])
 def test_async_rep_connect_handler_types(nsproxy, handler, check_function):
     '''
@@ -88,14 +85,14 @@ def test_async_rep_connect_handler_types(nsproxy, handler, check_function):
     if check_function:
         # Check that the function was not stored as a method for the object
         with pytest.raises(AttributeError) as error:
-            assert client.get_attr('receive_function')
+            assert client.get_attr('receive')
         assert 'object has no attribute' in str(error.value)
 
 
 @pytest.mark.parametrize(
     'handler, check_function',
     [('receive_method', False),
-     (receive_function, True),
+     (receive, True),
      (lambda a, x: a.received.append(x), False)])
 def test_async_rep_send_handler_types(nsproxy, handler, check_function):
     '''
@@ -116,5 +113,5 @@ def test_async_rep_send_handler_types(nsproxy, handler, check_function):
     if check_function:
         # Check that the function was not stored as a method for the object
         with pytest.raises(AttributeError) as error:
-            assert client.get_attr('receive_function')
+            assert client.get_attr('receive')
         assert 'object has no attribute' in str(error.value)

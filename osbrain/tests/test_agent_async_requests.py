@@ -12,10 +12,7 @@ from osbrain.helper import sync_agent_logger
 from osbrain.helper import logger_received
 
 from common import nsproxy  # pragma: no flakes
-
-
-def receive(agent, response):
-    agent.received.append(response)
+from common import receive
 
 
 def on_error(agent):

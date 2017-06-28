@@ -22,14 +22,11 @@ from osbrain.helper import sync_agent_logger
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
+from common import receive
 
 
 def set_received(agent, message, topic=None):
     agent.received = message
-
-
-def receive(agent, message):
-    agent.received.append(message)
 
 
 def test_agent_uuid():

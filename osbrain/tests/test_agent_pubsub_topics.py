@@ -6,10 +6,7 @@ from osbrain import run_agent
 from osbrain.address import AgentAddressSerializer
 
 from common import nsproxy  # pragma: no flakes
-
-
-def receive(agent, message, topic=None):
-    agent.received.append(message)
+from common import receive
 
 
 @pytest.mark.parametrize(

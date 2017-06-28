@@ -15,6 +15,7 @@ from osbrain.proxy import locate_ns
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
+from common import receive
 
 
 def since(t0, passed, tolerance):
@@ -300,7 +301,7 @@ def test_agent_proxy_oneway(nsproxy):
     """
     class OneWayne(Agent):
         def on_init(self):
-            target = self.bind('PULL', alias='target', handler=self.receive,
+            target = self.bind('PULL', alias='target', handler=receive,
                                transport='inproc')
             self.target = target
             self.received = []
@@ -310,9 +311,6 @@ def test_agent_proxy_oneway(nsproxy):
             for i in range(10):
                 self.send('gun', 'bang!')
                 time.sleep(0.1)
-
-        def receive(self, message):
-            self.received.append(message)
 
     wayne = run_agent('wayne', base=OneWayne)
 

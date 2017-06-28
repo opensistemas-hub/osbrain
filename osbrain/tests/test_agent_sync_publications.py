@@ -13,6 +13,7 @@ from osbrain.helper import logger_received
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
+from common import receive
 
 
 class BaseServer(Agent):
@@ -62,10 +63,6 @@ class Client(Agent):
     def on_init(self):
         self.received = []
         self.error_log = []
-
-
-def receive(agent, response):
-    agent.received.append(response)
 
 
 def receive_negate(agent, response):

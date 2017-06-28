@@ -14,6 +14,7 @@ from osbrain import SocketAddress
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
+from common import receive
 
 
 def test_agent_bind_transport_global(nsproxy):
@@ -96,9 +97,6 @@ def test_agent_ipc_from_different_folders(nsproxy):
     class Wdagent(Agent):
         def on_init(self):
             self.received = []
-
-    def receive(agent, message):
-        agent.received.append(message)
 
     dira = mkdtemp()
     dirb = mkdtemp()

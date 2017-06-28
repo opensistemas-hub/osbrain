@@ -4,6 +4,7 @@ Test file for asynchronous requests.
 import time
 
 from osbrain import run_agent
+from osbrain import Agent
 from osbrain import run_logger
 from osbrain.helper import sync_agent_logger
 from osbrain.helper import logger_received
@@ -19,6 +20,16 @@ def on_error(agent):
     agent.error_count += 1
 
 
+class Server(Agent):
+    def on_init(self):
+        self.received = []
+
+
+class Client(Agent):
+    def on_init(self):
+        self.received = []
+
+
 def test_return(nsproxy):
     """
     Asynchronous request-reply pattern with a reply handler that returns.
@@ -28,10 +39,8 @@ def test_return(nsproxy):
         time.sleep(1)
         return 'x' + request
 
-    server = run_agent('server')
-    client = run_agent('client')
-    server.set_attr(received=[])
-    client.set_attr(received=[])
+    server = run_agent('server', base=Server)
+    client = run_agent('client', base=Client)
 
     addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
     client.connect(addr, alias='async', handler=receive)
@@ -66,10 +75,8 @@ def test_yield(nsproxy):
         yield 'x' + request
         agent.received.append('y' + request)
 
-    server = run_agent('server')
-    client = run_agent('client')
-    server.set_attr(received=[])
-    client.set_attr(received=[])
+    server = run_agent('server', base=Server)
+    client = run_agent('client', base=Client)
 
     addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
     client.connect(addr, alias='async', handler=receive)
@@ -104,11 +111,9 @@ def test_unknown(nsproxy):
         time.sleep(1)
         return 'x' + request
 
-    server = run_agent('server')
-    client = run_agent('client')
+    server = run_agent('server', base=Server)
+    client = run_agent('client', base=Client)
     logger = run_logger('logger')
-    server.set_attr(received=[])
-    client.set_attr(received=[])
     client.set_logger(logger)
     sync_agent_logger(client, logger)
 
@@ -135,11 +140,9 @@ def test_wait(nsproxy):
         time.sleep(delay)
         return 'x' + str(delay)
 
-    server = run_agent('server')
-    client = run_agent('client')
+    server = run_agent('server', base=Server)
+    client = run_agent('client', base=Client)
     logger = run_logger('logger')
-    server.set_attr(received=[])
-    client.set_attr(received=[])
     client.set_logger(logger)
     sync_agent_logger(client, logger)
 
@@ -171,10 +174,8 @@ def test_wait_on_error(nsproxy):
         time.sleep(delay)
         return 'x' + str(delay)
 
-    server = run_agent('server')
-    client = run_agent('client')
-    server.set_attr(received=[])
-    client.set_attr(received=[])
+    server = run_agent('server', base=Server)
+    client = run_agent('client', base=Client)
     client.set_attr(error_count=0)
 
     addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)

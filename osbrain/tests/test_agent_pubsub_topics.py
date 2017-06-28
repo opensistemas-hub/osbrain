@@ -8,8 +8,8 @@ from osbrain.address import AgentAddressSerializer
 from common import nsproxy  # pragma: no flakes
 
 
-def log_received_to_list(agent, message, topic=None):
-    agent.received_list.append(message)
+def receive(agent, message, topic=None):
+    agent.received.append(message)
 
 
 @pytest.mark.parametrize(
@@ -32,16 +32,16 @@ def test_pubsub_topics_separator(nsproxy, serializer):
     a5 = run_agent('a5')
 
     for agent in (a1, a2, a3, a4, a5):
-        agent.set_attr(received_list=[])
+        agent.set_attr(received=[])
 
     addr = a0.bind('PUB', alias='pub', serializer=serializer)
 
-    a1.connect(addr, handler=log_received_to_list)
-    a2.connect(addr, handler={'foo': log_received_to_list})
-    a3.connect(addr, handler={'bar': log_received_to_list,
-                              'foo': log_received_to_list})
-    a4.connect(addr, handler={'bar': log_received_to_list})
-    a5.connect(addr, handler={'fo': log_received_to_list})
+    a1.connect(addr, handler=receive)
+    a2.connect(addr, handler={'foo': receive})
+    a3.connect(addr, handler={'bar': receive,
+                              'foo': receive})
+    a4.connect(addr, handler={'bar': receive})
+    a5.connect(addr, handler={'fo': receive})
 
     # Give some time for all the agents to connect
     time.sleep(0.1)
@@ -63,30 +63,30 @@ def test_pubsub_topics_separator(nsproxy, serializer):
     time.sleep(0.1)
 
     # Check each agent received the corresponding messages
-    assert message_01 in a1.get_attr('received_list')
-    assert message_02 in a1.get_attr('received_list')
-    assert message_03 in a1.get_attr('received_list')
-    assert message_04 in a1.get_attr('received_list')
+    assert message_01 in a1.get_attr('received')
+    assert message_02 in a1.get_attr('received')
+    assert message_03 in a1.get_attr('received')
+    assert message_04 in a1.get_attr('received')
 
-    assert message_01 not in a2.get_attr('received_list')
-    assert message_02 in a2.get_attr('received_list')
-    assert message_03 in a2.get_attr('received_list')
-    assert message_04 not in a2.get_attr('received_list')
+    assert message_01 not in a2.get_attr('received')
+    assert message_02 in a2.get_attr('received')
+    assert message_03 in a2.get_attr('received')
+    assert message_04 not in a2.get_attr('received')
 
-    assert message_01 not in a3.get_attr('received_list')
-    assert message_02 in a3.get_attr('received_list')
-    assert message_03 in a3.get_attr('received_list')
-    assert message_04 not in a3.get_attr('received_list')
+    assert message_01 not in a3.get_attr('received')
+    assert message_02 in a3.get_attr('received')
+    assert message_03 in a3.get_attr('received')
+    assert message_04 not in a3.get_attr('received')
 
-    assert message_01 not in a4.get_attr('received_list')
-    assert message_02 not in a4.get_attr('received_list')
-    assert message_03 not in a4.get_attr('received_list')
-    assert message_04 not in a4.get_attr('received_list')
+    assert message_01 not in a4.get_attr('received')
+    assert message_02 not in a4.get_attr('received')
+    assert message_03 not in a4.get_attr('received')
+    assert message_04 not in a4.get_attr('received')
 
-    assert message_01 not in a5.get_attr('received_list')
-    assert message_02 in a5.get_attr('received_list')
-    assert message_03 in a5.get_attr('received_list')
-    assert message_04 in a5.get_attr('received_list')
+    assert message_01 not in a5.get_attr('received')
+    assert message_02 in a5.get_attr('received')
+    assert message_03 in a5.get_attr('received')
+    assert message_04 in a5.get_attr('received')
 
 
 @pytest.mark.parametrize(
@@ -112,16 +112,16 @@ def test_pubsub_topics_raw(nsproxy, serializer):
     a5 = run_agent('a5')
 
     for agent in (a1, a2, a3, a4, a5):
-        agent.set_attr(received_list=[])
+        agent.set_attr(received=[])
 
     addr = a0.bind('PUB', alias='pub', serializer=serializer)
 
-    a1.connect(addr, handler=log_received_to_list)
-    a2.connect(addr, handler={'foo': log_received_to_list})
-    a3.connect(addr, handler={'bar': log_received_to_list,
-                              'foo': log_received_to_list})
-    a4.connect(addr, handler={'bar': log_received_to_list})
-    a5.connect(addr, handler={'fo': log_received_to_list})
+    a1.connect(addr, handler=receive)
+    a2.connect(addr, handler={'foo': receive})
+    a3.connect(addr, handler={'bar': receive,
+                              'foo': receive})
+    a4.connect(addr, handler={'bar': receive})
+    a5.connect(addr, handler={'fo': receive})
 
     # Give some time for all the agents to connect
     time.sleep(0.1)
@@ -143,27 +143,27 @@ def test_pubsub_topics_raw(nsproxy, serializer):
     time.sleep(0.1)
 
     # Check each agent received the corresponding messages
-    assert message_01 in a1.get_attr('received_list')
-    assert b'fooWorld' in a1.get_attr('received_list')
-    assert b'foobarFOO' in a1.get_attr('received_list')
-    assert b'foBAR' in a1.get_attr('received_list')
+    assert message_01 in a1.get_attr('received')
+    assert b'fooWorld' in a1.get_attr('received')
+    assert b'foobarFOO' in a1.get_attr('received')
+    assert b'foBAR' in a1.get_attr('received')
 
-    assert message_01 not in a2.get_attr('received_list')
-    assert b'fooWorld' in a2.get_attr('received_list')
-    assert b'foobarFOO' in a2.get_attr('received_list')
-    assert b'foBAR' not in a2.get_attr('received_list')
+    assert message_01 not in a2.get_attr('received')
+    assert b'fooWorld' in a2.get_attr('received')
+    assert b'foobarFOO' in a2.get_attr('received')
+    assert b'foBAR' not in a2.get_attr('received')
 
-    assert message_01 not in a3.get_attr('received_list')
-    assert b'fooWorld' in a3.get_attr('received_list')
-    assert b'foobarFOO' in a3.get_attr('received_list')
-    assert b'foBAR' not in a3.get_attr('received_list')
+    assert message_01 not in a3.get_attr('received')
+    assert b'fooWorld' in a3.get_attr('received')
+    assert b'foobarFOO' in a3.get_attr('received')
+    assert b'foBAR' not in a3.get_attr('received')
 
-    assert message_01 not in a4.get_attr('received_list')
-    assert b'fooWorld' not in a4.get_attr('received_list')
-    assert b'foobarFOO' not in a4.get_attr('received_list')
-    assert b'foBAR' not in a4.get_attr('received_list')
+    assert message_01 not in a4.get_attr('received')
+    assert b'fooWorld' not in a4.get_attr('received')
+    assert b'foobarFOO' not in a4.get_attr('received')
+    assert b'foBAR' not in a4.get_attr('received')
 
-    assert message_01 not in a5.get_attr('received_list')
-    assert b'fooWorld' in a5.get_attr('received_list')
-    assert b'foobarFOO' in a5.get_attr('received_list')
-    assert b'foBAR' in a5.get_attr('received_list')
+    assert message_01 not in a5.get_attr('received')
+    assert b'fooWorld' in a5.get_attr('received')
+    assert b'foobarFOO' in a5.get_attr('received')
+    assert b'foBAR' in a5.get_attr('received')

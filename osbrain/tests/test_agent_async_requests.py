@@ -11,6 +11,10 @@ from osbrain.helper import logger_received
 from common import nsproxy  # pragma: no flakes
 
 
+def receive(agent, response):
+    agent.received.append(response)
+
+
 def on_error(agent):
     agent.error_count += 1
 
@@ -23,9 +27,6 @@ def test_return(nsproxy):
         agent.received.append(request)
         time.sleep(1)
         return 'x' + request
-
-    def receive(agent, response):
-        agent.received.append(response)
 
     server = run_agent('server')
     client = run_agent('client')
@@ -65,9 +66,6 @@ def test_yield(nsproxy):
         yield 'x' + request
         agent.received.append('y' + request)
 
-    def receive(agent, response):
-        agent.received.append(response)
-
     server = run_agent('server')
     client = run_agent('client')
     server.set_attr(received=[])
@@ -106,9 +104,6 @@ def test_unknown(nsproxy):
         time.sleep(1)
         return 'x' + request
 
-    def receive(agent, response):
-        agent.received.append(response)
-
     server = run_agent('server')
     client = run_agent('client')
     logger = run_logger('logger')
@@ -139,9 +134,6 @@ def test_wait(nsproxy):
         agent.received.append(delay)
         time.sleep(delay)
         return 'x' + str(delay)
-
-    def receive(agent, response):
-        agent.received.append(response)
 
     server = run_agent('server')
     client = run_agent('client')
@@ -178,9 +170,6 @@ def test_wait_on_error(nsproxy):
         agent.received.append(delay)
         time.sleep(delay)
         return 'x' + str(delay)
-
-    def receive(agent, response):
-        agent.received.append(response)
 
     server = run_agent('server')
     client = run_agent('client')

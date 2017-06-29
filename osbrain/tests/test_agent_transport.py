@@ -14,7 +14,7 @@ from osbrain import SocketAddress
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
-from common import receive
+from common import append_received
 
 
 def test_agent_bind_transport_global(nsproxy):
@@ -105,8 +105,9 @@ def test_agent_ipc_from_different_folders(nsproxy):
     # First agent run for directory `a`
     os.chdir(dira)
     a = run_agent('a', base=Wdagent)
-    random_addr = a.bind('PULL', transport='ipc', handler=receive)
-    set_addr = a.bind('PULL', addr='qwer', transport='ipc', handler=receive)
+    random_addr = a.bind('PULL', transport='ipc', handler=append_received)
+    set_addr = a.bind('PULL', addr='qwer', transport='ipc',
+                      handler=append_received)
 
     # Second agent run for directory `b`
     os.chdir(dirb)

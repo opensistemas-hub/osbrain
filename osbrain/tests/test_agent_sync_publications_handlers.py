@@ -8,7 +8,7 @@ from osbrain import run_agent
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
-from common import receive
+from common import append_received
 
 
 class Server_SYNC_PUB(Agent):
@@ -50,7 +50,7 @@ def test_sync_pub_handler_exists(nsproxy):
 
 @pytest.mark.parametrize(
     'handler',
-    ['reply', receive, lambda a, x: a.received.append(x)]
+    ['reply', append_received, lambda a, x: a.received.append(x)]
 )
 def test_sync_pub_handler_types(nsproxy, handler):
     '''
@@ -66,7 +66,7 @@ def test_sync_pub_handler_types(nsproxy, handler):
 @pytest.mark.parametrize(
     'handler, check_function',
     [('receive_method', False),
-     (receive, True),
+     (append_received, True),
      (lambda a, x: a.received.append(x), False)])
 def test_sync_pub_connect_handler_types(nsproxy, handler, check_function):
     '''
@@ -88,14 +88,14 @@ def test_sync_pub_connect_handler_types(nsproxy, handler, check_function):
     if check_function:
         # Check that the function was not stored as a method for the object
         with pytest.raises(AttributeError) as error:
-            assert client.get_attr('receive')
+            assert client.get_attr('append_received')
         assert 'object has no attribute' in str(error.value)
 
 
 @pytest.mark.parametrize(
     'handler, check_function, should_crash',
     [('receive_method', False, False),
-     (receive, True, False),
+     (append_received, True, False),
      (lambda a, x: a.received.append(x), False, False),
      (None, False, True)])
 def test_sync_pub_send_handlers(nsproxy, handler, check_function,
@@ -125,5 +125,5 @@ def test_sync_pub_send_handlers(nsproxy, handler, check_function,
         if check_function:
             # Check that the function was not stored as a method for the object
             with pytest.raises(AttributeError) as error:
-                assert client.get_attr('receive')
+                assert client.get_attr('append_received')
             assert 'object has no attribute' in str(error.value)

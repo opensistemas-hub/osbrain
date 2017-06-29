@@ -6,7 +6,7 @@ from osbrain import run_nameserver
 from osbrain.helper import sync_agent_logger
 
 
-def receive(agent, message, topic=None):
+def append_received(agent, message, topic=None):
     agent.received.append(message)
 
 

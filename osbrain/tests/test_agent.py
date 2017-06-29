@@ -22,7 +22,7 @@ from osbrain.helper import sync_agent_logger
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
-from common import receive
+from common import append_received
 from common import set_received
 
 
@@ -196,7 +196,7 @@ def test_linger(nsproxy, linger, sleep_time, should_receive):
     puller = run_agent('puller', base=AgentTest)
     pusher = run_agent('pusher', base=AgentTest)
 
-    address = puller.bind('PULL', alias='pull', handler=receive,
+    address = puller.bind('PULL', alias='pull', handler=append_received,
                           transport='tcp')
 
     pusher.connect(address, alias='push')
@@ -210,8 +210,8 @@ def test_linger(nsproxy, linger, sleep_time, should_receive):
     time.sleep(sleep_time)
 
     puller = run_agent('puller', base=AgentTest)
-    puller.bind('PULL', alias='pull', handler=receive, addr=address.address,
-                transport='tcp')
+    puller.bind('PULL', alias='pull', handler=append_received,
+                addr=address.address, transport='tcp')
 
     assert should_receive == wait_agent_attr(puller, data='foo', timeout=.2)
 

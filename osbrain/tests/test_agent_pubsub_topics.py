@@ -6,7 +6,7 @@ from osbrain import run_agent
 from osbrain.address import AgentAddressSerializer
 
 from common import nsproxy  # pragma: no flakes
-from common import receive
+from common import append_received
 
 
 @pytest.mark.parametrize(
@@ -33,12 +33,12 @@ def test_pubsub_topics_separator(nsproxy, serializer):
 
     addr = a0.bind('PUB', alias='pub', serializer=serializer)
 
-    a1.connect(addr, handler=receive)
-    a2.connect(addr, handler={'foo': receive})
-    a3.connect(addr, handler={'bar': receive,
-                              'foo': receive})
-    a4.connect(addr, handler={'bar': receive})
-    a5.connect(addr, handler={'fo': receive})
+    a1.connect(addr, handler=append_received)
+    a2.connect(addr, handler={'foo': append_received})
+    a3.connect(addr, handler={'bar': append_received,
+                              'foo': append_received})
+    a4.connect(addr, handler={'bar': append_received})
+    a5.connect(addr, handler={'fo': append_received})
 
     # Give some time for all the agents to connect
     time.sleep(0.1)
@@ -113,12 +113,12 @@ def test_pubsub_topics_raw(nsproxy, serializer):
 
     addr = a0.bind('PUB', alias='pub', serializer=serializer)
 
-    a1.connect(addr, handler=receive)
-    a2.connect(addr, handler={'foo': receive})
-    a3.connect(addr, handler={'bar': receive,
-                              'foo': receive})
-    a4.connect(addr, handler={'bar': receive})
-    a5.connect(addr, handler={'fo': receive})
+    a1.connect(addr, handler=append_received)
+    a2.connect(addr, handler={'foo': append_received})
+    a3.connect(addr, handler={'bar': append_received,
+                              'foo': append_received})
+    a4.connect(addr, handler={'bar': append_received})
+    a5.connect(addr, handler={'fo': append_received})
 
     # Give some time for all the agents to connect
     time.sleep(0.1)

@@ -13,7 +13,7 @@ from osbrain.helper import logger_received
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
-from common import receive
+from common import append_received
 
 
 class BaseServer(Agent):
@@ -88,7 +88,7 @@ def test_simple_pub_single_handler(nsproxy, server):
 
     # Connect clients
     addr = server.addr('publish')
-    addr_alltopics = alltopics.connect(addr, handler=receive)
+    addr_alltopics = alltopics.connect(addr, handler=append_received)
     assert addr_alltopics == addr.twin()
 
     # Publish from server
@@ -130,10 +130,12 @@ def test_simple_pub_dict_handler(nsproxy, server):
 
     # Connect clients
     addr = server.addr('publish')
-    addr_both = both.connect(addr, handler={'positive': receive,
-                                            'negative': receive})
-    addr_positive = positive.connect(addr, handler={'positive': receive})
-    addr_bytestopic = bytestopic.connect(addr, handler={b'\xeb': receive})
+    addr_both = both.connect(addr, handler={'positive': append_received,
+                                            'negative': append_received})
+    addr_positive = positive.connect(addr,
+                                     handler={'positive': append_received})
+    addr_bytestopic = bytestopic.connect(addr,
+                                         handler={b'\xeb': append_received})
     assert addr_both == addr.twin()
     assert addr_positive == addr.twin()
     assert addr_bytestopic == addr.twin()
@@ -186,8 +188,10 @@ def test_request(nsproxy, server):
 
     # Connect clients
     server_addr = server.addr('publish')
-    active_addr = active.connect(server_addr, alias='sub', handler=receive)
-    passive_addr = passive.connect(server_addr, alias='sub', handler=receive)
+    active_addr = active.connect(server_addr, alias='sub',
+                                 handler=append_received)
+    passive_addr = passive.connect(server_addr, alias='sub',
+                                   handler=append_received)
     assert active_addr == server_addr.twin()
     assert passive_addr == server_addr.twin()
 
@@ -246,7 +250,7 @@ def test_wait(nsproxy):
 
     # Connect clients
     server_addr = server.addr('publish')
-    client.connect(server_addr, alias='sub', handler=receive)
+    client.connect(server_addr, alias='sub', handler=append_received)
 
     # Publish from server
     server.each(0, 'publish')
@@ -257,14 +261,14 @@ def test_wait(nsproxy):
 
     # Response received in time
     fast = 0
-    client.send('sub', fast, handler=receive, wait=0.5)
+    client.send('sub', fast, handler=append_received, wait=0.5)
     time.sleep(0.2)
     assert server.get_attr('received') == [fast]
     assert 'x' + str(fast) in client.get_attr('received')
 
     # Response not received in time
     slow = 1
-    client.send('sub', slow, handler=receive, wait=0.1)
+    client.send('sub', slow, handler=append_received, wait=0.1)
     assert logger_received(logger,
                            log_name='log_history_warning',
                            message='not receive req',
@@ -274,7 +278,8 @@ def test_wait(nsproxy):
 
     # Response not received in time with error handler
     slow = 1
-    client.send('sub', slow, handler=receive, wait=0.1, on_error=on_error)
+    client.send('sub', slow, handler=append_received, wait=0.1,
+                on_error=on_error)
     assert wait_agent_attr(client, name='error_log', length=1, timeout=0.5)
     assert server.get_attr('received') == [fast, slow]
     assert 'x' + str(slow) not in client.get_attr('received')

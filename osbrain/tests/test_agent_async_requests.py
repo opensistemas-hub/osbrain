@@ -12,7 +12,7 @@ from osbrain.helper import sync_agent_logger
 from osbrain.helper import logger_received
 
 from common import nsproxy  # pragma: no flakes
-from common import receive
+from common import append_received
 
 
 def on_error(agent):
@@ -40,7 +40,7 @@ def server_client_late_reply_return():
     client = run_agent('client', base=Client)
 
     addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
-    client.connect(addr, alias='async', handler=receive)
+    client.connect(addr, alias='async', handler=append_received)
 
     return (server, client)
 
@@ -56,7 +56,7 @@ def server_client_late_reply_delay():
     client = run_agent('client', base=Client)
 
     addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
-    client.connect(addr, alias='async', handler=receive)
+    client.connect(addr, alias='async', handler=append_received)
 
     return (server, client)
 
@@ -102,7 +102,7 @@ def test_yield(nsproxy):
     client = run_agent('client', base=Client)
 
     addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
-    client.connect(addr, alias='async', handler=receive)
+    client.connect(addr, alias='async', handler=append_received)
 
     # Client requests should be non-blocking
     t0 = time.time()

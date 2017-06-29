@@ -3,6 +3,8 @@ Test file for asynchronous requests.
 """
 import time
 
+import pytest
+
 from osbrain import run_agent
 from osbrain import Agent
 from osbrain import run_logger
@@ -30,10 +32,8 @@ class Client(Agent):
         self.received = []
 
 
-def test_return(nsproxy):
-    """
-    Asynchronous request-reply pattern with a reply handler that returns.
-    """
+@pytest.fixture(scope='function')
+def server_client_late_reply_return():
     def late_reply(agent, request):
         agent.received.append(request)
         time.sleep(1)
@@ -44,6 +44,32 @@ def test_return(nsproxy):
 
     addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
     client.connect(addr, alias='async', handler=receive)
+
+    return (server, client)
+
+
+@pytest.fixture(scope='function')
+def server_client_late_reply_delay():
+    def late_reply(agent, delay):
+        agent.received.append(delay)
+        time.sleep(delay)
+        return 'x' + str(delay)
+
+    server = run_agent('server', base=Server)
+    client = run_agent('client', base=Client)
+
+    addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
+    client.connect(addr, alias='async', handler=receive)
+
+    return (server, client)
+
+
+def test_return(nsproxy, server_client_late_reply_return):
+    """
+    Asynchronous request-reply pattern with a reply handler that returns.
+    """
+
+    server, client = server_client_late_reply_return
 
     # Client requests should be non-blocking
     t0 = time.time()
@@ -101,24 +127,17 @@ def test_yield(nsproxy):
     assert client.get_attr('received') == ['xfoo', 'xbar']
 
 
-def test_unknown(nsproxy):
+def test_unknown(nsproxy, server_client_late_reply_return):
     """
     When receiving a response for an unknow request (or an already processed
     request), a warning should be logged and handler should not be executed.
     """
-    def late_reply(agent, request):
-        agent.received.append(request)
-        time.sleep(1)
-        return 'x' + request
+    server, client = server_client_late_reply_return
 
-    server = run_agent('server', base=Server)
-    client = run_agent('client', base=Client)
     logger = run_logger('logger')
     client.set_logger(logger)
     sync_agent_logger(client, logger)
 
-    addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
-    client.connect(addr, alias='async', handler=receive)
     client.send('async', 'foo')
 
     # Manually remove the pending request before it is received
@@ -131,23 +150,15 @@ def test_unknown(nsproxy):
                            message='Received response for an unknown request!')
 
 
-def test_wait(nsproxy):
+def test_wait(nsproxy, server_client_late_reply_delay):
     """
     Asynchronous request-reply pattern maximum wait.
     """
-    def late_reply(agent, delay):
-        agent.received.append(delay)
-        time.sleep(delay)
-        return 'x' + str(delay)
+    server, client = server_client_late_reply_delay
 
-    server = run_agent('server', base=Server)
-    client = run_agent('client', base=Client)
     logger = run_logger('logger')
     client.set_logger(logger)
     sync_agent_logger(client, logger)
-
-    addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
-    client.connect(addr, alias='async', handler=receive)
 
     # Response received in time
     client.send('async', 1, wait=2)
@@ -165,21 +176,13 @@ def test_wait(nsproxy):
     assert client.get_attr('received') == ['x1']
 
 
-def test_wait_on_error(nsproxy):
+def test_wait_on_error(nsproxy, server_client_late_reply_delay):
     """
     Asynchronous request-reply pattern maximum wait with an error handler.
     """
-    def late_reply(agent, delay):
-        agent.received.append(delay)
-        time.sleep(delay)
-        return 'x' + str(delay)
+    server, client = server_client_late_reply_delay
 
-    server = run_agent('server', base=Server)
-    client = run_agent('client', base=Client)
     client.set_attr(error_count=0)
-
-    addr = server.bind('ASYNC_REP', alias='replier', handler=late_reply)
-    client.connect(addr, alias='async', handler=receive)
 
     # Response received in time
     client.send('async', 1, wait=2)

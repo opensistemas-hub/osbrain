@@ -10,6 +10,10 @@ def receive(agent, message, topic=None):
     agent.received.append(message)
 
 
+def set_received(agent, message, topic=None):
+    agent.received = message
+
+
 @pytest.fixture(scope='function')
 def nsproxy(request):
     ns = run_nameserver()

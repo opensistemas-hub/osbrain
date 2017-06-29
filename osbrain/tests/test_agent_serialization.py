@@ -15,10 +15,7 @@ from osbrain.address import AgentAddressSerializer
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
-
-
-def set_received(agent, message, topic=None):
-    agent.received = message
+from common import set_received
 
 
 def test_compose_message():

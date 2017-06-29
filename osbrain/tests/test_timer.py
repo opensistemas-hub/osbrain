@@ -8,10 +8,7 @@ from osbrain import run_agent
 from osbrain.common import repeat
 
 from common import nsproxy  # pragma: no flakes
-
-
-def set_received(agent, message, topic=None):
-    agent.received = message
+from common import set_received
 
 
 @pytest.mark.timeout(1)

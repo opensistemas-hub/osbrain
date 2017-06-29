@@ -125,7 +125,7 @@ def test_wait_agent_attr(nsproxy):
     Test `wait_agent_attr` function.
     """
     class Client(Agent):
-        def set_received(self, value):
+        def set_received_method(self, value):
             self.received = value
 
     a0 = run_agent('a0', base=Client)
@@ -136,6 +136,6 @@ def test_wait_agent_attr(nsproxy):
 
     # Default attribute, timeout
     a0.set_attr(received=0)
-    a0.after(1, 'set_received', 42)
+    a0.after(1, 'set_received_method', 42)
     assert not wait_agent_attr(a0, value=42, timeout=0.)
     assert wait_agent_attr(a0, value=42, timeout=2.)

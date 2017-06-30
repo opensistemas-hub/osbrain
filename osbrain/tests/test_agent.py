@@ -2,6 +2,7 @@
 Test file for agents.
 """
 import multiprocessing
+import random
 import time
 from uuid import uuid4
 from threading import Timer
@@ -15,6 +16,7 @@ from osbrain import run_agent
 from osbrain import Agent
 from osbrain import AgentAddress
 from osbrain import AgentProcess
+from osbrain import SocketAddress
 from osbrain import Proxy
 from osbrain.helper import agent_dies
 from osbrain.helper import logger_received
@@ -175,6 +177,37 @@ def test_socket_creation(nsproxy):
     assert a0.addr('alias0') == addr0
     assert a0.addr('alias1') == addr1
     assert a0.addr('alias2') == addr2
+
+
+def test_bind_tcp_addr_random_port(nsproxy):
+    """
+    When using TCP transport, the bind method allows the user to specify the
+    network interface to bind to. When no port is specified, a random one will
+    be used.
+    """
+    agent = run_agent('a0')
+    host = '127.0.0.1'
+    address = agent.bind('PUB', transport='tcp', addr=host)
+    assert isinstance(address.address, SocketAddress)
+    assert address.address.host == host
+    assert address.address.port > 0
+
+
+@pytest.mark.flaky(reruns=5)
+def test_bind_tcp_addr_specific_port(nsproxy):
+    """
+    When using TCP transport, the bind method allows the user to specify the
+    network interface and the port to bind to. If the port is specified, it
+    must be used.
+    """
+    agent = run_agent('a0')
+    host = '127.0.0.1'
+    port = random.randrange(10000, 20000)
+    addr = '{host}:{port}'.format(host=host, port=port)
+    address = agent.bind('PUB', transport='tcp', addr=addr)
+    assert isinstance(address.address, SocketAddress)
+    assert address.address.host == host
+    assert address.address.port == port
 
 
 @pytest.mark.parametrize('linger, sleep_time, should_receive', [

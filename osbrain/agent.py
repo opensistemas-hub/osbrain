@@ -724,7 +724,8 @@ class Agent():
             The address where the socket binded to.
         """
         if transport == 'tcp':
-            if not addr:
+            host, port = address_to_host_port(addr)
+            if not port:
                 uri = 'tcp://%s' % self.host
                 port = socket.bind_to_random_port(uri)
                 addr = self.host + ':' + str(port)

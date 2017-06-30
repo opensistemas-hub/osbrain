@@ -39,6 +39,7 @@ Contents
    complex_patterns.rst
    timers.rst
    transport_protocol.rst
+   distributed_systems.rst
    serialization.rst
    advanced_proxy_handling.rst
    distributed_systems.rst

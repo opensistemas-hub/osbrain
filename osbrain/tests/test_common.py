@@ -6,6 +6,7 @@ import pytest
 from osbrain.agent import TOPIC_SEPARATOR
 from osbrain.common import unique_identifier
 from osbrain.common import LogLevel
+from osbrain.common import topic_to_bytes
 from osbrain.common import topics_to_bytes
 
 
@@ -31,6 +32,14 @@ def test_loglevel():
     # Invalid initialization
     with pytest.raises(ValueError):
         LogLevel('FOO')
+
+
+def test_topic_to_bytes():
+    """
+    Test the topic to bytes function.
+    """
+    assert topic_to_bytes('foo') == b'foo'
+    assert topic_to_bytes(b'bar') == b'bar'
 
 
 def test_topics_to_bytes_without_uuid():

@@ -50,6 +50,15 @@ def format_method_exception(error, method, args, kwargs):
     return type(error)(message)
 
 
+def topic_to_bytes(topic: Union[bytes, str]) -> bytes:
+    '''
+    Return the passed topic as a `bytes` object.
+    '''
+    if isinstance(topic, str):
+        topic = topic.encode()
+    return topic
+
+
 def topics_to_bytes(handlers: Dict[Union[bytes, str], Any], uuid: bytes = b''):
     '''
     Given some pairs topic/handler, leaves them prepared for making the actual
@@ -70,8 +79,7 @@ def topics_to_bytes(handlers: Dict[Union[bytes, str], Any], uuid: bytes = b''):
     curated_handlers = {}
 
     for topic, value in handlers.items():
-        if isinstance(topic, str):
-            topic = topic.encode()
+        topic = topic_to_bytes(topic)
         curated_handlers[uuid + topic] = value
 
     return curated_handlers

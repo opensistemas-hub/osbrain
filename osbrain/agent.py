@@ -170,6 +170,8 @@ class Agent():
         (localhost) is used.
     transport : str, AgentAddressTransport, default is None
         Transport protocol.
+    attributes : dict, default is None
+        A dictionary that defines initial attributes for the agent.
 
     Attributes
     ----------
@@ -195,7 +197,8 @@ class Agent():
     running : bool
         Set to `True` if the agent is running (executing the main loop).
     """
-    def __init__(self, name=None, host=None, serializer=None, transport=None):
+    def __init__(self, name=None, host=None, serializer=None, transport=None,
+                 attributes=None):
         self.uuid = unique_identifier()
         self.name = name
         self.host = host
@@ -229,6 +232,12 @@ class Agent():
         self.bind('REP', alias='_loopback_safe', addr='_loopback_safe',
                   handler=self._handle_loopback_safe, transport='inproc',
                   serializer='pickle')
+
+        if attributes:
+            for key, value in attributes.items():
+                if hasattr(self, key):
+                    raise KeyError('Agent already has "%s" attribute!' % key)
+                setattr(self, key, value)
 
         self.on_init()
 
@@ -1523,7 +1532,7 @@ class AgentProcess(multiprocessing.Process):
     can be run independently.
     """
     def __init__(self, name, nsaddr=None, addr=None, serializer=None,
-                 transport=None, base=Agent):
+                 transport=None, base=Agent, attributes=None):
         super().__init__()
         self.name = name
         self._daemon = None
@@ -1537,6 +1546,7 @@ class AgentProcess(multiprocessing.Process):
         self.shutdown_event = multiprocessing.Event()
         self.queue = multiprocessing.Queue()
         self.sigint = False
+        self.attributes = attributes
 
     def run(self):
         # Capture SIGINT
@@ -1545,14 +1555,16 @@ class AgentProcess(multiprocessing.Process):
         try:
             ns = NSProxy(self.nsaddr)
             self._daemon = Pyro4.Daemon(self.host, self.port)
+            self.agent = self.base(name=self.name, host=self.host,
+                                   serializer=self.serializer,
+                                   transport=self.transport,
+                                   attributes=self.attributes)
         except Exception:
             self.queue.put(format_exception())
             return
+
         self.queue.put('STARTED')
 
-        self.agent = self.base(name=self.name, host=self.host,
-                               serializer=self.serializer,
-                               transport=self.transport)
         uri = self._daemon.register(self.agent)
         ns.register(self.name, uri)
         ns.release()
@@ -1599,7 +1611,7 @@ class AgentProcess(multiprocessing.Process):
 
 
 def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
-              transport=None, safe=None):
+              transport=None, safe=None, attributes=None):
     """
     Ease the agent creation process.
 
@@ -1618,6 +1630,8 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
         Transport protocol.
     safe : bool, default is None
         Use safe calls by default from the Proxy.
+    attributes : dict, default is None
+        A dictionary that defines initial attributes for the agent.
 
     Returns
     -------
@@ -1627,7 +1641,8 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
     if not nsaddr:
         nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
     AgentProcess(name, nsaddr=nsaddr, addr=addr, base=base,
-                 serializer=serializer, transport=transport).start()
+                 serializer=serializer, transport=transport,
+                 attributes=attributes).start()
     proxy = Proxy(name, nsaddr, safe=safe)
     proxy.run()
     while not proxy.get_attr('running'):

@@ -108,3 +108,27 @@ however you may notice some differences:
    to. As the binding was executed on initialization, we need to use the
    ``addr()`` method, which will return the address associated to the alias
    passed as parameter (in the example above it is ``main``).
+
+
+Setting initial attributes
+==========================
+
+Many times, after spawning an agent, we want to set some attributes, which
+may be used to configure the agent before it starts working with the rest of
+the multi-agent system:
+
+.. code-block:: python
+
+   a0 = run_agent('foo')
+   a0.set_attr(x=1, y=2)
+
+It is such a common task that a parameter ``attributes`` can be used when
+running the agent for exactly that:
+
+.. code-block:: python
+
+   a0 = run_agent('foo', attributes=dict(x=1, y=2))
+
+As you can see, this parameter accepts a dictionary in which the keys are the
+name of the attributes to be set in the agent and the values are the actual
+values that this attributes will take.

@@ -102,6 +102,28 @@ def test_agent_shutdown(nsproxy):
     assert 'a0' not in nsproxy.list()
 
 
+def test_run_agent_initial_attributes(nsproxy):
+    """
+    The user can specify a set of attributes to be set in the agent when
+    creating it.
+    """
+    a0 = run_agent('a0', attributes=dict(x=1, y='a'))
+    assert a0.get_attr('x') == 1
+    assert a0.get_attr('y') == 'a'
+
+
+def test_run_agent_initial_attributes_exception(nsproxy):
+    """
+    The user can specify a set of attributes to be set in the agent when
+    creating it. If the attribute specified overrites an existing attribute,
+    an exception will be raised.
+    """
+    with pytest.raises(RuntimeError) as error:
+        run_agent('a0', attributes=dict(name='foo'))
+    assert 'KeyError' in str(error.value)
+    assert 'Agent already has "name" attribute!' in str(error.value)
+
+
 def test_set_method(nsproxy):
     """
     Set new methods for the agent.

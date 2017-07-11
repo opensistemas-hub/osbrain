@@ -1574,20 +1574,30 @@ class AgentProcess(multiprocessing.Process):
 
         self._teardown()
 
+    def _remove_from_nameserver(self):
+        """
+        Make sure to remove the agent's name from the name server.
+        """
+        while True:
+            try:
+                ns = NSProxy(self.nsaddr)
+                ns.remove(self.name)
+                ns.release()
+            except PyroError as error:
+                time.sleep(0.1)
+                continue
+            break
+
     def _teardown(self):
         """
         Remove self from the name server address book, close daemon and die.
         """
-        try:
-            ns = NSProxy(self.nsaddr, timeout=1.)
-            ns.remove(self.name)
-        except PyroError:
-            if not self.sigint:
-                sys.stderr.write(format_exception())
-                raise
-        finally:
-            self.agent._killed = True
-            self._daemon.close()
+        if not self.sigint:
+            # Clean teardown
+            self._remove_from_nameserver()
+
+        self.agent._killed = True
+        self._daemon.close()
 
     def start(self):
         super().start()

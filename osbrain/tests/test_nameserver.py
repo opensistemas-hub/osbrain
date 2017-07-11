@@ -80,6 +80,51 @@ def test_nameserver_proxy_shutdown_with_agents():
     ns.shutdown()
 
 
+def test_nameserver_proxy_shutdown_with_many_agents():
+    """
+    Shutdown a name server from a name server proxy when there are many agents
+    registered in the name server (make sure proxies do not saturate the name
+    server on shutdown).
+    """
+    import Pyro4
+    Pyro4.config.THREADPOOL_SIZE = 4
+    ns = run_nameserver()
+    for i in range(20):
+        run_agent('Agent%s' % i)
+    ns.shutdown()
+
+
+@pytest.mark.parametrize('delay', [1, 3, 5])
+@pytest.mark.parametrize('timeout', [True, False])
+def test_nameserver_proxy_shutdown_lazy_agents(delay, timeout):
+    """
+    Shutdown a name server proxy with agents that wait some time before
+    shutting down.
+
+    The name server should always wait for all agents to shut down when no
+    timeout is set.
+    """
+    class Lazy(Agent):
+        def shutdown(self):
+            time.sleep(delay)
+            super().shutdown()
+
+    ns = run_nameserver()
+    run_agent('a0', base=Lazy)
+    run_agent('a1', base=Lazy)
+
+    t0 = time.time()
+    if timeout:
+        with pytest.raises(TimeoutError) as error:
+            ns.shutdown(timeout=delay-1)
+        assert 'not all agents were shutdown' in str(error.value)
+        ns.shutdown()
+    else:
+        ns.shutdown()
+        assert time.time() - t0 > delay
+        assert time.time() - t0 < delay + 1
+
+
 def test_nameserverprocess_shutdown():
     """
     Name server shutdown can be called directly from the name server process.

@@ -48,11 +48,10 @@ class NameServer(Pyro4.naming.NameServer):
             else:
                 agent.kill()
 
-    def async_shutdown(self):
+    def daemon_shutdown(self):
         """
-        Shutdown the name server. All agents will be shutdown as well.
+        Shutdown the name server daemon.
         """
-        self.async_shutdown_agents()
         self._pyroDaemon.shutdown()
 
 

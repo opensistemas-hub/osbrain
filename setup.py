@@ -44,7 +44,7 @@ setup(
     install_requires=[
         'Pyro4>=4.48',
         'pyzmq>=15.2.0',
-        'dill>=0.2.0',
+        'dill>=0.2.0,!=0.2.7',
     ] + install_requires_compat,
     extras_require={
         'dev': [],

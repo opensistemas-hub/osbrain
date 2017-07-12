@@ -327,7 +327,7 @@ class NSProxy(Pyro4.core.Proxy):
         timeout : float, default is None.
             Timeout, in seconds, to wait for the agents to shutdown.
         """
-        super()._pyroInvoke('async_shutdown_agents', (), {}, flags=0)
+        super()._pyroInvoke('async_shutdown_agents', (self.addr(), ), {})
         # Wait for all agents to be shutdown (unregistered)
         time0 = time.time()
         while True:

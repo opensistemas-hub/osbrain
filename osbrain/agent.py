@@ -215,7 +215,7 @@ class Agent():
         self._timer = {}
         self.poll_timeout = 1000
         self.keep_alive = True
-        self._shutdown_now = False
+        self._kill_now = False
         self.running = False
         self._DEBUG = False
 
@@ -1463,7 +1463,7 @@ class Agent():
             self.log_error(msg)
             raise
         self.running = False
-        if self._shutdown_now:
+        if self._kill_now:
             # Kill the agent
             self.kill()
 
@@ -1474,7 +1474,7 @@ class Agent():
         if self.running:
             self.log_info('Stopping...')
             self.keep_alive = False
-            self._shutdown_now = True
+            self._kill_now = True
 
     def kill(self):
         self.close_sockets()

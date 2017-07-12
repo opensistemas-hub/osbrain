@@ -35,18 +35,17 @@ class NameServer(Pyro4.naming.NameServer):
         agents = self.list()
         return [name for name in agents if name != 'Pyro.NameServer']
 
-    def async_shutdown_agents(self):
+    def async_shutdown_agents(self, nsaddr):
         """
         Shutdown all agents registered in the name server.
         """
-        for name, address in self.list().items():
-            if name == 'Pyro.NameServer':
-                continue
-            agent = Pyro4.core.Proxy(address)
+        for name in self.agents():
+            agent = Proxy(name, nsaddr=nsaddr)
             if agent.get_attr('running'):
                 agent.after(0, 'shutdown')
             else:
-                agent.kill()
+                agent.oneway.kill()
+            agent._pyroRelease()
 
     def daemon_shutdown(self):
         """

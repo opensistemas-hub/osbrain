@@ -15,6 +15,8 @@ from osbrain import run_nameserver
 from osbrain import Agent
 from osbrain import NameServer
 from osbrain import NSProxy
+from osbrain.helper import agent_dies
+from osbrain.helper import wait_agent_attr
 from osbrain.nameserver import NameServerProcess
 from osbrain.nameserver import random_nameserver_process
 
@@ -118,11 +120,37 @@ def test_nameserver_proxy_shutdown_lazy_agents(delay, timeout):
         with pytest.raises(TimeoutError) as error:
             ns.shutdown(timeout=delay-1)
         assert 'not all agents were shutdown' in str(error.value)
-        ns.shutdown()
-    else:
-        ns.shutdown()
-        assert time.time() - t0 > delay
-        assert time.time() - t0 < delay + 1
+        # Agent should die soon anyway
+        assert agent_dies('a0', nsproxy=ns, timeout=1.5)
+        assert agent_dies('a1', nsproxy=ns, timeout=0.)
+    ns.shutdown()
+    assert time.time() - t0 > delay
+    assert time.time() - t0 < delay + 1
+
+
+def test_oneway_kill_non_running_agent_on_name_server_shutdown(nsproxy):
+    """
+    The agent's `shutdown` method is only executed for running agents. When
+    agents are not running (i.e.: they raised an exception while running or
+    their `keep_alive` attribute was simply set to `False`, the `kill` method
+    is called instead.
+
+    When killing a non-running agent (i.e.: when shutting down the
+    architecture from the name server), this call is expected to be executed
+    one-way, as otherwise the Pyro daemon will shut down before returning
+    from the method, resulting in a `ConnectionClosedError`.
+    """
+    class WilliamWallace(Agent):
+        def kill(self):
+            super().kill()
+            time.sleep(2)
+
+    william = run_agent('william', base=WilliamWallace)
+    # Stop the agent
+    william.set_attr(keep_alive=False)
+    assert wait_agent_attr(william, name='running', value=False)
+    # Shut down should work just fine
+    nsproxy.shutdown()
 
 
 def test_nameserverprocess_shutdown():

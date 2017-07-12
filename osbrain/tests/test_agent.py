@@ -256,7 +256,7 @@ def test_linger(nsproxy, linger, sleep_time, should_receive):
 
     pusher.connect(address, alias='push')
     puller.shutdown()
-    assert agent_dies(puller, nsproxy)
+    assert agent_dies('puller', nsproxy)
 
     pusher.send('push', 'foo')
     pusher.close_sockets()

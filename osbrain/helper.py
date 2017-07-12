@@ -103,6 +103,7 @@ def agent_dies(agent, nsproxy, timeout=1.):
         Whether the agent died (was unregistered from the name server) within
         the given period.
     """
+    assert isinstance(agent, str), 'Wrong type for `agent`!'
     t0 = time.time()
     while True:
         time.sleep(0.01)

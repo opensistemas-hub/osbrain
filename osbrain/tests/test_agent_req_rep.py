@@ -7,7 +7,6 @@ from osbrain import run_agent
 from osbrain import run_logger
 from osbrain.helper import logger_received
 from osbrain.helper import sync_agent_logger
-from osbrain.helper import agent_dies
 
 from common import nsproxy  # pragma: no flakes
 
@@ -90,4 +89,3 @@ def test_multiple_yield(nsproxy):
     # Replier should crash
     assert logger_received(logger, log_name='log_history_error',
                            message='yielded more than once')
-    assert agent_dies(a0, nsproxy)

@@ -10,7 +10,6 @@ import osbrain
 from osbrain import run_agent
 from osbrain import Agent
 from osbrain import Proxy
-from osbrain import NSProxy
 from osbrain.proxy import locate_ns
 from osbrain.helper import wait_agent_attr
 
@@ -154,20 +153,6 @@ def test_agent_proxy_initialization_timeout(nsproxy):
     run_agent('foo')
     with pytest.raises(TimeoutError):
         InitTimeoutProxy('foo', timeout=1.)
-
-
-def test_nameserver_proxy_shutdown_timeout(nsproxy):
-    """
-    A NSProxy should raise a TimeoutError if all agents were not shutted
-    down and unregistered after a number of seconds.
-    """
-    class ShutdownTimeoutNSProxy(NSProxy):
-        def agents(self):
-            return ['agent_foo']
-
-    timeoutproxy = ShutdownTimeoutNSProxy(nsproxy.addr())
-    with pytest.raises(TimeoutError):
-        timeoutproxy.shutdown(timeout=1.)
 
 
 def test_agent_proxy_nameserver_address(nsproxy):

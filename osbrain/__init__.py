@@ -14,8 +14,9 @@ if sys.version_info < (3, 5):
 
 import Pyro4
 Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
+Pyro4.config.SERIALIZERS_ACCEPTED.add('cloudpickle')
 Pyro4.config.SERIALIZERS_ACCEPTED.add('dill')
-Pyro4.config.SERIALIZER = 'dill'
+Pyro4.config.SERIALIZER = 'cloudpickle'
 Pyro4.config.THREADPOOL_SIZE = 16
 Pyro4.config.SERVERTYPE = 'thread'
 Pyro4.config.REQUIRE_EXPOSE = False

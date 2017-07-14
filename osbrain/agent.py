@@ -298,7 +298,7 @@ class Agent():
         """
         Handle incoming messages in the loopback socket.
         """
-        header, data = dill.loads(message)
+        header, data = cloudpickle.loads(message)
         if header == 'EXECUTE_METHOD':
             method, args, kwargs = data
             try:
@@ -316,7 +316,7 @@ class Agent():
         """
         Handle incoming messages in the _loopback_safe socket.
         """
-        method, args, kwargs = dill.loads(data)
+        method, args, kwargs = cloudpickle.loads(data)
         try:
             response = getattr(self, method)(*args, **kwargs)
         except Exception as error:
@@ -345,7 +345,7 @@ class Agent():
         """
         if not self._running:
             raise NotImplementedError()
-        data = dill.dumps((header, data))
+        data = cloudpickle.dumps((header, data))
         return self._loopback_reqrep('inproc://loopback', data)
 
     def safe_call(self, method, *args, **kwargs):
@@ -366,7 +366,7 @@ class Agent():
         if not self._running:
             raise RuntimeError(
                 'Agent must be running to safely execute methods!')
-        data = dill.dumps((method, args, kwargs))
+        data = cloudpickle.dumps((method, args, kwargs))
         return self._loopback_reqrep('inproc://_loopback_safe', data)
 
     def each(self, period, method, *args, alias=None, **kwargs):

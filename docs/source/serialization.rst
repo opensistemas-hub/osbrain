@@ -11,15 +11,15 @@ Introduction
 
 osBrain uses by default the :py:mod:`pickle` module for serialization when
 passing messages between agents. Serialization is, however, configurable.
-osBrain can also use :py:mod:`dill`, :py:mod:`json` and `raw`. Where `raw`
-means, actually, no serialization (i.e.: the user is expected to send only
-raw bytes over those sockets).
+osBrain can also use :py:mod:`dill`, :py:mod:`cloudpickle`, :py:mod:`json`
+and `raw`. Where `raw` means, actually, no serialization (i.e.: the user is
+expected to send only raw bytes over those sockets).
 
-.. warning:: Using some serializers such as :py:mod:`pickle` or :py:mod:`dill`
-   can be security risk. Those serializers allow arbitrary code execution
-   while deserializing data and therefore may wreck or compromise your system.
-   Only use those when communications between agents are secured (i.e.:
-   encrypted or in a local area network).
+.. warning:: Using some serializers such as :py:mod:`pickle`, :py:mod:`dill`
+   or :py:mod:`cloudpickle` can be security risk. Those serializers allow
+   arbitrary code execution while deserializing data and therefore may wreck
+   or compromise your system. Only use those when communications between
+   agents are secured (i.e.: encrypted or in a local area network).
 
 .. note:: Note that different serializers might have different limitations.
    For example, `'json'` does not support serializing an object of `bytes`

@@ -195,10 +195,10 @@ class AgentAddressSerializer(str):
     Parameters
     ----------
     serializer_type : str
-        Serializer type (i.e.: 'raw', 'pickle', 'dill', 'json').
+        Serializer type (i.e.: 'raw', 'pickle', 'cloudpickle', 'dill', 'json').
     """
     SERIALIZER_SIMPLE = ('raw', )
-    SERIALIZER_SEPARATOR = ('pickle', 'dill', 'json')
+    SERIALIZER_SEPARATOR = ('pickle', 'cloudpickle', 'dill', 'json')
 
     def __new__(cls, value):
         if value not in cls.SERIALIZER_SIMPLE + cls.SERIALIZER_SEPARATOR:

@@ -16,6 +16,7 @@ from typing import Any
 from typing import Dict
 from typing import Union
 
+import cloudpickle
 import dill
 import Pyro4
 from Pyro4.errors import PyroError
@@ -65,6 +66,8 @@ def serialize_message(message, serializer):
     """
     if serializer == 'pickle':
         return pickle.dumps(message, -1)
+    if serializer == 'cloudpickle':
+        return cloudpickle.dumps(message, -1)
     if serializer == 'dill':
         return dill.dumps(message, -1)
     if serializer == 'json':
@@ -94,6 +97,8 @@ def deserialize_message(message, serializer):
     """
     if serializer == 'pickle':
         return pickle.loads(message)
+    if serializer == 'cloudpickle':
+        return cloudpickle.loads(message)
     if serializer == 'dill':
         return dill.loads(message)
     if serializer == 'json':

@@ -21,11 +21,6 @@ def since(t0, passed, tolerance):
     return abs((time.time() - t0) - passed) < tolerance
 
 
-class DelayAgent(Agent):
-    def delay(self, seconds):
-        time.sleep(seconds)
-
-
 class BussyWorker(Agent):
     def on_init(self):
         self.bind('PULL', alias='pull', handler=self.stay_bussy)
@@ -46,31 +41,8 @@ def setup_bussy_worker(nsproxy):
     boss.connect(worker.addr('pull'), alias='push')
     # Make worker bussy for 2 seconds
     boss.send('push', 2)
-    while not worker.get_attr('bussy'):
-        time.sleep(0.01)
+    assert wait_agent_attr(worker, name='bussy', value=True, timeout=.5)
     return worker
-
-
-def time_threads(threads):
-    """
-    Start all threads in a given list and wait for all of them to finish.
-
-    Parameters
-    ----------
-    threads : list(Thread)
-        A list containing all the threads.
-
-    Returns
-    -------
-    float
-        The number of seconds that took all threads to finish their jobs.
-    """
-    t0 = time.time()
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
-    return time.time() - t0
 
 
 def test_wrong_nameserver_address():
@@ -168,7 +140,7 @@ def test_agent_proxy_safe_and_unsafe_property(nsproxy):
     Using the safe/unsafe property from a proxy should allow us to
     override the environment global configuration.
     """
-    run_agent('foo', base=DelayAgent)
+    run_agent('foo')
     # Safe environment
     osbrain.config['SAFE'] = True
     proxy = Proxy('foo')
@@ -199,7 +171,7 @@ def test_agent_proxy_safe_and_unsafe_parameter(nsproxy):
     Using the safe/unsafe parameter when initializating a proxy should allow
     us to override the environment global configuration.
     """
-    run_agent('foo', base=DelayAgent)
+    run_agent('foo')
     # Safe environment
     osbrain.config['SAFE'] = True
     proxy = Proxy('foo')

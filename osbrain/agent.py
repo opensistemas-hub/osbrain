@@ -45,6 +45,22 @@ from .proxy import NSProxy
 
 TOPIC_SEPARATOR = b'\x80'
 
+_serialize_calls = {
+    'pickle': lambda message: pickle.dumps(message, -1),
+    'cloudpickle': lambda message: cloudpickle.dumps(message, -1),
+    'dill': lambda message: dill.dumps(message, -1),
+    'json': lambda message: json.dumps(message).encode(),
+    'raw': lambda message: message,
+}
+
+_deserialize_calls = {
+    'pickle': lambda message: pickle.loads(message),
+    'cloudpickle': lambda message: cloudpickle.loads(message),
+    'dill': lambda message: dill.loads(message),
+    'json': lambda message: json.loads(bytes(message).decode()),
+    'raw': lambda message: message,
+}
+
 
 def serialize_message(message, serializer):
     """
@@ -64,17 +80,10 @@ def serialize_message(message, serializer):
         The serialized message, or the same message in case no
         serialization is needed.
     """
-    if serializer == 'pickle':
-        return pickle.dumps(message, -1)
-    if serializer == 'cloudpickle':
-        return cloudpickle.dumps(message, -1)
-    if serializer == 'dill':
-        return dill.dumps(message, -1)
-    if serializer == 'json':
-        return json.dumps(message).encode()
-    if serializer == 'raw':
-        return message
-    raise ValueError('Serializer not supported for serialization')
+    try:
+        return _serialize_calls[serializer](message)
+    except KeyError:
+        raise ValueError('"%s" not supported for serialization' % serializer)
 
 
 def deserialize_message(message, serializer):
@@ -95,17 +104,10 @@ def deserialize_message(message, serializer):
         The deserialized message, or the same message in case no
         deserialization is needed.
     """
-    if serializer == 'pickle':
-        return pickle.loads(message)
-    if serializer == 'cloudpickle':
-        return cloudpickle.loads(message)
-    if serializer == 'dill':
-        return dill.loads(message)
-    if serializer == 'json':
-        return json.loads(bytes(message).decode())
-    if serializer == 'raw':
-        return message
-    raise ValueError('Serializer not supported for deserialization')
+    try:
+        return _deserialize_calls[serializer](message)
+    except KeyError:
+        raise ValueError('"%s" not supported for deserialization' % serializer)
 
 
 def compose_message(message: bytes, topic: bytes,

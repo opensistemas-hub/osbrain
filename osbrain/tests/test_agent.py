@@ -1,6 +1,7 @@
 """
 Test file for agents.
 """
+import os
 import multiprocessing
 import random
 import time
@@ -598,3 +599,44 @@ def test_agent_spawn_process(nsproxy):
 
     agent = run_agent('a0', base=Spawner)
     assert agent.spawn_process()
+
+
+def test_agent_execute_as_function(nsproxy):
+    """
+    Test `execute_as_function` method, which should execute a given function
+    in the remote agent.
+    """
+    class EnvironmentAgent(Agent):
+        def configure(self, value):
+            os.environ['__OSBRAIN_TEST'] = value
+
+    def name(prefix, suffix='suffix'):
+        return prefix + os.environ.get('__OSBRAIN_TEST', '') + suffix
+
+    agent0 = run_agent('a0', base=EnvironmentAgent)
+    agent1 = run_agent('a1', base=EnvironmentAgent)
+    agent0.configure('0')
+    agent1.configure('1')
+
+    assert agent0.execute_as_function(name, 'p') == 'p0suffix'
+    assert agent0.execute_as_function(name, 'p', suffix='s') == 'p0s'
+    assert agent1.execute_as_function(name, 'p') == 'p1suffix'
+    assert agent1.execute_as_function(name, 'p', suffix='s') == 'p1s'
+
+
+def test_agent_execute_as_method(nsproxy):
+    """
+    Test `execute_as_method` method, which should execute a given function
+    in the remote agent as a method (i.e.: passing the agent as first
+    parameter of the function).
+    """
+    def name(agent, prefix, suffix='suffix'):
+        return prefix + agent.name + suffix
+
+    agent0 = run_agent('a0')
+    agent1 = run_agent('a1')
+
+    assert agent0.execute_as_method(name, 'p') == 'pa0suffix'
+    assert agent0.execute_as_method(name, 'p', suffix='s') == 'pa0s'
+    assert agent1.execute_as_method(name, 'p') == 'pa1suffix'
+    assert agent1.execute_as_method(name, 'p', suffix='s') == 'pa1s'

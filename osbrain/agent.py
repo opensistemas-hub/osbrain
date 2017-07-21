@@ -1004,11 +1004,18 @@ class Agent():
             self.log_info('SET self.%s() = %s' % (name, function))
         return name
 
-    def execute_function(self, function, *args, **kwargs):
+    def execute_as_function(self, function, *args, **kwargs):
         """
         Execute a function passed as parameter.
         """
-        return function(args, kwargs)
+        return function(*args, **kwargs)
+
+    def execute_as_method(self, function, *args, **kwargs):
+        """
+        Execute a function as a method, without adding it to the set of
+        agent methods.
+        """
+        return function(self, *args, **kwargs)
 
     def loop(self):
         """

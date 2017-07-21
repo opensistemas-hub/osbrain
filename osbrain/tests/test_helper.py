@@ -1,6 +1,8 @@
 """
 Test file for functionality implemented in `osbrain/tests/common.py`.
 """
+import time
+
 import pytest
 
 from osbrain import run_agent
@@ -9,6 +11,7 @@ from osbrain.helper import logger_received
 from osbrain.helper import agent_dies
 from osbrain.helper import attribute_match_all
 from osbrain.helper import wait_agent_attr
+from osbrain.helper import wait_agent_condition
 
 from common import nsproxy  # pragma: no flakes
 from common import agent_logger  # pragma: no flakes
@@ -139,3 +142,28 @@ def test_wait_agent_attr(nsproxy):
     a0.after(1, 'set_received_method', 42)
     assert not wait_agent_attr(a0, value=42, timeout=0.)
     assert wait_agent_attr(a0, value=42, timeout=2.)
+
+
+def test_wait_agent_condition(nsproxy):
+    """
+    Test `wait_agent_condition` function.
+    """
+    class Counter(Agent):
+        def on_init(self):
+            self.count = 0
+            self.log = []
+
+        def increment(self):
+            self.log.append(self.count)
+            self.count += 1
+            time.sleep(0.1)
+
+    def log_length(agent, size):
+        return len(agent.log) > size
+
+    a0 = run_agent('a0', base=Counter)
+    a0.each(0., 'increment')
+
+    assert not wait_agent_condition(a0, log_length, size=4, timeout=0.2)
+    assert wait_agent_condition(a0, log_length, size=10, timeout=1.)
+    assert wait_agent_condition(a0, lambda agent: agent.count > 8, timeout=0.)

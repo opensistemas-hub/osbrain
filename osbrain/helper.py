@@ -193,3 +193,33 @@ def wait_agent_attr(agent, name='received', length=None, data=None, value=None,
             break
         time.sleep(0.01)
     return False
+
+
+def wait_agent_condition(agent, condition, *args, timeout=3, **kwargs):
+    """
+    Wait for an agent's condition to be true.
+
+    The condition is passed as a function which must take, at least, the
+    actual agent as a parameter, and must evaluate to a boolean result.
+
+    Parameters
+    ----------
+    agent : Proxy
+        A proxy to the agent.
+    condition : Callable
+        A function that evaluates the desired condition.
+    timeout : float, default is 3
+        After this number of seconds the function will return `False`.
+
+    Returns
+    -------
+    bool
+        Whether the specified condition was True.
+    """
+    t0 = time.time()
+    while True:
+        if agent.execute_as_method(condition, *args, **kwargs):
+            return True
+        if time.time() - t0 > timeout:
+            return False
+        time.sleep(0.01)

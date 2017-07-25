@@ -260,7 +260,7 @@ def test_linger(nsproxy, linger, sleep_time, should_receive):
     assert agent_dies('puller', nsproxy)
 
     pusher.send('push', 'foo')
-    pusher.close_sockets()
+    pusher.close_all()
     # After this timeout, depending on linger value, 'foo' will no longer be
     # on queue to be sent
     time.sleep(sleep_time)
@@ -483,7 +483,33 @@ def test_has_socket(nsproxy):
     """
     a0 = run_agent('a0')
     assert a0.has_socket('_loopback_safe')
-    assert not a0.has_socket('invented_socket')
+    assert not a0.has_socket('pub')
+    a0.bind('PUB', alias='pub')
+    assert a0.has_socket('pub')
+
+
+def test_close(nsproxy):
+    """
+    Test that closing a socket removes it from the socket entry.
+    """
+    a0 = run_agent('a0')
+    a0.bind('PUB', alias='pub')
+
+    a0.close('pub')
+    assert not a0.has_socket('pub')
+
+
+def test_close_all(nsproxy):
+    """
+    Test that after a call to `close_all`, only those non-internal are
+    actually closed.
+    """
+    a0 = run_agent('a0')
+    a0.bind('PUB', alias='pub')
+
+    a0.close_all()
+    assert not a0.has_socket('pub')
+    assert a0.has_socket('_loopback_safe')
 
 
 def test_log_levels(nsproxy):

@@ -406,6 +406,8 @@ class Agent():
 
     def list_timers(self):
         """
+        Return a list with all timer aliases currently running.
+
         Returns
         -------
         list (str)
@@ -526,6 +528,8 @@ class Agent():
 
     def addr(self, alias):
         """
+        Return the address of a socket given by its alias.
+
         Parameters
         ----------
         alias : str
@@ -972,7 +976,15 @@ class Agent():
             setattr(self, name, value)
             self.log_info('SET self.%s = %s' % (name, value))
 
-    def get_attr(self, name):
+    def get_attr(self, name: str):
+        """
+        Return the specified attribute of the agent.
+
+        Parameters
+        ----------
+        name
+            Name of the attribute to be retrieved.
+        """
         return getattr(self, name)
 
     def set_method(self, *args, **kwargs):

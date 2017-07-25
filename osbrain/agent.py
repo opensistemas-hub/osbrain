@@ -1537,6 +1537,12 @@ class Agent():
 
         return set(external_sockets)
 
+    def has_socket(self, socket):
+        """
+        Return whether the agent has the passed socket internally stored.
+        """
+        return socket in self.socket
+
     def close_sockets(self):
         """
         Close all non-internal zmq sockets.

@@ -477,6 +477,15 @@ def test_invalid_handlers(nsproxy):
         agent.bind('REP', handler=1.234)
 
 
+def test_has_socket(nsproxy):
+    """
+    Test the has_socket method.
+    """
+    a0 = run_agent('a0')
+    assert a0.has_socket('_loopback_safe')
+    assert not a0.has_socket('invented_socket')
+
+
 def test_log_levels(nsproxy):
     """
     Test different log levels: info, warning, error and debug. Debug messages

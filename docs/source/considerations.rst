@@ -26,6 +26,32 @@ For more information simply refer to the
 `ØMQ guide <http://zguide.zeromq.org/page:all>`_.
 
 
+Closing connections
+===================
+
+For closing a specific connection from an agent we need to call the
+``close()`` method, which takes the alias of the socket from the
+connection we want to close as a parameter.
+
+.. code-block:: python
+
+   agent.bind('PUB', alias='connection')
+   ...
+   agent.close('connection')
+
+There is also a ``close_all()`` method, which takes no parameters and
+will close all user-defined connections of the agent.
+
+Remember that the `linger` value from the osBrain configuration will
+be used for the actual `socket.close()` calls in both methods. For more
+information, simply refer to the
+`ØMQ guide <http://zguide.zeromq.org/page:all>`_.
+
+.. note:: Closing a connection within an agent will have no effect on
+   any possible agents at the other end of the connection. Remember to
+   manually close them as well if the connection is not going to be reused.
+
+
 Adding new methods
 ==================
 

@@ -1503,7 +1503,7 @@ class Agent():
             self._kill_now = True
 
     def kill(self):
-        self.close_sockets()
+        self.close_all()
         self._pyroDaemon.shutdown()
 
     def get_unique_external_zmq_sockets(self):
@@ -1537,18 +1537,47 @@ class Agent():
 
         return set(external_sockets)
 
-    def has_socket(self, socket):
+    def has_socket(self, alias):
         """
         Return whether the agent has the passed socket internally stored.
         """
-        return socket in self.socket
+        return alias in self.socket
 
-    def close_sockets(self):
+    def close(self, alias):
+        """
+        Close a socket given its alias and clear its entry from the
+        `Agent.socket` dictionary.
+        """
+        sock = self.socket[alias]
+
+        # Each socket might be pointed by different keys
+        entries_to_delete = []
+        for k, v in self.socket.items():
+            if v == sock:
+                entries_to_delete.append(k)
+
+        for entry in entries_to_delete:
+            del self.socket[entry]
+
+        sock.close(linger=get_linger())
+
+    def close_all(self):
         """
         Close all non-internal zmq sockets.
         """
+        # Each socket might be pointed by different keys
+        sockets_to_delete = []
         for sock in self.get_unique_external_zmq_sockets():
+            sockets_to_delete.append(sock)
             sock.close(linger=get_linger())
+
+        entries_to_delete = []
+        for k, v in self.socket.items():
+            if v in sockets_to_delete:
+                entries_to_delete.append(k)
+
+        for entry in entries_to_delete:
+            del self.socket[entry]
 
     def ping(self):
         """

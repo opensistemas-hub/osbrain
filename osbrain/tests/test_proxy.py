@@ -45,24 +45,16 @@ def setup_bussy_worker(nsproxy):
     return worker
 
 
-def test_wrong_nameserver_address():
+@pytest.mark.parametrize('timeout', [0, 1])
+def test_wrong_nameserver_address(timeout):
     """
-    Locating a name server that does not exist should raise an error.
-    """
-    t0 = time.time()
-    with pytest.raises(TimeoutError):
-        locate_ns('127.0.0.1:22', timeout=1.)
-    assert 1. <= time.time() - t0 <= 2.
-
-
-def test_no_timeout_locate_ns_not_existing():
-    """
-    Locating a NS that does not exist with no timeout should raise an error.
+    Locating a name server that does not exist should raise an error after
+    the defined timeout.
     """
     t0 = time.time()
     with pytest.raises(TimeoutError):
-        locate_ns('127.0.0.1:22', timeout=0.)
-    assert time.time() - t0 <= 1.
+        locate_ns('127.0.0.1:1234', timeout=timeout)
+    assert timeout <= time.time() - t0 <= timeout + 1.
 
 
 def test_no_timeout_locate_ns_existing(nsproxy):

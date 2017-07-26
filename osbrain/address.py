@@ -389,7 +389,7 @@ class AgentChannel():
     receiver : str
         Second AgentAddress.
     """
-    def __init__(self, kind, receiver, sender):
+    def __init__(self, kind, receiver, sender, twin_uuid=None):
         self.kind = AgentChannelKind(kind)
         self.receiver = receiver
         self.sender = sender
@@ -398,6 +398,7 @@ class AgentChannel():
         self.serializer = \
             receiver.serializer if receiver else sender.serializer
         self.uuid = unique_identifier()
+        self.twin_uuid = twin_uuid
         # Set up pairs
         if sender:
             self.sender.channel = self
@@ -435,4 +436,5 @@ class AgentChannel():
         kind = self.kind.twin()
         sender = self.receiver.twin() if self.receiver is not None else None
         receiver = self.sender.twin() if self.sender is not None else None
-        return self.__class__(kind=kind, receiver=receiver, sender=sender)
+        return self.__class__(kind=kind, receiver=receiver, sender=sender,
+                              twin_uuid=self.uuid)

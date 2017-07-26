@@ -19,7 +19,7 @@ def log_message(agent, message):
 if __name__ == '__main__':
 
     # System deployment
-    run_nameserver()
+    ns = run_nameserver()
     alice = run_agent('Alice', base=Greeter)
     bob = run_agent('Bob')
 
@@ -27,6 +27,8 @@ if __name__ == '__main__':
     bob.connect(alice.addr('main'), handler=log_message)
 
     # Send messages
-    while True:
+    for i in range(3):
         time.sleep(1)
         alice.hello('Bob')
+
+    ns.shutdown()

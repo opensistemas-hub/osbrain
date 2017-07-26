@@ -8,7 +8,7 @@ def reply(agent, message):
 
 if __name__ == '__main__':
 
-    run_nameserver()
+    ns = run_nameserver()
     alice = run_agent('Alice')
     bob = run_agent('Bob')
 
@@ -19,3 +19,5 @@ if __name__ == '__main__':
         bob.send('main', i)
         reply = bob.recv('main')
         print(reply)
+
+    ns.shutdown()

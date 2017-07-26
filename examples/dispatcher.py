@@ -13,6 +13,7 @@ def request_work(agent):
     x = agent.send_recv('dispatcher', 'READY!')
     if not x:
         agent.shutdown()
+        return
     time.sleep(x)
     agent.send('results', '%s finished with %s' % (agent.name, x))
 
@@ -33,3 +34,8 @@ if __name__ == '__main__':
         worker.connect(results_addr, alias='results')
         worker.connect(dispatcher_addr, alias='dispatcher')
         worker.each(0., request_work)
+
+    while len(ns.agents()) > 2:
+        time.sleep(0.1)
+
+    ns.shutdown()

@@ -13,3 +13,5 @@ if __name__ == '__main__':
     # Create a proxy to Agent1 and log a message
     agent = ns.proxy('Agent1')
     agent.log_info('Hello world!')
+
+    ns.shutdown()

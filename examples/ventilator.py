@@ -9,12 +9,17 @@ def heavy_processing(agent, message):
     agent.send('results', '%s finished with %s' % (agent.name, message))
 
 
+def append_received(agent, message):
+    agent.log_info(message)
+    agent.received.append(message)
+
 if __name__ == '__main__':
 
-    run_nameserver()
+    ns = run_nameserver()
 
     results = run_agent('Results')
-    results.bind('PULL', alias='results', handler=lambda a, m: a.log_info(m))
+    results.set_attr(received=[])
+    results.bind('PULL', alias='results', handler=append_received)
 
     ventilator = run_agent('Ventilator')
     ventilator_addr = ventilator.bind('PUSH', alias='push')
@@ -26,3 +31,8 @@ if __name__ == '__main__':
 
     for task in [5, 1, 1, 1, 1, 5, 1, 1, 1, 1]:
         ventilator.send('push', task)
+
+    while len(results.get_attr('received')) != 10:
+        time.sleep(0.1)
+
+    ns.shutdown()

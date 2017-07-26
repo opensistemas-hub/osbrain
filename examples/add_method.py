@@ -17,7 +17,7 @@ def add_xy(self):
 if __name__ == '__main__':
 
     # System deployment
-    run_nameserver()
+    ns = run_nameserver()
     agent = run_agent('Example')
 
     # System configuration
@@ -27,3 +27,5 @@ if __name__ == '__main__':
     agent.set_x(1)
     agent.set_y(2)
     print(agent.add())
+
+    ns.shutdown()

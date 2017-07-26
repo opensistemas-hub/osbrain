@@ -15,7 +15,7 @@ def log_b(agent, message):
 if __name__ == '__main__':
 
     # System deployment
-    run_nameserver()
+    ns = run_nameserver()
     alice = run_agent('Alice')
     bob = run_agent('Bob')
     eve = run_agent('Eve')
@@ -28,8 +28,10 @@ if __name__ == '__main__':
     dave.connect(addr, handler={'b': log_b})
 
     # Send messages
-    while True:
+    for i in range(6):
         time.sleep(1)
         topic = random.choice(['a', 'b'])
         message = 'Hello, %s!' % topic
         alice.send('main', message, topic=topic)
+
+    ns.shutdown()

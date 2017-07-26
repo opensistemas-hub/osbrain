@@ -1,3 +1,4 @@
+import time
 from osbrain import run_agent
 from osbrain import run_nameserver
 
@@ -13,7 +14,7 @@ def annoy(agent, say, more=None):
 
 if __name__ == '__main__':
 
-    run_nameserver()
+    ns = run_nameserver()
     orange = run_agent('Orange')
     apple = run_agent('Apple')
     addr = orange.bind('PUSH', alias='annoy')
@@ -23,3 +24,7 @@ if __name__ == '__main__':
     orange.each(1., annoy, 'Hey')
     orange.each(1.4142, annoy, 'Apple')
     orange.each(3.1415, annoy, 'Hey', more='Apple')
+
+    time.sleep(10)
+
+    ns.shutdown()

@@ -13,3 +13,5 @@ if __name__ == '__main__':
     # Show agents registered in the name server
     for alias in ns.agents():
         print(alias)
+
+    ns.shutdown()

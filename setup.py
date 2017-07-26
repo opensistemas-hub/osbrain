@@ -48,7 +48,6 @@ setup(
         'cloudpickle==0.3.1',
     ] + install_requires_compat,
     extras_require={
-        'dev': [],
         'test': ['tox'],
         'docs': ['sphinx', 'numpydoc', 'sphinx_rtd_theme'],
     },

@@ -176,3 +176,25 @@ subscribed to topic ``a`` only and *Dave* subscribed to topic ``b`` only.
 
 Note how we can specify different handlers for different topics when
 subscribing agents.
+
+.. index:: more_on_filtering
+.. _more_on_filtering:
+
+More on filtering
+-----------------
+
+We can also easily modify the subscriptions at run-time.
+
+In the following example, *Alice* will be publishing messages using topics
+``a`` and ``b`` at the same time. Meanwhile, *Bob* will first subscribe to
+topic ``a``. After a few seconds, he will subscribe to topic ``b`` while
+unsubscribing from topic ``a``.
+
+.. literalinclude:: ../../examples/pub_sub_more_on_filter.py
+
+.. note:: Syntax regarding handlers in the ``subscribe()`` and
+   ``unsubscribe()`` methods is the same that the one used when specifying
+   the handlers on the ``connect()``/``bind()`` call of the SUB socket.
+
+.. warning:: Calls to the ``subscribe()`` method will always override the
+   previous handler for each of the specified topics, if any.

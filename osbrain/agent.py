@@ -25,6 +25,7 @@ import zmq
 from . import config
 from .common import format_exception
 from .common import format_method_exception
+from .common import topic_to_bytes
 from .common import topics_to_bytes
 from .common import unbound_method
 from .common import validate_handler
@@ -556,14 +557,18 @@ class Agent():
             alias = address
         self.socket[alias] = socket
         self.socket[address] = socket
+        self.socket[socket] = socket
         self.address[alias] = address
         self.address[socket] = address
         self.address[address] = address
         if handler is not None:
             self.poller.register(socket, zmq.POLLIN)
-            self._set_handler(socket, handler)
+            if address.kind in ('SUB', 'SYNC_SUB'):
+                self.subscribe(socket, handler)
+            else:
+                self._set_handler(socket, handler)
 
-    def _set_handler(self, socket, handlers):
+    def _set_handler(self, socket, handlers, update=False):
         """
         Set the socket handler(s).
 
@@ -574,7 +579,13 @@ class Agent():
         handlers : function(s)
             Handler(s) for the socket. This can be a list or a dictionary too.
         """
-        self.handler[socket] = self._curated_handlers(handlers)
+        if update:
+            try:
+                self.handler[socket].update(self._curated_handlers(handlers))
+            except KeyError:
+                self.handler[socket] = self._curated_handlers(handlers)
+        else:
+            self.handler[socket] = self._curated_handlers(handlers)
 
     def _curated_handlers(self, handlers):
         if isinstance(handlers, (list, tuple)):
@@ -667,7 +678,7 @@ class Agent():
         self.register(socket, server_address, alias, handler)
         # SUB sockets are a special case
         if kind == 'SUB':
-            self._subscribe(server_address, handler)
+            self.subscribe(server_address, handler)
         return server_address
 
     def _bind_channel(self, kind, alias=None, handler=None, addr=None,
@@ -804,7 +815,7 @@ class Agent():
         if client_address.kind == 'SUB':
             if not alias:
                 alias = client_address
-            self._subscribe(alias, handler)
+            self.subscribe(alias, handler)
         return client_address
 
     def _connect_channel(self, channel, alias=None, handler=None):
@@ -933,9 +944,11 @@ class Agent():
         else:
             handler(self, response)
 
-    def _subscribe(self, alias: str, handlers: Dict[Union[bytes, str], Any]):
+    def subscribe(self, alias: str,
+                  handlers: Dict[Union[bytes, str], Any]) -> None:
         """
-        Subscribe the agent to another agent.
+        Subscribe a SUB/SYNC_SUB socket given by its alias to the given
+        topics, and leave the handlers prepared internally.
 
         Parameters
         ----------
@@ -951,11 +964,65 @@ class Agent():
             handlers = {'': handlers}
 
         curated_handlers = topics_to_bytes(handlers)
+
         # Subscribe to topics
-        for topic in curated_handlers.keys():
-            self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
+        for topic in curated_handlers:
+            self._subscribe_to_topic(alias, topic)
+
         # Reset handlers
-        self._set_handler(self.socket[alias], curated_handlers)
+        if isinstance(self.address[alias], AgentChannel):
+            channel = self.address[alias]
+            sub_address = channel.receiver
+            uuid = channel.twin_uuid
+            curated_handlers = topics_to_bytes(handlers, uuid=uuid)
+            self._set_handler(self.socket[sub_address], curated_handlers,
+                              update=True)
+        else:
+            self._set_handler(self.socket[alias], curated_handlers,
+                              update=True)
+
+    def unsubscribe(self, alias: str, topic: Union[bytes, str]) -> None:
+        '''
+        Unsubscribe a SUB/SYNC_SUB socket given by its alias from a given
+        specific topic, and delete its entry from the handlers dictionary.
+
+        If instead of a single topic, a tuple or a list of topics is passed,
+        the agent will unsubscribe from all the supplied topics.
+        '''
+        if isinstance(topic, (tuple, list)):
+            for t in topic:
+                self.unsubscribe(alias, t)
+            return
+
+        topic = topic_to_bytes(topic)
+
+        if isinstance(self.address[alias], AgentAddress):
+            self.socket[alias].setsockopt(zmq.UNSUBSCRIBE, topic)
+            del self.handler[self.socket[alias]][topic]
+        elif isinstance(self.address[alias], AgentChannel):
+            channel = self.address[alias]
+            sub_address = channel.receiver
+            treated_topic = channel.twin_uuid + topic
+            self.socket[sub_address].setsockopt(zmq.UNSUBSCRIBE, treated_topic)
+            del self.handler[self.socket[sub_address]][treated_topic]
+
+    def _subscribe_to_topic(self, alias: str, topic: Union[bytes, str]):
+        '''
+        Do the actual ZeroMQ subscription of a socket given by its alias to
+        a specific topic. This method only makes sense to be called on
+        SUB/SYNC_SUB sockets.
+
+        Note that the handler is not set within this function.
+        '''
+        topic = topic_to_bytes(topic)
+
+        if isinstance(self.address[alias], AgentAddress):
+            self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
+        elif isinstance(self.address[alias], AgentChannel):
+            channel = self.address[alias]
+            sub_address = channel.receiver
+            treated_topic = channel.uuid + topic
+            self.socket[sub_address].setsockopt(zmq.SUBSCRIBE, treated_topic)
 
     def idle(self):
         """
@@ -1335,8 +1402,7 @@ class Agent():
         if address.kind == 'PUB':
             if topic is None:
                 topic = ''
-            if isinstance(topic, str):
-                topic = topic.encode()
+            topic = topic_to_bytes(topic)
             message = compose_message(message=message,
                                       topic=topic,
                                       serializer=address.serializer)
@@ -1383,8 +1449,7 @@ class Agent():
                                     serializer=channel.serializer)
         if topic is None:
             topic = ''
-        if isinstance(topic, str):
-            topic = topic.encode()
+        topic = topic_to_bytes(topic)
         if general:
             topic = channel.uuid + topic
         message = compose_message(message=message,
@@ -1528,6 +1593,8 @@ class Agent():
         external_sockets = []
 
         for k, v in self.socket.items():
+            if isinstance(k, zmq.sugar.socket.Socket):
+                continue
             if isinstance(k, AgentAddress) and k.address in reserved:
                 continue
             if k in reserved:

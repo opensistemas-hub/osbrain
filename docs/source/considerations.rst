@@ -158,3 +158,36 @@ running the agent for exactly that:
 As you can see, this parameter accepts a dictionary in which the keys are the
 name of the attributes to be set in the agent and the values are the actual
 values that this attributes will take.
+
+
+.. _creating_proxies_to_existing_name_servers:
+
+Creating proxies to existing name servers
+=========================================
+
+Many times, specially if we are not working with distributed systems, we want
+to spawn a single name server and run all the agents from a single script. If
+that is the case, simply by executing the `run_nameserver` function we would
+obtain a proxy to the name server.
+
+Sometimes, however, we may need to access name servers that are already
+running and of which we do not have a proxy available. To do so, we definitely
+need to know the address of the name server, so make sure you spawn it with
+a well-known address or save it somewhere to read it later.
+
+You can create a proxy to an already-running name server using the `NSProxy`
+class:
+
+.. code-block:: python
+
+   from osbrain import NSProxy
+
+
+   ns = NSProxy(nsaddr='127.0.0.1:1234')
+
+Note how we need to specify the name server address.
+
+.. note:: This might be useful for attaching yourself to an already-running
+   system for manual configuration/update, debugging... If you are just
+   planning to launch and configure your architecture from multiple scripts,
+   then think it twice, as normally you would not need to do so.

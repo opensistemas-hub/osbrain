@@ -8,6 +8,18 @@ Distributed systems
    and understand the `serialization` and `security` sections.
 
 
+Name servers
+============
+
+Normally you would want to have a centralized name server when working with
+distributed systems, but that is not mandatory, for some applications it might
+be more convenient to have multiple name servers in different machines, each
+handling different agents.
+
+If you want to create a proxy to a remote name server, simply refer to the
+`creating_proxies_to_existing_name_servers` section.
+
+
 .. index:: binding, distributed
 
 Binding with distributed systems

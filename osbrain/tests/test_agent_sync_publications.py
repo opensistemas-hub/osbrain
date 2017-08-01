@@ -214,14 +214,15 @@ def test_request(nsproxy, server):
     instant = received[0][0]
 
     # Make sure active gets response
-    N = len(active.get_attr('received')) + 2
+    response = instant + 0.5
+    assert wait_agent_attr(active, data=-response)
+
+    # Wait for at least another message after the response
+    N = len(active.get_attr('received')) + 1
     assert wait_agent_attr(active, length=N)
 
-    # Check active client received data
+    # Check received messages are properly sorted
     received = active.get_attr('received')
-    response = instant + 0.5
-    assert len(received) >= N
-    assert -response in received
     index = received.index(-response)
     assert received[index - 1] + 1 == received[index + 1]
     received.remove(-response)

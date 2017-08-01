@@ -223,3 +223,32 @@ def wait_agent_condition(agent, condition, *args, timeout=3, **kwargs):
         if time.time() - t0 > timeout:
             return False
         time.sleep(0.01)
+
+
+def last_received_endswith(agent, tail):
+    """
+    Check if the agent's last received message ends with `tail`.
+
+    It is supposed to be executed as an agent method (in example: use it as
+    the condition in `wait_agent_condition` or execute it with the method
+    `execute_as_method`).
+
+    Parameters
+    ----------
+    agent : Proxy
+        A proxy to the agent.
+    tail : str or bytes
+        The expected termination of the last received message.
+
+    Returns
+    -------
+    bool
+        Whether the last message received ends with `tail`.
+    """
+    if not hasattr(agent, 'received'):
+        return False
+    if not agent.received:
+        return False
+    if not agent.received[-1][-len(tail):] == tail:
+        return False
+    return True

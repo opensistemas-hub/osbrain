@@ -1,9 +1,9 @@
-import time
-
 import pytest
 
 from osbrain import run_agent
 from osbrain.address import AgentAddressSerializer
+from osbrain.helper import wait_agent_condition
+from osbrain.helper import last_received_endswith
 
 from common import nsproxy  # pragma: no flakes
 from common import append_received
@@ -40,8 +40,12 @@ def test_pubsub_topics_separator(nsproxy, serializer):
     a4.connect(addr, handler={'bar': append_received})
     a5.connect(addr, handler={'fo': append_received})
 
-    # Give some time for all the agents to connect
-    time.sleep(0.1)
+    # Make sure all agents are connected
+    a0.each(0.1, 'send', 'pub', 'first', topic='foo')
+    a0.each(0.1, 'send', 'pub', 'first', topic='bar')
+    for agent in (a1, a2, a3, a4, a5):
+        assert wait_agent_condition(agent, last_received_endswith, 'first')
+    a0.stop_all_timers()
 
     # Send some messages
     message_01 = 'Hello'
@@ -56,8 +60,11 @@ def test_pubsub_topics_separator(nsproxy, serializer):
     message_04 = 'BAR'
     a0.send('pub', message_04, topic='fo')
 
-    # Give some time for all the agents to handle the message
-    time.sleep(0.1)
+    # Make sure all messages are processed
+    a0.send('pub', 'last', topic='foo')
+    a0.send('pub', 'last', topic='bar')
+    for agent in (a1, a2, a3, a4, a5):
+        assert wait_agent_condition(agent, last_received_endswith, 'last')
 
     # Check each agent received the corresponding messages
     assert message_01 in a1.get_attr('received')
@@ -120,8 +127,12 @@ def test_pubsub_topics_raw(nsproxy, serializer):
     a4.connect(addr, handler={'bar': append_received})
     a5.connect(addr, handler={'fo': append_received})
 
-    # Give some time for all the agents to connect
-    time.sleep(0.1)
+    # Make sure all agents are connected
+    a0.each(0.1, 'send', 'pub', b'first', topic='foo')
+    a0.each(0.1, 'send', 'pub', b'first', topic='bar')
+    for agent in (a1, a2, a3, a4, a5):
+        assert wait_agent_condition(agent, last_received_endswith, b'first')
+    a0.stop_all_timers()
 
     # Send some messages
     message_01 = b'Hello'
@@ -136,8 +147,11 @@ def test_pubsub_topics_raw(nsproxy, serializer):
     message_04 = b'BAR'
     a0.send('pub', message_04, topic='fo')
 
-    # Give some time for all the agents to handle the message
-    time.sleep(0.1)
+    # Make sure all agents are connected
+    a0.send('pub', b'last', topic='foo')
+    a0.send('pub', b'last', topic='bar')
+    for agent in (a1, a2, a3, a4, a5):
+        assert wait_agent_condition(agent, last_received_endswith, b'last')
 
     # Check each agent received the corresponding messages
     assert message_01 in a1.get_attr('received')

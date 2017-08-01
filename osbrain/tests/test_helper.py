@@ -10,6 +10,7 @@ from osbrain import Agent
 from osbrain.helper import logger_received
 from osbrain.helper import agent_dies
 from osbrain.helper import attribute_match_all
+from osbrain.helper import last_received_endswith
 from osbrain.helper import wait_agent_attr
 from osbrain.helper import wait_agent_condition
 
@@ -167,3 +168,19 @@ def test_wait_agent_condition(nsproxy):
     assert not wait_agent_condition(a0, log_length, size=4, timeout=0.2)
     assert wait_agent_condition(a0, log_length, size=10, timeout=1.)
     assert wait_agent_condition(a0, lambda agent: agent.count > 8, timeout=0.)
+
+
+def test_last_received_endswith(nsproxy):
+    """
+    Test `last_received_endswith` function.
+    """
+    agent = run_agent('a0')
+    assert not agent.execute_as_method(last_received_endswith, 'foo')
+    agent.set_attr(received=[])
+    assert not agent.execute_as_method(last_received_endswith, 'foo')
+    agent.set_attr(received=['bar'])
+    assert not agent.execute_as_method(last_received_endswith, 'foo')
+    agent.set_attr(received=['foo', 'bar'])
+    assert not agent.execute_as_method(last_received_endswith, 'foo')
+    agent.set_attr(received=['bar', 'foo'])
+    assert agent.execute_as_method(last_received_endswith, 'foo')

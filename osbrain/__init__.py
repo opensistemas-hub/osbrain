@@ -26,12 +26,16 @@ config = {}
 config['SAFE'] = os.environ.get('OSBRAIN_DEFAULT_SAFE', 'true') != 'false'
 config['SERIALIZER'] = os.environ.get('OSBRAIN_DEFAULT_SERIALIZER', 'pickle')
 config['LINGER'] = float(os.environ.get('OSBRAIN_DEFAULT_LINGER', '1'))
-config['TRANSPORT'] = os.environ.get('OSBRAIN_DEFAULT_TRANSPORT', 'ipc')
-
-# Set storage folder for IPC socket files
-config['IPC_DIR'] = \
-    Path(os.environ.get('XDG_RUNTIME_DIR', Path.home())) / '.osbrain_ipc'
-config['IPC_DIR'].mkdir(exist_ok=True, parents=True)
+# Set IPC by default only for POSIX systems
+if os.name != 'posix':
+    config['TRANSPORT'] = os.environ.get('OSBRAIN_DEFAULT_TRANSPORT', 'tcp')
+    config['IPC_DIR'] = Path('')
+else:
+    config['TRANSPORT'] = os.environ.get('OSBRAIN_DEFAULT_TRANSPORT', 'ipc')
+    # Set storage folder for IPC socket files
+    config['IPC_DIR'] = \
+        Path(os.environ.get('XDG_RUNTIME_DIR', Path.home())) / '.osbrain_ipc'
+    config['IPC_DIR'].mkdir(exist_ok=True, parents=True)
 
 
 __version__ = '0.4.4'

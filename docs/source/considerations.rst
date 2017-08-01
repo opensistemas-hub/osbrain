@@ -93,17 +93,22 @@ In fact, the only difference is the binding from Alice, in which we are using
 a lambda function for the handler.
 
 
+.. _shutting_down:
+
 Shutting down
 =============
 
-Although not covered in the examples until now (because many times you just
-want the multi-agent system to run forever until, perhaps, an event occurs),
-it is possible to actively kill the system using proxies:
+If we want to end the execution of a specific agent in our system, we can do
+it by calling the `agent.shutdown` method:
 
 .. literalinclude:: ../../examples/shutdown.py
 
-.. note:: Shutting down the nameserver will result in all agents registered in
-   the name server being shut down as well.
+Shutting down a name server will result in all agents registered in that name
+server being shut down as well. This allows us to easily shutdown groups of
+agents at the same time.
+
+.. note:: We can stablish connections between agents registered in different
+   name servers.
 
 
 OOP

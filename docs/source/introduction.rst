@@ -44,6 +44,11 @@ Running this example from your terminal should simply show you a log message
 saying `Hello world!` but, what exactly is happening there?
 
 
+.. note:: The ``ns.shutdown()`` calls in the examples are there because we do
+   not want examples to run indefinetely. For more information on that method,
+   refer to the :ref:`shutting_down` section.
+
+
 .. index:: agents, proxies
 .. _agents_and_proxies:
 

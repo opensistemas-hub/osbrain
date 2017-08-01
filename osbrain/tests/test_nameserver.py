@@ -121,11 +121,11 @@ def test_nameserver_proxy_shutdown_lazy_agents(delay, timeout):
             ns.shutdown(timeout=delay-1)
         assert 'not all agents were shutdown' in str(error.value)
         # Agent should die soon anyway
-        assert agent_dies('a0', nsproxy=ns, timeout=1.5)
+        assert agent_dies('a0', nsproxy=ns, timeout=2.)
         assert agent_dies('a1', nsproxy=ns, timeout=0.)
     ns.shutdown()
     assert time.time() - t0 > delay
-    assert time.time() - t0 < delay + 1
+    assert time.time() - t0 < delay + 2
 
 
 def test_oneway_kill_non_running_agent_on_name_server_shutdown(nsproxy):

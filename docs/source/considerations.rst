@@ -111,6 +111,8 @@ agents at the same time.
    name servers.
 
 
+.. _oop:
+
 OOP
 ===
 
@@ -163,6 +165,10 @@ running the agent for exactly that:
 As you can see, this parameter accepts a dictionary in which the keys are the
 name of the attributes to be set in the agent and the values are the actual
 values that this attributes will take.
+
+.. note:: If you find yourself setting a lot of attributes through a proxy
+   then you might use `oop` instead (set attributes on initialization or
+   create a method for that purpose).
 
 
 .. _creating_proxies_to_existing_name_servers:

@@ -12,8 +12,9 @@ class Greeter(Agent):
         self.send('main', 'Hello, %s!' % name)
 
 
-def log_message(agent, message):
-    agent.log_info('Received: %s' % message)
+class Bob(Agent):
+    def custom_log(self, message):
+        self.log_info('Received: %s' % message)
 
 
 if __name__ == '__main__':
@@ -21,14 +22,14 @@ if __name__ == '__main__':
     # System deployment
     ns = run_nameserver()
     alice = run_agent('Alice', base=Greeter)
-    bob = run_agent('Bob')
+    bob = run_agent('Bob', base=Bob)
 
     # System configuration
-    bob.connect(alice.addr('main'), handler=log_message)
+    bob.connect(alice.addr('main'), handler='custom_log')
 
     # Send messages
     for i in range(3):
-        time.sleep(1)
         alice.hello('Bob')
+        time.sleep(1)
 
     ns.shutdown()

@@ -136,11 +136,12 @@ however you may notice some differences:
    #. ``on_init()``: which is executed on initialization and will, in this
       case, simply bind a ``'PUSH'`` communication channel.
    #. ``hello()``: which simply logs a *Hello* message when it is executed.
-
 #. When connecting *Bob* to *Alice*, we need the address where *Alice* binded
    to. As the binding was executed on initialization, we need to use the
    ``addr()`` method, which will return the address associated to the alias
    passed as parameter (in the example above it is ``main``).
+#. When setting a handler that is a method already defined in the agent we
+   simply pass a string with the method name.
 
 
 Setting initial attributes

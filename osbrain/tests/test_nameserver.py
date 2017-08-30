@@ -128,7 +128,7 @@ def test_nameserver_proxy_shutdown_lazy_agents(delay, timeout):
     assert time.time() - t0 < delay + 2
 
 
-def test_oneway_kill_non_running_agent_on_name_server_shutdown(nsproxy):
+def test_oneway_kill_non_running_agent_on_name_server_shutdown():
     """
     The agent's `shutdown` method is only executed for running agents. When
     agents are not running (i.e.: they raised an exception while running or
@@ -145,12 +145,13 @@ def test_oneway_kill_non_running_agent_on_name_server_shutdown(nsproxy):
             super().kill()
             time.sleep(2)
 
+    ns = run_nameserver()
     william = run_agent('william', base=WilliamWallace)
     # Stop the agent
     william.set_attr(keep_alive=False)
     assert wait_agent_attr(william, name='running', value=False)
     # Shut down should work just fine
-    nsproxy.shutdown()
+    ns.shutdown()
 
 
 def test_nameserverprocess_shutdown():

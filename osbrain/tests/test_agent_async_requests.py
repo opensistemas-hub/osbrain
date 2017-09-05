@@ -126,7 +126,7 @@ def test_yield(nsproxy):
 
 def test_unknown(nsproxy, server_client_late_reply_return):
     """
-    When receiving a response for an unknow request (or an already processed
+    When receiving a response for an unknown request (or an already processed
     request), a warning should be logged and handler should not be executed.
     """
     server, client = server_client_late_reply_return

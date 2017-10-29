@@ -215,11 +215,11 @@ def test_subscribe(nsproxy, socket_type, subscribe_separately):
     # Subscribe to two topics. Client should only receive -1 and 2.
     client.unsubscribe('sub', '')
     if subscribe_separately:
-        client.subscribe('sub', handlers={'negate': receive_negate})
-        client.subscribe('sub', handlers={'normal': append_received})
+        client.subscribe('sub', handler={'negate': receive_negate})
+        client.subscribe('sub', handler={'normal': append_received})
     else:
-        client.subscribe('sub', handlers={'negate': receive_negate,
-                                          'normal': append_received})
+        client.subscribe('sub', handler={'negate': receive_negate,
+                                         'normal': append_received})
 
     server.each(0.1, 'publish')
 
@@ -282,8 +282,8 @@ def test_unsubscribe_and_subscribe_again(nsproxy, socket_type):
 
     # Subscribe to two topics
     client.unsubscribe('sub', '')
-    client.subscribe('sub', handlers={'negate': receive_negate,
-                                      'normal': append_received})
+    client.subscribe('sub', handler={'negate': receive_negate,
+                                     'normal': append_received})
 
     # Make server to start publishing messages
     server.each(0.1, 'publish')

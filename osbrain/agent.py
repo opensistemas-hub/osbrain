@@ -568,7 +568,7 @@ class Agent():
             else:
                 self._set_handler(socket, handler)
 
-    def _set_handler(self, socket, handlers, update=False):
+    def _set_handler(self, socket, handler, update=False):
         """
         Set the socket handler(s).
 
@@ -576,23 +576,23 @@ class Agent():
         ----------
         socket : zmq.Socket
             Socket to set its handler(s).
-        handlers : function(s)
+        handler : function(s)
             Handler(s) for the socket. This can be a list or a dictionary too.
         """
         if update:
             try:
-                self.handler[socket].update(self._curated_handlers(handlers))
+                self.handler[socket].update(self._curated_handlers(handler))
             except KeyError:
-                self.handler[socket] = self._curated_handlers(handlers)
+                self.handler[socket] = self._curated_handlers(handler)
         else:
-            self.handler[socket] = self._curated_handlers(handlers)
+            self.handler[socket] = self._curated_handlers(handler)
 
-    def _curated_handlers(self, handlers):
-        if isinstance(handlers, (list, tuple)):
-            return [self._curate_handler(h) for h in handlers]
-        if isinstance(handlers, dict):
-            return {k: self._curate_handler(v) for k, v in handlers.items()}
-        return self._curate_handler(handlers)
+    def _curated_handlers(self, handler):
+        if isinstance(handler, (list, tuple)):
+            return [self._curate_handler(h) for h in handler]
+        if isinstance(handler, dict):
+            return {k: self._curate_handler(v) for k, v in handler.items()}
+        return self._curate_handler(handler)
 
     def _curate_handler(self, handler):
         if isinstance(handler, str):
@@ -945,7 +945,7 @@ class Agent():
             handler(self, response)
 
     def subscribe(self, alias: str,
-                  handlers: Dict[Union[bytes, str], Any]) -> None:
+                  handler: Dict[Union[bytes, str], Any]) -> None:
         """
         Subscribe a SUB/SYNC_SUB socket given by its alias to the given
         topics, and leave the handlers prepared internally.
@@ -954,16 +954,16 @@ class Agent():
         ----------
         alias
             Alias of the new subscriber socket.
-        handlers
+        handler
             A dictionary in which the keys represent the different topics
             and the values the actual handlers. If, instead of a dictionary,
             a single handler is given, it will be used to subscribe the agent
             to any topic.
         """
-        if not isinstance(handlers, dict):
-            handlers = {'': handlers}
+        if not isinstance(handler, dict):
+            handler = {'': handler}
 
-        curated_handlers = topics_to_bytes(handlers)
+        curated_handlers = topics_to_bytes(handler)
 
         # Subscribe to topics
         for topic in curated_handlers:
@@ -974,7 +974,7 @@ class Agent():
             channel = self.address[alias]
             sub_address = channel.receiver
             uuid = channel.twin_uuid
-            curated_handlers = topics_to_bytes(handlers, uuid=uuid)
+            curated_handlers = topics_to_bytes(handler, uuid=uuid)
             self._set_handler(self.socket[sub_address], curated_handlers,
                               update=True)
         else:

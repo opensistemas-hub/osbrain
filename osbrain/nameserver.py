@@ -9,6 +9,7 @@ import multiprocessing
 
 import Pyro4
 from Pyro4.naming import BroadcastServer
+from Pyro4.errors import PyroError
 
 from .common import format_exception
 from .address import address_to_host_port
@@ -40,12 +41,15 @@ class NameServer(Pyro4.naming.NameServer):
         Shutdown all agents registered in the name server.
         """
         for name in self.agents():
-            agent = Proxy(name, nsaddr=nsaddr)
-            if agent.get_attr('running'):
-                agent.after(0, 'shutdown')
-            else:
-                agent.oneway.kill()
-            agent._pyroRelease()
+            try:
+                agent = Proxy(name, nsaddr=nsaddr, timeout=0.5)
+                if agent.unsafe.get_attr('running'):
+                    agent.unsafe.after(0, 'shutdown')
+                else:
+                    agent.oneway.kill()
+                agent._pyroRelease()
+            except PyroError:
+                pass
 
     def daemon_shutdown(self):
         """

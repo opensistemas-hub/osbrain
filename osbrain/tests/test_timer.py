@@ -5,7 +5,9 @@ import time
 import pytest
 from osbrain import Agent
 from osbrain import run_agent
+from osbrain import run_nameserver
 from osbrain.common import repeat
+from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
 from common import set_received
@@ -297,3 +299,23 @@ def test_timer_after_stop_alias(nsproxy):
     agent.stop_timer('foo')
     time.sleep(1.1)
     assert agent.get_attr('count') == 0
+
+
+def test_timer_delayed_exception_shutdown_before_raising():
+    """
+    Test a timer that waits for a while and then raises an exception. While
+    the timer is executing (during that waiting), the name server calls for
+    shutdown.
+    """
+    def tick(agent):
+        agent.count = 1
+        time.sleep(2)
+        raise RuntimeError()
+
+    ns = run_nameserver()
+    agent = run_agent('agent')
+    agent.set_attr(count=0)
+    # Start timer
+    agent.each(0., tick)
+    assert wait_agent_attr(agent, name='count', value=1)
+    ns.shutdown()

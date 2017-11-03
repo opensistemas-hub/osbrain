@@ -87,12 +87,33 @@ def test_nameserver_proxy_shutdown_with_many_agents():
     Shutdown a name server from a name server proxy when there are many agents
     registered in the name server (make sure proxies do not saturate the name
     server on shutdown).
+
+    The shutdown process is given a long timeout to avoid raising exceptions.
     """
     import Pyro4
     Pyro4.config.THREADPOOL_SIZE = 4
     ns = run_nameserver()
     for i in range(20):
         run_agent('Agent%s' % i)
+    ns.shutdown(timeout=60)
+
+
+def test_nameserver_proxy_shutdown_with_many_agents_timeout():
+    """
+    Shutdown a name server from a name server proxy when there are many agents
+    registered in the name server (make sure proxies do not saturate the name
+    server on shutdown).
+
+    The shutdown process is given the shortest timeout to ensure an exception
+    is raised.
+    """
+    import Pyro4
+    Pyro4.config.THREADPOOL_SIZE = 4
+    ns = run_nameserver()
+    for i in range(20):
+        run_agent('Agent%s' % i)
+    with pytest.raises(TimeoutError):
+        ns.shutdown(timeout=.0)
     ns.shutdown()
 
 

@@ -1005,6 +1005,9 @@ class Agent():
             treated_topic = channel.twin_uuid + topic
             self.socket[sub_address].setsockopt(zmq.UNSUBSCRIBE, treated_topic)
             del self.handler[self.socket[sub_address]][treated_topic]
+        else:
+            raise NotImplementedError('Unsupported address type %s!' %
+                                      self.address[alias])
 
     def _subscribe_to_topic(self, alias: str, topic: Union[bytes, str]):
         '''
@@ -1023,6 +1026,9 @@ class Agent():
             sub_address = channel.receiver
             treated_topic = channel.uuid + topic
             self.socket[sub_address].setsockopt(zmq.SUBSCRIBE, treated_topic)
+        else:
+            raise NotImplementedError('Unsupported address type %s!' %
+                                      self.address[alias])
 
     def idle(self):
         """

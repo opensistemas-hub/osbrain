@@ -675,3 +675,20 @@ def test_agent_execute_as_method(nsproxy):
     assert agent0.execute_as_method(name, 'p', suffix='s') == 'pa0s'
     assert agent1.execute_as_method(name, 'p') == 'pa1suffix'
     assert agent1.execute_as_method(name, 'p', suffix='s') == 'pa1s'
+
+
+def test_agent_not_running_safe_call(nsproxy):
+    """
+    Trying to execute a `safe_call()` on an agent that is not running should
+    raise an exception.
+    """
+    agent = run_agent('a0')
+    assert agent.safe_call('ping') == 'pong'
+
+    with pytest.raises(Exception):
+        agent.raise_exception()
+    assert wait_agent_attr(agent, name='running', value=False)
+
+    with pytest.raises(RuntimeError) as error:
+        agent.safe_call('ping')
+    assert 'Agent must be running' in str(error.value)

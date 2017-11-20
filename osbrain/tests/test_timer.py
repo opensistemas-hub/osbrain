@@ -319,3 +319,29 @@ def test_timer_delayed_exception_shutdown_before_raising():
     agent.each(0., tick)
     assert wait_agent_attr(agent, name='count', value=1)
     ns.shutdown()
+
+
+def test_timer_sleep_and_send_shutdown_before_sent():
+    """
+    Test a timer that waits for a while and then sends a message through a
+    socket. While the timer is executing (during that waiting), the name
+    server calls for shutdown.
+
+    Basically the sender agent binds a PUSH socket and the receiver connects
+    to it. The shutdown call will kill the receiver before the sender sends
+    its message. Sender should not block in the send call.
+    """
+    def tick(agent):
+        agent.count += 1
+        time.sleep(2)
+        agent.send('push', agent.count)
+
+    ns = run_nameserver()
+    sender = run_agent('sender', attributes={'count': 0})
+    receiver = run_agent('receiver')
+    addr = sender.bind('PUSH', alias='push')
+    receiver.connect(addr, handler=set_received)
+    # Start timer
+    sender.each(0., tick)
+    assert wait_agent_attr(sender, name='count', value=1)
+    ns.shutdown()

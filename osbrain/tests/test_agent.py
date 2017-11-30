@@ -49,7 +49,9 @@ def test_early_agent_proxy(nsproxy):
     # Start agent later
     Timer(2, agent.start).start()
     # Locate agent now
-    a0 = Proxy('a0', timeout=3.)
+    with pytest.raises(Pyro4.errors.NamingError):
+        a0 = Proxy('a0', timeout=1.)
+    a0 = Proxy('a0', timeout=10.)
     # Just check agent is ready
     assert a0.unsafe.ping() == 'pong'
 

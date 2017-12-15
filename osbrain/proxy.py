@@ -95,6 +95,7 @@ class Proxy(Pyro4.core.Proxy):
         try:
             self.unsafe.ping()
         except Exception:
+            time.sleep(0.1)
             if time.time() - time0 < timeout:
                 return False
             raise

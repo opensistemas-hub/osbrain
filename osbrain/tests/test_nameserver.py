@@ -153,7 +153,7 @@ def test_nameserver_proxy_shutdown_raise_timeout():
     run_agent('a0')
     with pytest.raises(TimeoutError) as error:
         ns.shutdown(timeout=0.)
-    assert 'not all agents were shutdown' in str(error.value)
+    assert 'not shutdown after' in str(error.value)
     ns.shutdown()
 
 

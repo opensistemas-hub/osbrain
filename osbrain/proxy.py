@@ -370,8 +370,11 @@ class NSProxy(Pyro4.core.Proxy):
                 return
             time.sleep(0.1)
         raise TimeoutError(
-            'Chances are not all agents were shutdown after %s s!' %
-            timeout)
+            'Chances are {} were not shutdown after {} s!'.format(
+                self.agents(),
+                timeout,
+                )
+            )
 
     def shutdown(self, timeout=10.):
         """

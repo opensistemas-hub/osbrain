@@ -45,9 +45,20 @@ class NameServer(Pyro4.naming.NameServer):
                 agent = Proxy(name, nsaddr=nsaddr, timeout=0.5)
                 if agent.unsafe.get_attr('running'):
                     agent.unsafe.after(0, 'shutdown')
-                    agent.unsafe.close_all()
                 else:
                     agent.oneway.kill()
+                agent._pyroRelease()
+            except PyroError:
+                pass
+
+    def async_kill_agents(self, nsaddr):
+        """
+        Kill all agents registered in the name server, with no mercy.
+        """
+        for name in self.agents():
+            try:
+                agent = Proxy(name, nsaddr=nsaddr, timeout=0.5)
+                agent.oneway.kill()
                 agent._pyroRelease()
             except PyroError:
                 pass

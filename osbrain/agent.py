@@ -1567,6 +1567,8 @@ class Agent():
     def shutdown(self):
         # Stop running timers
         self.stop_all_timers()
+        # Close all non-internal sockets
+        self.close_all()
         # Stop the running thread
         if self.running:
             self.log_info('Stopping...')
@@ -1574,8 +1576,9 @@ class Agent():
             self._kill_now = True
 
     def kill(self):
-        self.close_all()
         self._pyroDaemon.shutdown()
+        self.stop_all_timers()
+        self.close_all()
 
     def get_unique_external_zmq_sockets(self):
         """

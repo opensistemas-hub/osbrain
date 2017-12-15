@@ -358,15 +358,19 @@ class NSProxy(Pyro4.core.Proxy):
         """
         # Wait for all agents to be shutdown (unregistered)
         time0 = time.time()
-        while True:
+        super()._pyroInvoke('async_shutdown_agents', (self.addr(), ), {})
+        while time.time() - time0 <= timeout / 2.:
             if not len(self.agents()):
-                break
-            super()._pyroInvoke('async_shutdown_agents', (self.addr(), ), {})
+                return
             time.sleep(0.1)
-            if time.time() - time0 >= timeout:
-                raise TimeoutError(
-                    'Chances are not all agents were shutdown after %s s!' %
-                    timeout)
+        super()._pyroInvoke('async_kill_agents', (self.addr(), ), {})
+        while time.time() - time0 <= timeout:
+            if not len(self.agents()):
+                return
+            time.sleep(0.1)
+        raise TimeoutError(
+            'Chances are not all agents were shutdown after %s s!' %
+            timeout)
 
     def shutdown(self, timeout=10.):
         """

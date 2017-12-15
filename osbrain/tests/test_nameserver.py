@@ -15,7 +15,6 @@ from osbrain import run_nameserver
 from osbrain import Agent
 from osbrain import NameServer
 from osbrain import NSProxy
-from osbrain.helper import agent_dies
 from osbrain.helper import wait_agent_attr
 from osbrain.nameserver import NameServerProcess
 from osbrain.nameserver import random_nameserver_process
@@ -124,8 +123,8 @@ def test_nameserver_proxy_shutdown_lazy_agents(delay, timeout):
     Shutdown a name server proxy with agents that wait some time before
     shutting down.
 
-    The name server should always wait for all agents to shut down when no
-    timeout is set.
+    The name server shutdown should always succeed. If the agents do not
+    shutdown cleanly soon they should be hard-killed.
     """
     class Lazy(Agent):
         def shutdown(self):
@@ -138,15 +137,24 @@ def test_nameserver_proxy_shutdown_lazy_agents(delay, timeout):
 
     t0 = time.time()
     if timeout:
-        with pytest.raises(TimeoutError) as error:
-            ns.shutdown(timeout=delay-1)
-        assert 'not all agents were shutdown' in str(error.value)
-        # Agent should die soon anyway
-        assert agent_dies('a0', nsproxy=ns, timeout=2.)
-        assert agent_dies('a1', nsproxy=ns, timeout=0.)
-    ns.shutdown()
-    assert time.time() - t0 > delay
+        ns.shutdown(timeout=delay)
+    else:
+        ns.shutdown()
+    assert time.time() - t0 > delay / 2.
     assert time.time() - t0 < delay + 2
+
+
+def test_nameserver_proxy_shutdown_raise_timeout():
+    """
+    A name server proxy should raise a TimeoutError if agents were not shutdown
+    or killed before the set timeout.
+    """
+    ns = run_nameserver()
+    run_agent('a0')
+    with pytest.raises(TimeoutError) as error:
+        ns.shutdown(timeout=0.)
+    assert 'not all agents were shutdown' in str(error.value)
+    ns.shutdown()
 
 
 def test_oneway_kill_non_running_agent_on_name_server_shutdown():

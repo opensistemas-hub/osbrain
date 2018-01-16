@@ -107,7 +107,7 @@ Shutting down a name server will result in all agents registered in that name
 server being shut down as well. This allows us to easily shutdown groups of
 agents at the same time.
 
-.. note:: We can stablish connections between agents registered in different
+.. note:: We can establish connections between agents registered in different
    name servers.
 
 

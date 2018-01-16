@@ -21,7 +21,7 @@ if __name__ == '__main__':
     apple.connect(addr, handler=log_message)
 
     # Multiple timers with parameters
-    orange.each(1., annoy, 'Hey')
+    orange.each(1.0, annoy, 'Hey')
     orange.each(1.4142, annoy, 'Apple')
     orange.each(3.1415, annoy, 'Hey', more='Apple')
 

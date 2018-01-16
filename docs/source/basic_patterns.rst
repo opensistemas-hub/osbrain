@@ -91,12 +91,12 @@ Note that in this case all handlers will be executed in sequence.
 Request-Reply
 =============
 
+Another common communication pattern is the request-reply, in which a requester
+sends a message to the replier and always expects a reply. It is sometimes
+useful, specially when some kind of synchronization is required.
+
 Example
 -------
-
-Another common communication pattern is the request-reply, in which a requester
-sends a message to the replier and expects always a reply back. It is sometimes
-useful, specially when some kind of synchronization is required.
 
 .. literalinclude:: ../../examples/req_rep.py
 
@@ -133,12 +133,12 @@ the handler. Instead, an agent can use `yield` to reply earlier if needed::
 Publish-Subscribe
 =================
 
-Example
--------
-
 One of the most useful communication patterns between agents is the publish
 and subscribe pattern. The publisher will send messages to all subscribed
 agents.
+
+Example
+-------
 
 Here is an example in which *Alice* is the publisher and *Bob* and *Eve*
 subscribe to *Alice*. This way, when *Alice* sends a message, both *Bob* and

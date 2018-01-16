@@ -26,19 +26,18 @@ Binding with distributed systems
 ================================
 
 Working with distributed systems is easy, you just basically need to make
-sure you use TCP transport and to specify the network interface where you
-want to bind.
+sure you use TCP transport and to specify the network interface IP address
+that you want to bind to.
 
 This can be done when binding (note that we are using `127.0.0.1` but you
-may use any other interface available in your system):
+may use any other IP address available in your system):
 
 .. code-block:: python
 
    address = agent.bind('PULL', transport='tcp', addr='127.0.0.1')
 
-Defining just the network interface means the agent will bind to a random
-port, which is usually fine. However, you can also specify the port to bind
-to:
+Defining just the IP address means the agent will bind to a random port, which
+is usually fine. However, you can also specify the port to bind to:
 
 .. code-block:: python
 
@@ -77,22 +76,23 @@ Proxies and multiple scripts
 ============================
 
 With distributed systems, it is very common to have multiple scripts (many
-times spread accross multiple machines). If those are to interact together,
+times spread across multiple machines). If those are to interact together,
 you should consider whether a single/shared name server should be used. This
 simplifies the way you can get proxies to every agent and also the way they
 may share information between them.
 
 If you are just starting with distributed systems and osBrain, you may
-approach it in the following way:
+approach it the following way:
 
 - You create one script, in which you run some agents and configure them.
-- You create another script, in which you run some agents and configure them.
+- You create another script, in which you run some more agents and configure
+  those as well.
 - From the second script, you access agents that you created on the first
-  and except that they are all ready and completely configured. But it turns
+  and expect them to be ready and completely configured. But it turns
   out that might not be the case.
 
-There is a very simple way to avoid this issue. Do create the agents from
-different scripts, but try to do all the configuration just from one of them.
+To avoid this issue, try to do all the configuration of agents from a single
+script, even if those agents are created from different ones.
 Remember that proxies allow you to treat remote agents just like local objects,
-which means you do not really mind if they are running in one machine or
+which means it does not really matter if they are running in one machine or
 another.

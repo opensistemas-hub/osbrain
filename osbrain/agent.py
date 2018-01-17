@@ -1789,6 +1789,6 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
                  attributes=attributes).start()
     proxy = Proxy(name, nsaddr, safe=safe)
     proxy.run()
-    while not proxy.get_attr('running'):
-        time.sleep(0.01)
+    proxy.wait_for_running()
+
     return proxy

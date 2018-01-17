@@ -5,10 +5,13 @@ import time
 
 import pickle
 import pytest
+from threading import Timer
+
 
 import osbrain
 from osbrain import run_agent
 from osbrain import Agent
+from osbrain import AgentProcess
 from osbrain import Proxy
 from osbrain.proxy import locate_ns
 from osbrain.helper import wait_agent_attr
@@ -117,6 +120,55 @@ def test_agent_proxy_initialization_timeout(nsproxy):
     run_agent('foo')
     with pytest.raises(TimeoutError):
         InitTimeoutProxy('foo', timeout=1.)
+
+
+@pytest.mark.parametrize('timeout', [-1, 1])
+def test_agent_proxy_wait_running(nsproxy, timeout):
+    """
+    Using `wait_for_running` on a proxy after initialization should block until
+    the agent is running or time out.
+    """
+    AgentProcess('agent').start()
+
+    # Get "offline" proxy
+    agent = Proxy('agent')
+    time0 = time.time()
+    Timer(abs(timeout) / 2, agent.run).start()
+
+    proxy = Proxy('agent').wait_for_running(timeout=timeout)
+    elapsed = time.time() - time0
+    assert proxy.ping() == 'pong'
+    assert elapsed >= abs(timeout) / 2
+    assert elapsed <= abs(timeout)
+
+
+def test_agent_proxy_wait_running_0_seconods(nsproxy):
+    """
+    Using `wait_for_running` on a proxy after initialization should block until
+    the agent is running or time out.
+    """
+    run_agent('agent')
+
+    proxy = Proxy('agent').wait_for_running(timeout=0)
+    assert proxy.ping() == 'pong'
+
+
+@pytest.mark.parametrize('timeout', [0, 1])
+def test_agent_proxy_wait_running_timeout(nsproxy, timeout):
+    """
+    Check that the `wait_for_running` method times out if the agent is not
+    running after the specified number of seconds.
+    """
+    AgentProcess('agent').start()
+
+    time0 = time.time()
+    with pytest.raises(TimeoutError) as error:
+        Proxy('agent').wait_for_running(timeout=timeout)
+    elapsed = time.time() - time0
+
+    assert "Timed out" in str(error.value)
+    assert elapsed >= timeout
+    assert elapsed < timeout + .5
 
 
 def test_agent_proxy_nameserver_address(nsproxy):

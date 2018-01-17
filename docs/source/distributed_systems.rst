@@ -96,3 +96,6 @@ script, even if those agents are created from different ones.
 Remember that proxies allow you to treat remote agents just like local objects,
 which means it does not really matter if they are running in one machine or
 another.
+
+.. note:: If you want to make sure the agent is running before using it, you
+   can use the `Proxy.wait_for_running()` method.

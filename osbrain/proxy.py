@@ -100,6 +100,35 @@ class Proxy(Pyro4.core.Proxy):
             raise
         return True
 
+    def wait_for_running(self, timeout=3.):
+        """
+        Wait until the agent is running.
+
+        Parameters
+        ----------
+        timeout : float
+            Raise and exception if the agent is not running after this number
+            of seconds. Use a negative value to wait forever.
+
+        Raises
+        ------
+        TimeoutError
+            If the agent is not running after the given timeout.
+
+        Returns
+        -------
+        Proxy
+            The object itself.
+        """
+        time0 = time.time()
+        while not self.get_attr('running'):
+            if timeout >= 0 and time.time() - time0 > timeout:
+                msg = 'Timed out while waiting for the agent to be running'
+                raise TimeoutError(msg)
+            time.sleep(.01)
+
+        return self
+
     def __getstate__(self):
         return super().__getstate__() + \
             (self._next_oneway, self._default_safe, self._safe)

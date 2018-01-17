@@ -52,6 +52,17 @@ def test_nameserver_proxy_list(nsproxy):
     assert 'a1' in agent_list
 
 
+def test_run_agents_same_name(nsproxy):
+    """
+    Check that the user cannot create two agents with the same name. A
+    RuntimeError should be raised.
+    """
+    run_agent('name')
+    with pytest.raises(RuntimeError) as error:
+        run_agent('name')
+    assert 'name already registered' in str(error.value)
+
+
 def test_nameserver_proxy_shutdown_no_agents():
     """
     Shutdown a name server through a proxy when the name server has no

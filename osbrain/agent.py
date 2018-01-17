@@ -1700,11 +1700,16 @@ class AgentProcess(multiprocessing.Process):
             self.queue.put(format_exception())
             return
 
-        self.queue.put('STARTED')
-
         uri = self._daemon.register(self.agent)
-        ns.register(self.name, uri)
-        ns.release()
+        try:
+            ns.register(self.name, uri, safe=True)
+        except Pyro4.errors.NamingError:
+            self.queue.put(format_exception())
+            return
+        finally:
+            ns.release()
+
+        self.queue.put('STARTED')
 
         self._daemon.requestLoop(lambda: not self.shutdown_event.is_set())
         self._daemon.unregister(self.agent)

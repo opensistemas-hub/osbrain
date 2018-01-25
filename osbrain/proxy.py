@@ -161,29 +161,56 @@ class Proxy(Pyro4.core.Proxy):
 
     def nsaddr(self):
         """
+        Get the socket address of the name server.
+
         Returns
         -------
         SocketAddress
-            The socket address of the name server.
+            The socket address.
         """
         return SocketAddress(self._pyroUri.host, self._pyroUri.port)
 
     @property
     def safe(self):
+        """
+        Make the next remote method call be safe.
+
+        Returns
+        -------
+        The proxy itself.
+        """
         self._safe = True
         return self
 
     @property
     def unsafe(self):
+        """
+        Make the next remote method call be unsafe.
+
+        Returns
+        -------
+        The proxy itself.
+        """
         self._safe = False
         return self
 
     @property
     def oneway(self):
+        """
+        Make the next remote method call be one way.
+
+        Returns
+        -------
+        The proxy itself.
+        """
         self._next_oneway = True
         return self
 
     def _pyroInvoke(self, methodname, args, kwargs, flags=0, objectId=None):
+        """
+        Wrapper around `_remote_call` to safely execute methods on remote
+        objects.
+        """
         try:
             result = self._remote_call(
                 methodname, args, kwargs, flags, objectId)

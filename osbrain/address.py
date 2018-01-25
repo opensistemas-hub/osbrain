@@ -106,11 +106,13 @@ class AgentAddressRole(str):
 
     def twin(self):
         """
+        Get the twin role of the current one. `server` would be the twin
+        of `client` and viceversa.
+
         Returns
         -------
         AgentAddressRole
-            The twin role of the current one; `server` would be the twin
-            of `client` and viceversa.
+            The twin role.
         """
         if self == 'server':
             return self.__class__('client')
@@ -153,32 +155,37 @@ class AgentAddressKind(str):
 
     def zmq(self):
         """
+        Get the equivalent ZeroMQ socket kind.
+
         Returns
         -------
         int
-            The equivalent ZeroMQ socket kind.
         """
         return self.ZMQ_KIND_CONVERSION[self]
 
     def requires_handler(self):
         """
+        Whether the Agent's address kind requires a handler or not.
+        A socket which processes incoming messages would require a
+        handler (i.e. 'REP', 'PULL', 'SUB'...).
+
         Returns
         -------
         bool
-            Whether the Agent's address kind requires a handler or not.
-            A socket which processes incoming messages would require a
-            handler (i.e. 'REP', 'PULL', 'SUB'...).
         """
         return self in self.REQUIRE_HANDLER
 
     def twin(self):
         """
+        Get the twin kind of the current one.
+
+        `REQ` would be the twin of `REP` and viceversa, `PUB` would be the
+        twin of `SUB` and viceversa, etc.
+
         Returns
         -------
         AgentAddressKind
-            The twin kind of the current one; `REQ` would be the twin
-            of `REP` and viceversa, `PUB` would be the twin of `SUB` and
-            viceversa, etc.
+            The twin kind of the current one.
         """
         return self.__class__(self.TWIN[self])
 
@@ -319,13 +326,16 @@ class AgentAddress():
 
     def twin(self):
         """
+        Return the twin address of the current one.
+
+        While the `host` and `port` are kept for the twin, the `kind` and
+        `role` change to their corresponding twins, according to the
+        rules defined in the respective classes.
+
         Returns
         -------
         AgentAddress
-            The twin address of the current one; while the `host` and `port`
-            are kept for the twin, the `kind` and `role` change to their
-            corresponding twins, according to the rules defined in the
-            respective classes.
+            The twin address of the current one.
         """
         kind = self.kind.twin()
         role = self.role.twin()
@@ -354,12 +364,14 @@ class AgentChannelKind(str):
 
     def twin(self):
         """
+        Get the twin kind of the current one.
+
+        `REQ` would be the twin of `REP` and viceversa, `PUB` would be
+        the twin of `SUB` and viceversa, etc.
+
         Returns
         -------
         AgentChannelKind
-            The twin kind of the current one; `REQ` would be the twin
-            of `REP` and viceversa, `PUB` would be the twin of `SUB` and
-            viceversa, etc.
         """
         return self.__class__(self.TWIN[self])
 
@@ -428,10 +440,12 @@ class AgentChannel():
 
     def twin(self):
         """
+        Get the twin channel of the current one.
+
         Returns
         -------
         AgentChannel
-            The twin channel of the current one.
+            The twin channel.
         """
         kind = self.kind.twin()
         sender = self.receiver.twin() if self.receiver is not None else None

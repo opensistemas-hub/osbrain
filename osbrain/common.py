@@ -30,7 +30,7 @@ def format_exception():
     with a `|` character.
 
     Useful for differenciating remote from local exceptions and exceptions
-    that where sileced.
+    that where silenced.
 
     Returns
     -------
@@ -43,6 +43,27 @@ def format_exception():
 
 
 def format_method_exception(error, method, args, kwargs):
+    """
+    Represent an exception as a formatted string that includes the name and
+    arguments of the method where it occurred, followed by the output of
+    `format_exception`.
+
+    Parameters
+    ----------
+    error : Error
+        The exception that was raised.
+    method : function
+        The method where the exception was raised.
+    args
+        The arguments of the method call.
+    kwargs : dict
+        The keyword arguments of the method call.
+
+    Returns
+    -------
+    str
+        The formatted string with the method call and traceback information.
+    """
     message = 'Error executing `%s`! (%s)\n' % (method, error)
     message += '\n> method: %s\n> args: %s\n> kwargs: %s\n' % \
         (str(method), str(args), str(kwargs))

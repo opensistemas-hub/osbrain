@@ -88,6 +88,9 @@ class NameServerProcess(multiprocessing.Process):
         self.queue = multiprocessing.Queue()
 
     def run(self):
+        """
+        Begin execution of the name server process and start the main loop.
+        """
         # Capture SIGINT
 
         try:
@@ -124,6 +127,14 @@ class NameServerProcess(multiprocessing.Process):
         sys.stdout.flush()
 
     def start(self):
+        """
+        Start the system process.
+
+        Raises
+        ------
+        RuntimeError
+            If an error occured when initializing the daemon.
+        """
         os.environ['OSBRAIN_NAMESERVER_ADDRESS'] = str(self.addr)
         super().start()
         status = self.queue.get()

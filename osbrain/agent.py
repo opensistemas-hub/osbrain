@@ -190,7 +190,7 @@ class Agent():
     socket : dict
         A dictionary in which the key is the address or the alias and the
         value is the actual socket.
-    adddress : dict
+    address : dict
         A dictionary in which the key is the address or the alias and the
         value is the actual address.
     handler : dict
@@ -551,6 +551,21 @@ class Agent():
         return self.address[alias]
 
     def register(self, socket, address, alias=None, handler=None):
+        """
+        Internally register a connection as a socket-address pair.
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            The socket object to store.
+        address : str, AgentAddress
+            The address the socket is bound to.
+        alias : str, default is None
+            Optional alias for the connection.
+        handler : function(s)
+            Optional handler(s) for the socket. This can be a list or a
+            dictionary too.
+        """
         assert not self.registered(address), \
             'Socket is already registered!'
         if not alias:
@@ -606,6 +621,9 @@ class Agent():
         raise TypeError('Unknown handler type "%s"' % type(handler))
 
     def registered(self, address):
+        """
+        Check if an address is already registered.
+        """
         return address in self.socket
 
     def bind(self, kind, alias=None, handler=None, addr=None, transport=None,
@@ -922,6 +940,20 @@ class Agent():
 
     def _connect_and_register(self, client_address, alias=None, handler=None,
                               register_as=None):
+        """
+        Establish and register a new connection.
+
+        Parameters
+        ----------
+        client_address : AgentAddress
+            The address to connect to.
+        alias : str
+            Optional alias for the connection.
+        handler : function(s)
+            Optional handler(s) for the socket.
+        register_as
+            What the socket should be registered as (usually an AgentAddress).
+        """
         if not register_as:
             register_as = client_address
         socket = self.context.socket(client_address.kind.zmq())
@@ -931,6 +963,9 @@ class Agent():
         return client_address
 
     def _handle_async_requests(self, data):
+        """
+        Receive and process an async request.
+        """
         address_uuid, uuid, response = data
         if uuid not in self._pending_requests:
             error = 'Received response for an unknown request! %s' % uuid
@@ -1403,6 +1438,9 @@ class Agent():
         raise NotImplementedError('Unsupported address type %s!' % address)
 
     def _send_address(self, address, message, topic=None):
+        """
+        Send a message through a specific address.
+        """
         message = serialize_message(message=message,
                                     serializer=address.serializer)
         if address.kind == 'PUB':
@@ -1415,6 +1453,9 @@ class Agent():
         self.socket[address].send(message)
 
     def _send_channel(self, channel, message, topic, handler, wait, on_error):
+        """
+        Send a message through a specific channel.
+        """
         kind = channel.kind
         if kind == 'ASYNC_REP':
             return self._send_channel_async_rep(channel=channel,
@@ -1434,6 +1475,9 @@ class Agent():
 
     def _send_channel_async_rep(self, channel, message, wait, on_error,
                                 handler=None):
+        """
+        Send a message through an ASYNC_REP channel.
+        """
         address = channel.receiver
         address_uuid = self._async_req_uuid[address]
         request_uuid = unique_identifier()
@@ -1451,6 +1495,9 @@ class Agent():
 
     def _send_channel_sync_pub(self, channel, message, topic=None,
                                general=True):
+        """
+        Send a message through a SYNC_PUB channel.
+        """
         message = serialize_message(message=message,
                                     serializer=channel.serializer)
         if topic is None:
@@ -1465,6 +1512,9 @@ class Agent():
 
     def _send_channel_sync_sub(self, channel, message, topic, handler, wait,
                                on_error):
+        """
+        Send a message through a SYNC_SUB channel.
+        """
         address = channel.receiver
         address_uuid = self._async_req_uuid[address]
         request_uuid = unique_identifier()
@@ -1548,7 +1598,7 @@ class Agent():
     @Pyro4.oneway
     def run(self):
         """
-        Run the agent.
+        Start the main loop.
         """
         self.running = True
         try:
@@ -1565,6 +1615,9 @@ class Agent():
             self.kill()
 
     def shutdown(self):
+        """
+        Cleanly stop and shut down the agent.
+        """
         # Stop running timers
         self.stop_all_timers()
         # Close all non-internal sockets
@@ -1576,6 +1629,9 @@ class Agent():
             self._kill_now = True
 
     def kill(self):
+        """
+        Force shutdown of the agent.
+        """
         self._pyroDaemon.shutdown()
         self.stop_all_timers()
         self.close_all()
@@ -1686,6 +1742,9 @@ class AgentProcess(multiprocessing.Process):
         self.attributes = attributes
 
     def run(self):
+        """
+        Begin execution of the agent process and start the main loop.
+        """
         # Capture SIGINT
         signal.signal(signal.SIGINT, self.sigint_handler)
 
@@ -1742,6 +1801,14 @@ class AgentProcess(multiprocessing.Process):
         self._daemon.close()
 
     def start(self):
+        """
+        Start the system process.
+
+        Raises
+        ------
+        RuntimeError
+            If an error occured when initializing the daemon.
+        """
         super().start()
         status = self.queue.get()
         if status == 'STARTED':
@@ -1750,6 +1817,9 @@ class AgentProcess(multiprocessing.Process):
                            '\n===============\n'.join(['', status, '']))
 
     def kill(self):
+        """
+        Force kill the agent process.
+        """
         self.shutdown_event.set()
         if self._daemon:
             self._daemon.shutdown()

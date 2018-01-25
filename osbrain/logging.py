@@ -21,6 +21,9 @@ class Logger(Agent):
     logging incoming messages.
     """
     def on_init(self):
+        """
+        Initialize attributes.
+        """
         self.log_history_info = []
         self.log_history_warning = []
         self.log_history_error = []

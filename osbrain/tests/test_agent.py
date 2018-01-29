@@ -103,6 +103,24 @@ def test_late_runner(nsproxy):
     assert a0.ping() == 'pong'
 
 
+def test_agent_configure(nsproxy):
+    """
+    Tests agent's `configure()` method, which should be able to start timers.
+    """
+    class MyAgent(Agent):
+        def on_init(self):
+            self.x = 0
+
+        def configure(self):
+            self.each(.5, 'incr')
+
+        def incr(self):
+            self.x += 1
+
+    agent = run_agent('agent', base=MyAgent)
+    assert wait_agent_attr(agent, 'x', value=3, timeout=1.2)
+
+
 def test_agent_shutdown(nsproxy):
     """
     An agent must unregister itself before shutting down.
@@ -656,7 +674,7 @@ def test_agent_execute_as_function(nsproxy):
     in the remote agent.
     """
     class EnvironmentAgent(Agent):
-        def configure(self, value):
+        def set_environment(self, value):
             os.environ['__OSBRAIN_TEST'] = value
 
     def name(prefix, suffix='suffix'):
@@ -664,8 +682,8 @@ def test_agent_execute_as_function(nsproxy):
 
     agent0 = run_agent('a0', base=EnvironmentAgent)
     agent1 = run_agent('a1', base=EnvironmentAgent)
-    agent0.configure('0')
-    agent1.configure('1')
+    agent0.set_environment('0')
+    agent1.set_environment('1')
 
     assert agent0.execute_as_function(name, 'p') == 'p0suffix'
     assert agent0.execute_as_function(name, 'p', suffix='s') == 'p0s'

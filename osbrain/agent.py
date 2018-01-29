@@ -262,6 +262,12 @@ class Agent():
         """
         pass
 
+    def configure(self):
+        """
+        This user-defined method is to be executed right before the main loop.
+        """
+        pass
+
     def _handle_loopback(self, message):
         """
         Handle incoming messages in the loopback socket.
@@ -1608,6 +1614,7 @@ class Agent():
         Start the main loop.
         """
         self.running = True
+        self.configure()
         try:
             self.loop()
         except Exception as error:

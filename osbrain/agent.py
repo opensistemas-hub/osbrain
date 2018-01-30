@@ -185,8 +185,14 @@ class Agent():
     ----------
     name : str
         Name of the agent.
+    uuid : bytes
+        Globally unique identifer for the agent.
     host : str
         Host address where the agent is binding to.
+    serializer : str
+        Default agent serialization format.
+    transport : str, AgentAddressTransport, default is None
+        Default agent transport protocol.
     socket : dict
         A dictionary in which the key is the address or the alias and the
         value is the actual socket.
@@ -196,6 +202,10 @@ class Agent():
     handler : dict
         A dictionary in which the key is the socket and the values are the
         handlers for each socket.
+    context : zmq.Context
+        ZMQ context to create ZMQ socket objects.
+    poller : zmq.Poller
+        ZMQ poller to wait for incoming data from sockets.
     poll_timeout : int
         Polling timeout, in milliseconds. After this timeout, if no message
         is received, the agent executes de `idle()` method before going back
@@ -204,6 +214,21 @@ class Agent():
         When set to `True`, the agent will continue executing the main loop.
     running : bool
         Set to `True` if the agent is running (executing the main loop).
+    _async_req_uuid : dict
+        Stores the UUIDs of the asynchronous request sockets (used in
+        communication channels).
+    _async_req_handler : dict
+        Stores the handler for every asynchronous request sockets (used in
+        communication channels).
+    _kill_now : bool
+        During shutdown, this attribute is set for the agent to be killed.
+    _DEBUG : bool
+        Whether to print debug level messages.
+    _pending_requests : dict
+        Stores pending (waiting for reply) asynchronous requests. The
+        asynchronous request UUID is used as key and its handler as the value.
+    _timer : dict
+        Stores all the current active timers, using their aliases as keys.
     """
     def __init__(self, name='', host=None, serializer=None, transport=None,
                  attributes=None):

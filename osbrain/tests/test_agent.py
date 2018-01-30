@@ -39,6 +39,18 @@ def test_agent_uuid():
     assert all(isinstance(identifier, bytes) for identifier in bunch)
 
 
+def test_agent_auto_generated_name(nsproxy):
+    """
+    If an agent is initialized without a name, a globally unique one must be
+    auto generated for it.
+    """
+    count = 10
+    names = set([run_agent().get_attr('name') for x in range(count)])
+    assert all(isinstance(name, str) for name in names)
+    assert len(names) == count
+    assert names == set(nsproxy.agents())
+
+
 def test_early_agent_proxy(nsproxy):
     """
     It must be possible to create a Proxy when the registration of the new

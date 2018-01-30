@@ -205,10 +205,13 @@ class Agent():
     running : bool
         Set to `True` if the agent is running (executing the main loop).
     """
-    def __init__(self, name=None, host=None, serializer=None, transport=None,
+    def __init__(self, name='', host=None, serializer=None, transport=None,
                  attributes=None):
         self.uuid = unique_identifier()
         self.name = name
+        if not self.name:
+            self.name = self.uuid.decode()
+
         self.host = host
         if not self.host:
             self.host = '127.0.0.1'
@@ -1724,7 +1727,7 @@ class AgentProcess(multiprocessing.Process):
     Agent class. Instances of an Agent are system processes which
     can be run independently.
     """
-    def __init__(self, name, nsaddr=None, addr=None, serializer=None,
+    def __init__(self, name='', nsaddr=None, addr=None, serializer=None,
                  transport=None, base=Agent, attributes=None):
         super().__init__()
         self.name = name
@@ -1759,6 +1762,7 @@ class AgentProcess(multiprocessing.Process):
             self.queue.put(format_exception())
             return
 
+        self.name = self.agent.name
         uri = self._daemon.register(self.agent)
         try:
             ns.register(self.name, uri, safe=True)
@@ -1768,7 +1772,7 @@ class AgentProcess(multiprocessing.Process):
         finally:
             ns.release()
 
-        self.queue.put('STARTED')
+        self.queue.put('STARTED:'+self.name)
 
         self._daemon.requestLoop(lambda: not self.shutdown_event.is_set())
         self._daemon.unregister(self.agent)
@@ -1811,10 +1815,11 @@ class AgentProcess(multiprocessing.Process):
         """
         super().start()
         status = self.queue.get()
-        if status == 'STARTED':
-            return
-        raise RuntimeError('An error occured while creating the daemon!' +
-                           '\n===============\n'.join(['', status, '']))
+        if not status.startswith('STARTED'):
+            raise RuntimeError('An error occured while creating the daemon!' +
+                               '\n===============\n'.join(['', status, '']))
+
+        return status.partition(':')[-1]
 
     def kill(self):
         """
@@ -1832,7 +1837,7 @@ class AgentProcess(multiprocessing.Process):
         self.kill()
 
 
-def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
+def run_agent(name='', nsaddr=None, addr=None, base=Agent, serializer=None,
               transport=None, safe=None, attributes=None):
     """
     Ease the agent creation process.
@@ -1842,7 +1847,7 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
 
     Parameters
     ----------
-    name : str
+    name : str, default is ''
         Agent name or alias.
     nsaddr : SocketAddress, default is None
         Name server address.
@@ -1862,10 +1867,12 @@ def run_agent(name, nsaddr=None, addr=None, base=Agent, serializer=None,
     """
     if not nsaddr:
         nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
-    AgentProcess(name, nsaddr=nsaddr, addr=addr, base=base,
-                 serializer=serializer, transport=transport,
-                 attributes=attributes).start()
-    proxy = Proxy(name, nsaddr, safe=safe)
+    agent = AgentProcess(name=name, nsaddr=nsaddr, addr=addr, base=base,
+                         serializer=serializer, transport=transport,
+                         attributes=attributes)
+    agent_name = agent.start()
+
+    proxy = Proxy(agent_name, nsaddr, safe=safe)
     proxy.run()
     proxy.wait_for_running()
 

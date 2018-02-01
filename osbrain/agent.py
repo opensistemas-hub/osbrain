@@ -244,13 +244,17 @@ class Agent():
                   handler=self._handle_loopback_safe, transport='inproc',
                   serializer='pickle')
 
-        if attributes:
-            for key, value in attributes.items():
-                if hasattr(self, key):
-                    raise KeyError('Agent already has "%s" attribute!' % key)
-                setattr(self, key, value)
-
+        self._set_attributes(attributes)
         self.on_init()
+
+    def _set_attributes(self, attributes):
+        if not attributes:
+            return
+
+        for key, value in attributes.items():
+            if hasattr(self, key):
+                raise KeyError('Agent already has "%s" attribute!' % key)
+            setattr(self, key, value)
 
     def on_init(self):
         """

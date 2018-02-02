@@ -501,7 +501,7 @@ class Agent():
         """
         level = LogLevel(level)
         message = '[%s] (%s): %s' % (datetime.utcnow(), self.name, message)
-        if self.registered(logger):
+        if self._registered(logger):
             logger_kind = AgentAddressKind(self._address[logger].kind)
             assert logger_kind == 'PUB', \
                 'Logger must use publisher-subscriber pattern!'
@@ -589,7 +589,7 @@ class Agent():
         """
         return self._address[alias]
 
-    def register(self, socket, address, alias=None, handler=None):
+    def _register(self, socket, address, alias=None, handler=None):
         """
         Internally register a connection as a socket-address pair.
 
@@ -605,7 +605,7 @@ class Agent():
             Optional handler(s) for the socket. This can be a list or a
             dictionary too.
         """
-        assert not self.registered(address), \
+        assert not self._registered(address), \
             'Socket is already registered!'
         if not alias:
             alias = address
@@ -659,7 +659,7 @@ class Agent():
             return unbound_method(handler)
         raise TypeError('Unknown handler type "%s"' % type(handler))
 
-    def registered(self, address):
+    def _registered(self, address):
         """
         Check if an address is already registered.
         """
@@ -732,7 +732,7 @@ class Agent():
         addr = self._bind_socket(socket, addr=addr, transport=transport)
         server_address = AgentAddress(transport, addr, kind, 'server',
                                       serializer)
-        self.register(socket, server_address, alias, handler)
+        self._register(socket, server_address, alias, handler)
         # SUB sockets are a special case
         if kind == 'SUB':
             self.subscribe(server_address, handler)
@@ -769,7 +769,7 @@ class Agent():
             server_address = AgentAddress(transport, addr, 'PULL', 'server',
                                           serializer)
             channel = AgentChannel(kind, receiver=server_address, sender=None)
-            self.register(socket, channel, alias, handler)
+            self._register(socket, channel, alias, handler)
             return channel
         if kind == 'SYNC_PUB':
             if addr:
@@ -788,7 +788,7 @@ class Agent():
                                        serializer)
             channel = AgentChannel(kind, receiver=pull_address,
                                    sender=pub_address)
-            self.register(pub_socket, channel, alias=alias)
+            self._register(pub_socket, channel, alias=alias)
             return channel
         else:
             raise NotImplementedError('Unsupported channel kind %s!' % kind)
@@ -865,7 +865,7 @@ class Agent():
         client_address = server_address.twin()
         validate_handler(handler,
                          required=client_address.kind.requires_handler())
-        if self.registered(client_address):
+        if self._registered(client_address):
             self._connect_old(client_address, alias, handler)
         else:
             self._connect_and_register(client_address, alias, handler)
@@ -917,7 +917,7 @@ class Agent():
         # Connect PUSH-PULL (asynchronous REQ-REP)
         pull_address = channel.receiver
         self._connect_address(pull_address, alias=alias, handler=None)
-        if self.registered(channel):
+        if self._registered(channel):
             raise NotImplementedError('Tried to (re)connect a channel')
         self._connect_and_register(pull_address.twin(), alias=alias,
                                    register_as=channel)
@@ -947,7 +947,7 @@ class Agent():
         # Connect PUSH-PULL (synchronous PUB-SUB)
         client_channel = channel.twin()
         self._connect_address(channel.receiver, alias=alias, handler=None)
-        if self.registered(channel):
+        if self._registered(channel):
             raise NotImplementedError('Tried to (re)connect a channel')
         self._connect_and_register(client_channel.sender, alias=alias,
                                    register_as=client_channel)
@@ -998,7 +998,7 @@ class Agent():
         socket = self._context.socket(client_address.kind.zmq())
         socket.connect('%s://%s' % (client_address.transport,
                                     client_address.address))
-        self.register(socket, register_as, alias, handler)
+        self._register(socket, register_as, alias, handler)
         return client_address
 
     def _handle_async_requests(self, data):
@@ -1184,7 +1184,7 @@ class Agent():
         """
         return function(self, *args, **kwargs)
 
-    def loop(self):
+    def _loop(self):
         """
         Agent's main loop.
 
@@ -1192,10 +1192,10 @@ class Agent():
         or until an error occurs.
         """
         while self._keep_alive:
-            if self.iterate():
+            if self._iterate():
                 break
 
-    def iterate(self):
+    def _iterate(self):
         """
         Agent's main iteration.
 
@@ -1345,7 +1345,7 @@ class Agent():
                                       serializer=channel.serializer)
         address_uuid, request_uuid, data, address = message
         client_address = address.twin()
-        if not self.registered(client_address):
+        if not self._registered(client_address):
             self.connect(address)
         handler = self._handler[socket]
         is_generator = inspect.isgeneratorfunction(handler)
@@ -1642,7 +1642,7 @@ class Agent():
         self._running = True
         self.configure()
         try:
-            self.loop()
+            self._loop()
         except Exception as error:
             self._running = False
             msg = 'An exception occured while running! (%s)\n' % error
@@ -1682,7 +1682,7 @@ class Agent():
         self.stop_all_timers()
         self.close_all()
 
-    def get_unique_external_zmq_sockets(self):
+    def _get_unique_external_zmq_sockets(self):
         """
         Return an iterable containing all the zmq.Socket objects from
         `self.socket` which are not internal, without repetition.
@@ -1745,7 +1745,7 @@ class Agent():
         """
         # Each socket might be pointed by different keys
         sockets_to_delete = []
-        for sock in self.get_unique_external_zmq_sockets():
+        for sock in self._get_unique_external_zmq_sockets():
             sockets_to_delete.append(sock)
             sock.close(linger=get_linger())
 
@@ -1792,7 +1792,7 @@ class AgentProcess(multiprocessing.Process):
         Begin execution of the agent process and start the main loop.
         """
         # Capture SIGINT
-        signal.signal(signal.SIGINT, self.sigint_handler)
+        signal.signal(signal.SIGINT, self._sigint_handler)
 
         try:
             ns = NSProxy(self.nsaddr)
@@ -1872,7 +1872,7 @@ class AgentProcess(multiprocessing.Process):
         if self._daemon:
             self._daemon.shutdown()
 
-    def sigint_handler(self, signal, frame):
+    def _sigint_handler(self, signal, frame):
         """
         Handle interruption signals.
         """

@@ -122,7 +122,7 @@ class Proxy(Pyro4.core.Proxy):
             The object itself.
         """
         time0 = time.time()
-        while not self.get_attr('running'):
+        while not self.is_running():
             if timeout >= 0 and time.time() - time0 > timeout:
                 msg = 'Timed out while waiting for the agent to be running'
                 raise TimeoutError(msg)
@@ -241,7 +241,7 @@ class Proxy(Pyro4.core.Proxy):
         return (methodname in self._pyroMethods and
                 not methodname.startswith('_') and
                 methodname not in ('run', 'get_attr', 'kill', 'safe_call',
-                                   'concurrent'))
+                                   'concurrent', 'is_running'))
 
     def _remote_call(self, methodname, args, kwargs, flags, objectId):
         """

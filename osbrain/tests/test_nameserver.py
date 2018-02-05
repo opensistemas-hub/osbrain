@@ -206,8 +206,8 @@ def test_oneway_kill_non_running_agent_on_name_server_shutdown():
     ns = run_nameserver()
     william = run_agent('william', base=WilliamWallace)
     # Stop the agent
-    william.set_attr(keep_alive=False)
-    assert wait_agent_attr(william, name='running', value=False)
+    william.set_attr(_keep_alive=False)
+    assert wait_agent_attr(william, name='_running', value=False)
     # Shut down should work just fine
     ns.shutdown()
 

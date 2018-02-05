@@ -43,7 +43,7 @@ class NameServer(Pyro4.naming.NameServer):
         for name in self.agents():
             try:
                 agent = Proxy(name, nsaddr=nsaddr, timeout=0.5)
-                if agent.unsafe.get_attr('running'):
+                if agent.is_running():
                     agent.unsafe.after(0, 'shutdown')
                 else:
                     agent.oneway.kill()
@@ -78,14 +78,14 @@ class NameServerProcess(multiprocessing.Process):
     def __init__(self, addr=None, base=NameServer):
         super().__init__()
         self._daemon = None
-        self.base = base
+        self._base = base
         if isinstance(addr, int):
             addr = '127.0.0.1:%s' % addr
         self.addr = addr
         self.host, self.port = address_to_host_port(addr)
-        self.shutdown_event = multiprocessing.Event()
-        self.uri = None
-        self.queue = multiprocessing.Queue()
+        self._shutdown_event = multiprocessing.Event()
+        self._uri = None
+        self._queue = multiprocessing.Queue()
 
     def run(self):
         """
@@ -94,15 +94,15 @@ class NameServerProcess(multiprocessing.Process):
         # Capture SIGINT
 
         try:
-            Pyro4.naming.NameServer = self.base
+            Pyro4.naming.NameServer = self._base
             self._daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)
         except Exception:
-            self.queue.put(format_exception())
+            self._queue.put(format_exception())
             return
-        self.queue.put('STARTED')
-        self.uri = self._daemon.uriFor(self._daemon.nameserver)
-        self.host = self.uri.host
-        self.port = self.uri.port
+        self._queue.put('STARTED')
+        self._uri = self._daemon.uriFor(self._daemon.nameserver)
+        self.host = self._uri.host
+        self.port = self._uri.port
         self.addr = SocketAddress(self.host, self.port)
         internal_uri = self._daemon.uriFor(self._daemon.nameserver, nat=False)
         bcserver = None
@@ -115,10 +115,10 @@ class NameServerProcess(multiprocessing.Process):
         bcserver.runInThread()
         sys.stdout.write(
             "NS running on %s (%s)\n" % (self._daemon.locationStr, hostip))
-        sys.stdout.write("URI = %s\n" % self.uri)
+        sys.stdout.write("URI = %s\n" % self._uri)
         sys.stdout.flush()
         try:
-            self._daemon.requestLoop(lambda: not self.shutdown_event.is_set())
+            self._daemon.requestLoop(lambda: not self._shutdown_event.is_set())
         finally:
             self._daemon.close()
             if bcserver is not None:
@@ -137,7 +137,7 @@ class NameServerProcess(multiprocessing.Process):
         """
         os.environ['OSBRAIN_NAMESERVER_ADDRESS'] = str(self.addr)
         super().start()
-        status = self.queue.get()
+        status = self._queue.get()
         if status == 'STARTED':
             return
         raise RuntimeError('An error occured while creating the daemon!' +
@@ -169,7 +169,7 @@ class NameServerProcess(multiprocessing.Process):
         # Wait for all agents to be shutdown (unregistered)
         while len(nameserver.list()) > 1:
             time.sleep(0.1)
-        self.shutdown_event.set()
+        self._shutdown_event.set()
         self.terminate()
         self.join()
 

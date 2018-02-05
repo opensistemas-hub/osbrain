@@ -34,7 +34,7 @@ def test_agent_uuid():
     All agent identifiers should be unique strings.
     """
     N = 1000
-    bunch = set(Agent().uuid for i in range(N))
+    bunch = set(Agent()._uuid for i in range(N))
     assert len(bunch) == N
     assert all(isinstance(identifier, bytes) for identifier in bunch)
 
@@ -588,7 +588,7 @@ def test_running_exception(nsproxy):
     logger = run_logger('logger')
     agent = run_agent('crasher')
     agent.set_logger(logger)
-    assert agent.get_attr('running')
+    assert agent.is_running()
     # Make sure agent and logger are connected
     sync_agent_logger(agent, logger)
     # Raise an exception
@@ -596,7 +596,7 @@ def test_running_exception(nsproxy):
         agent.raise_exception()
     message = 'User raised an exception'
     assert logger_received(logger, message, log_name='log_history_error')
-    assert not agent.get_attr('running')
+    assert not agent.is_running()
 
 
 def test_agent_error_address_already_in_use(nsproxy):
@@ -645,10 +645,10 @@ def test_agent_stop(nsproxy):
     An agent will stop running when the `stop()` method is executed.
     """
     agent = run_agent('a0')
-    assert agent.get_attr('running')
+    assert agent.is_running()
     agent.stop()
-    assert not agent.get_attr('keep_alive')
-    assert wait_agent_attr(agent, name='running', value=False)
+    assert not agent.get_attr('_keep_alive')
+    assert wait_agent_attr(agent, name='_running', value=False)
 
 
 def test_agent_spawn_process(nsproxy):
@@ -719,7 +719,7 @@ def test_agent_not_running_safe_call(nsproxy):
 
     with pytest.raises(Exception):
         agent.raise_exception()
-    assert wait_agent_attr(agent, name='running', value=False)
+    assert wait_agent_attr(agent, name='_running', value=False)
 
     with pytest.raises(RuntimeError) as error:
         agent.safe_call('ping')

@@ -185,35 +185,36 @@ class Agent():
     ----------
     name : str
         Name of the agent.
-    uuid : bytes
-        Globally unique identifer for the agent.
-    host : str
+
+    _host : str
         Host address where the agent is binding to.
-    serializer : str
+    _uuid : bytes
+        Globally unique identifer for the agent.
+    _running : bool
+        Set to `True` if the agent is running (executing the main loop).
+    _serializer : str
         Default agent serialization format.
-    transport : str, AgentAddressTransport, default is None
+    _transport : str, AgentAddressTransport, default is None
         Default agent transport protocol.
-    socket : dict
+    _socket : dict
         A dictionary in which the key is the address or the alias and the
         value is the actual socket.
-    address : dict
+    _address : dict
         A dictionary in which the key is the address or the alias and the
         value is the actual address.
-    handler : dict
+    _handler : dict
         A dictionary in which the key is the socket and the values are the
         handlers for each socket.
-    context : zmq.Context
+    _context : zmq.Context
         ZMQ context to create ZMQ socket objects.
-    poller : zmq.Poller
+    _poller : zmq.Poller
         ZMQ poller to wait for incoming data from sockets.
-    poll_timeout : int
+    _poll_timeout : int
         Polling timeout, in milliseconds. After this timeout, if no message
         is received, the agent executes de `idle()` method before going back
         to polling.
-    keep_alive : bool
+    _keep_alive : bool
         When set to `True`, the agent will continue executing the main loop.
-    running : bool
-        Set to `True` if the agent is running (executing the main loop).
     _async_req_uuid : dict
         Stores the UUIDs of the asynchronous request sockets (used in
         communication channels).
@@ -232,31 +233,31 @@ class Agent():
     """
     def __init__(self, name='', host=None, serializer=None, transport=None,
                  attributes=None):
-        self.uuid = unique_identifier()
+        self._uuid = unique_identifier()
         self.name = name
         if not self.name:
-            self.name = self.uuid.decode()
+            self.name = self._uuid.decode()
 
-        self.host = host
-        if not self.host:
-            self.host = '127.0.0.1'
-        self.serializer = serializer
-        self.transport = transport
-        self.socket = {}
-        self.address = {}
-        self.handler = {}
+        self._host = host
+        if not self._host:
+            self._host = '127.0.0.1'
+        self._serializer = serializer
+        self._transport = transport
+        self._socket = {}
+        self._address = {}
+        self._handler = {}
         self._async_req_uuid = {}
         self._async_req_handler = {}
         self._pending_requests = {}
         self._timer = {}
-        self.poll_timeout = 1000
-        self.keep_alive = True
+        self._poll_timeout = 1000
+        self._keep_alive = True
         self._kill_now = False
-        self.running = False
+        self._running = False
         self._DEBUG = False
 
-        self.context = zmq.Context()
-        self.poller = zmq.Poller()
+        self._context = zmq.Context()
+        self._poller = zmq.Poller()
 
         # A loopback socket where, for example, timers are processed
         self.bind('REP', alias='loopback', addr='loopback',
@@ -331,7 +332,7 @@ class Agent():
         -------
         Response obtained from the loopback socket.
         """
-        loopback = self.context.socket(zmq.REQ)
+        loopback = self._context.socket(zmq.REQ)
         loopback.connect(socket)
         loopback.send_pyobj(data_to_send)
         response = loopback.recv_pyobj()
@@ -342,7 +343,7 @@ class Agent():
         """
         Send a message to the loopback socket.
         """
-        if not self.running:
+        if not self._running:
             raise NotImplementedError()
         data = dill.dumps((header, data))
         return self._loopback_reqrep('inproc://loopback', data)
@@ -362,7 +363,7 @@ class Agent():
         *kwargs : keyword arguments
             Method keyword arguments.
         """
-        if not self.running:
+        if not self._running:
             raise RuntimeError(
                 'Agent must be running to safely execute methods!')
         data = dill.dumps((method, args, kwargs))
@@ -472,7 +473,7 @@ class Agent():
         Stop the agent. Agent will stop running.
         """
         self.log_info('Stopping...')
-        self.keep_alive = False
+        self._keep_alive = False
         return 'OK'
 
     def set_logger(self, logger, alias='_logger'):
@@ -501,7 +502,7 @@ class Agent():
         level = LogLevel(level)
         message = '[%s] (%s): %s' % (datetime.utcnow(), self.name, message)
         if self.registered(logger):
-            logger_kind = AgentAddressKind(self.address[logger].kind)
+            logger_kind = AgentAddressKind(self._address[logger].kind)
             assert logger_kind == 'PUB', \
                 'Logger must use publisher-subscriber pattern!'
             self.send(logger, message, topic=level)
@@ -586,7 +587,7 @@ class Agent():
         AgentAddress
             Address of the agent socket associated with the alias.
         """
-        return self.address[alias]
+        return self._address[alias]
 
     def register(self, socket, address, alias=None, handler=None):
         """
@@ -608,14 +609,14 @@ class Agent():
             'Socket is already registered!'
         if not alias:
             alias = address
-        self.socket[alias] = socket
-        self.socket[address] = socket
-        self.socket[socket] = socket
-        self.address[alias] = address
-        self.address[socket] = address
-        self.address[address] = address
+        self._socket[alias] = socket
+        self._socket[address] = socket
+        self._socket[socket] = socket
+        self._address[alias] = address
+        self._address[socket] = address
+        self._address[address] = address
         if handler is not None:
-            self.poller.register(socket, zmq.POLLIN)
+            self._poller.register(socket, zmq.POLLIN)
             if address.kind in ('SUB', 'SYNC_SUB'):
                 self.subscribe(socket, handler)
             else:
@@ -634,11 +635,11 @@ class Agent():
         """
         if update:
             try:
-                self.handler[socket].update(self._curated_handlers(handler))
+                self._handler[socket].update(self._curated_handlers(handler))
             except KeyError:
-                self.handler[socket] = self._curated_handlers(handler)
+                self._handler[socket] = self._curated_handlers(handler)
         else:
-            self.handler[socket] = self._curated_handlers(handler)
+            self._handler[socket] = self._curated_handlers(handler)
 
     def _curated_handlers(self, handler):
         if isinstance(handler, (list, tuple)):
@@ -662,7 +663,7 @@ class Agent():
         """
         Check if an address is already registered.
         """
-        return address in self.socket
+        return address in self._socket
 
     def bind(self, kind, alias=None, handler=None, addr=None, transport=None,
              serializer=None):
@@ -690,10 +691,10 @@ class Agent():
         """
         kind = guess_kind(kind)
         transport = transport \
-            or self.transport \
+            or self._transport \
             or config['TRANSPORT']
         serializer = serializer \
-            or self.serializer \
+            or self._serializer \
             or config['SERIALIZER']
         if isinstance(kind, AgentAddressKind):
             return self._bind_address(kind, alias, handler, addr, transport,
@@ -727,7 +728,7 @@ class Agent():
             The address where the agent binded to.
         """
         validate_handler(handler, required=kind.requires_handler())
-        socket = self.context.socket(kind.zmq())
+        socket = self._context.socket(kind.zmq())
         addr = self._bind_socket(socket, addr=addr, transport=transport)
         server_address = AgentAddress(transport, addr, kind, 'server',
                                       serializer)
@@ -763,7 +764,7 @@ class Agent():
         """
         if kind == 'ASYNC_REP':
             validate_handler(handler, required=True)
-            socket = self.context.socket(zmq.PULL)
+            socket = self._context.socket(zmq.PULL)
             addr = self._bind_socket(socket, addr=addr, transport=transport)
             server_address = AgentAddress(transport, addr, 'PULL', 'server',
                                           serializer)
@@ -780,7 +781,7 @@ class Agent():
                                      handler=handler,
                                      transport=transport,
                                      serializer=serializer)
-            pub_socket = self.context.socket(zmq.PUB)
+            pub_socket = self._context.socket(zmq.PUB)
             aux = self._bind_socket(pub_socket, addr=addr[1],
                                     transport=transport)
             pub_address = AgentAddress(transport, aux, 'PUB', 'server',
@@ -813,9 +814,9 @@ class Agent():
         if transport == 'tcp':
             host, port = address_to_host_port(addr)
             if not port:
-                uri = 'tcp://%s' % self.host
+                uri = 'tcp://%s' % self._host
                 port = socket.bind_to_random_port(uri)
-                addr = self.host + ':' + str(port)
+                addr = self._host + ':' + str(port)
             else:
                 socket.bind('tcp://%s' % (addr))
         else:
@@ -972,8 +973,8 @@ class Agent():
     def _connect_old(self, client_address, alias=None, handler=None):
         if handler is not None:
             raise NotImplementedError('Undefined behavior!')
-        self.socket[alias] = self.socket[client_address]
-        self.address[alias] = client_address
+        self._socket[alias] = self._socket[client_address]
+        self._address[alias] = client_address
         return client_address
 
     def _connect_and_register(self, client_address, alias=None, handler=None,
@@ -994,7 +995,7 @@ class Agent():
         """
         if not register_as:
             register_as = client_address
-        socket = self.context.socket(client_address.kind.zmq())
+        socket = self._context.socket(client_address.kind.zmq())
         socket.connect('%s://%s' % (client_address.transport,
                                     client_address.address))
         self.register(socket, register_as, alias, handler)
@@ -1043,15 +1044,15 @@ class Agent():
             self._subscribe_to_topic(alias, topic)
 
         # Reset handlers
-        if isinstance(self.address[alias], AgentChannel):
-            channel = self.address[alias]
+        if isinstance(self._address[alias], AgentChannel):
+            channel = self._address[alias]
             sub_address = channel.receiver
             uuid = channel.twin_uuid
             curated_handlers = topics_to_bytes(handler, uuid=uuid)
-            self._set_handler(self.socket[sub_address], curated_handlers,
+            self._set_handler(self._socket[sub_address], curated_handlers,
                               update=True)
         else:
-            self._set_handler(self.socket[alias], curated_handlers,
+            self._set_handler(self._socket[alias], curated_handlers,
                               update=True)
 
     def unsubscribe(self, alias: str, topic: Union[bytes, str]) -> None:
@@ -1069,18 +1070,19 @@ class Agent():
 
         topic = topic_to_bytes(topic)
 
-        if isinstance(self.address[alias], AgentAddress):
-            self.socket[alias].setsockopt(zmq.UNSUBSCRIBE, topic)
-            del self.handler[self.socket[alias]][topic]
-        elif isinstance(self.address[alias], AgentChannel):
-            channel = self.address[alias]
+        if isinstance(self._address[alias], AgentAddress):
+            self._socket[alias].setsockopt(zmq.UNSUBSCRIBE, topic)
+            del self._handler[self._socket[alias]][topic]
+        elif isinstance(self._address[alias], AgentChannel):
+            channel = self._address[alias]
             sub_address = channel.receiver
             treated_topic = channel.twin_uuid + topic
-            self.socket[sub_address].setsockopt(zmq.UNSUBSCRIBE, treated_topic)
-            del self.handler[self.socket[sub_address]][treated_topic]
+            self._socket[sub_address].setsockopt(zmq.UNSUBSCRIBE,
+                                                 treated_topic)
+            del self._handler[self._socket[sub_address]][treated_topic]
         else:
             raise NotImplementedError('Unsupported address type %s!' %
-                                      self.address[alias])
+                                      self._address[alias])
 
     def _subscribe_to_topic(self, alias: str, topic: Union[bytes, str]):
         '''
@@ -1092,16 +1094,16 @@ class Agent():
         '''
         topic = topic_to_bytes(topic)
 
-        if isinstance(self.address[alias], AgentAddress):
-            self.socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
-        elif isinstance(self.address[alias], AgentChannel):
-            channel = self.address[alias]
+        if isinstance(self._address[alias], AgentAddress):
+            self._socket[alias].setsockopt(zmq.SUBSCRIBE, topic)
+        elif isinstance(self._address[alias], AgentChannel):
+            channel = self._address[alias]
             sub_address = channel.receiver
             treated_topic = channel.uuid + topic
-            self.socket[sub_address].setsockopt(zmq.SUBSCRIBE, treated_topic)
+            self._socket[sub_address].setsockopt(zmq.SUBSCRIBE, treated_topic)
         else:
             raise NotImplementedError('Unsupported address type %s!' %
-                                      self.address[alias])
+                                      self._address[alias])
 
     def idle(self):
         """
@@ -1186,10 +1188,10 @@ class Agent():
         """
         Agent's main loop.
 
-        This loop is executed until the `keep_alive` attribute is False
+        This loop is executed until the `_keep_alive` attribute is False
         or until an error occurs.
         """
-        while self.keep_alive:
+        while self._keep_alive:
             if self.iterate():
                 break
 
@@ -1212,7 +1214,7 @@ class Agent():
             0 otherwise.
         """
         try:
-            events = dict(self.poller.poll(self.poll_timeout))
+            events = dict(self._poller.poll(self._poll_timeout))
         except zmq.ZMQError as error:
             # Raise the exception in case it is not due to SIGINT
             if error.errno == errno.EINTR:
@@ -1273,7 +1275,7 @@ class Agent():
             Socket that generated the event.
         """
         data = socket.recv()
-        address = self.address[socket]
+        address = self._address[socket]
         if address.kind == 'SUB':
             self._process_sub_event(socket, address, data)
         elif address.kind == 'PULL':
@@ -1317,7 +1319,7 @@ class Agent():
             Data received on the socket.
         """
         message = deserialize_message(message=data, serializer=addr.serializer)
-        handler = self.handler[socket]
+        handler = self._handler[socket]
         if inspect.isgeneratorfunction(handler):
             generator = handler(self, message)
             socket.send(serialize_message(next(generator), addr.serializer))
@@ -1345,7 +1347,7 @@ class Agent():
         client_address = address.twin()
         if not self.registered(client_address):
             self.connect(address)
-        handler = self.handler[socket]
+        handler = self._handler[socket]
         is_generator = inspect.isgeneratorfunction(handler)
         if is_generator:
             generator = handler(self, data)
@@ -1372,7 +1374,7 @@ class Agent():
         message = deserialize_message(message=data,
                                       serializer=channel.serializer)
         address_uuid, request_uuid, data = message
-        handler = self.handler[socket]
+        handler = self._handler[socket]
         is_generator = inspect.isgeneratorfunction(handler)
         if is_generator:
             generator = handler(self, data)
@@ -1401,7 +1403,7 @@ class Agent():
             Data received on the socket.
         """
         message = deserialize_message(message=data, serializer=addr.serializer)
-        handler = self.handler[socket]
+        handler = self._handler[socket]
         if not isinstance(handler, (list, dict, tuple)):
             handler = [handler]
         for h in handler:
@@ -1420,7 +1422,7 @@ class Agent():
         data : bytes
             Data received on the socket.
         """
-        handlers = self.handler[socket]
+        handlers = self._handler[socket]
 
         message = self._process_sub_message(addr.serializer, data)
 
@@ -1461,7 +1463,7 @@ class Agent():
             Code to be executed if `wait` is passed and the response is not
             received.
         """
-        address = self.address[address]
+        address = self._address[address]
         if isinstance(address, AgentChannel):
             return self._send_channel(channel=address,
                                       message=message,
@@ -1488,7 +1490,7 @@ class Agent():
             message = compose_message(message=message,
                                       topic=topic,
                                       serializer=address.serializer)
-        self.socket[address].send(message)
+        self._socket[address].send(message)
 
     def _send_channel(self, channel, message, topic, handler, wait, on_error):
         """
@@ -1524,11 +1526,11 @@ class Agent():
         else:
             self._pending_requests[request_uuid] = \
                 self._async_req_handler[address_uuid]
-        receiver_address = self.address[address_uuid]
+        receiver_address = self._address[address_uuid]
         message = (address_uuid, request_uuid, message, receiver_address)
         message = serialize_message(message=message,
                                     serializer=channel.serializer)
-        self.socket[channel].send(message)
+        self._socket[channel].send(message)
         self._wait_received(wait, uuid=request_uuid, on_error=on_error)
 
     def _send_channel_sync_pub(self, channel, message, topic=None,
@@ -1546,7 +1548,7 @@ class Agent():
         message = compose_message(message=message,
                                   topic=topic,
                                   serializer=channel.serializer)
-        self.socket[channel].send(message)
+        self._socket[channel].send(message)
 
     def _send_channel_sync_sub(self, channel, message, topic, handler, wait,
                                on_error):
@@ -1620,10 +1622,9 @@ class Agent():
         -------
         anything
             The content received in the address.
-
         """
-        message = self.socket[address].recv()
-        serializer = self.address[address].serializer
+        message = self._socket[address].recv()
+        serializer = self._address[address].serializer
         return deserialize_message(message=message, serializer=serializer)
 
     def send_recv(self, address, message):
@@ -1638,17 +1639,17 @@ class Agent():
         """
         Start the main loop.
         """
-        self.running = True
+        self._running = True
         self.configure()
         try:
             self.loop()
         except Exception as error:
-            self.running = False
+            self._running = False
             msg = 'An exception occured while running! (%s)\n' % error
             msg += format_exception()
             self.log_error(msg)
             raise
-        self.running = False
+        self._running = False
         if self._kill_now:
             # Kill the agent
             self.kill()
@@ -1662,10 +1663,16 @@ class Agent():
         # Close all non-internal sockets
         self.close_all()
         # Stop the running thread
-        if self.running:
+        if self._running:
             self.log_info('Stopping...')
-            self.keep_alive = False
+            self._keep_alive = False
             self._kill_now = True
+
+    def is_running(self):
+        """
+        Returns a boolean indicating whether the agent is running or not.
+        """
+        return self._running
 
     def kill(self):
         """
@@ -1696,7 +1703,7 @@ class Agent():
                     'inproc://_loopback_safe')
         external_sockets = []
 
-        for k, v in self.socket.items():
+        for k, v in self._socket.items():
             if isinstance(k, zmq.sugar.socket.Socket):
                 continue
             if isinstance(k, AgentAddress) and k.address in reserved:
@@ -1712,23 +1719,23 @@ class Agent():
         """
         Return whether the agent has the passed socket internally stored.
         """
-        return alias in self.socket
+        return alias in self._socket
 
     def close(self, alias):
         """
         Close a socket given its alias and clear its entry from the
         `Agent.socket` dictionary.
         """
-        sock = self.socket[alias]
+        sock = self._socket[alias]
 
         # Each socket might be pointed by different keys
         entries_to_delete = []
-        for k, v in self.socket.items():
+        for k, v in self._socket.items():
             if v == sock:
                 entries_to_delete.append(k)
 
         for entry in entries_to_delete:
-            del self.socket[entry]
+            del self._socket[entry]
 
         sock.close(linger=get_linger())
 
@@ -1743,12 +1750,12 @@ class Agent():
             sock.close(linger=get_linger())
 
         entries_to_delete = []
-        for k, v in self.socket.items():
+        for k, v in self._socket.items():
             if v in sockets_to_delete:
                 entries_to_delete.append(k)
 
         for entry in entries_to_delete:
-            del self.socket[entry]
+            del self._socket[entry]
 
     def ping(self):
         """
@@ -1768,16 +1775,16 @@ class AgentProcess(multiprocessing.Process):
         super().__init__()
         self.name = name
         self._daemon = None
-        self.host, self.port = address_to_host_port(addr)
+        self._host, self.port = address_to_host_port(addr)
         if self.port is None:
             self.port = 0
         self.nsaddr = nsaddr
-        self.serializer = serializer
-        self.transport = transport
+        self._serializer = serializer
+        self._transport = transport
         self.base = base
-        self.shutdown_event = multiprocessing.Event()
-        self.queue = multiprocessing.Queue()
-        self.sigint = False
+        self._shutdown_event = multiprocessing.Event()
+        self._queue = multiprocessing.Queue()
+        self._sigint = False
         self.attributes = attributes
 
     def run(self):
@@ -1789,13 +1796,13 @@ class AgentProcess(multiprocessing.Process):
 
         try:
             ns = NSProxy(self.nsaddr)
-            self._daemon = Pyro4.Daemon(self.host, self.port)
-            self.agent = self.base(name=self.name, host=self.host,
-                                   serializer=self.serializer,
-                                   transport=self.transport,
+            self._daemon = Pyro4.Daemon(self._host, self.port)
+            self.agent = self.base(name=self.name, host=self._host,
+                                   serializer=self._serializer,
+                                   transport=self._transport,
                                    attributes=self.attributes)
         except Exception:
-            self.queue.put(format_exception())
+            self._queue.put(format_exception())
             return
 
         self.name = self.agent.name
@@ -1803,14 +1810,14 @@ class AgentProcess(multiprocessing.Process):
         try:
             ns.register(self.name, uri, safe=True)
         except Pyro4.errors.NamingError:
-            self.queue.put(format_exception())
+            self._queue.put(format_exception())
             return
         finally:
             ns.release()
 
-        self.queue.put('STARTED:'+self.name)
+        self._queue.put('STARTED:' + self.name)
 
-        self._daemon.requestLoop(lambda: not self.shutdown_event.is_set())
+        self._daemon.requestLoop(lambda: not self._shutdown_event.is_set())
         self._daemon.unregister(self.agent)
 
         self._teardown()
@@ -1833,7 +1840,7 @@ class AgentProcess(multiprocessing.Process):
         """
         Remove self from the name server address book, close daemon and die.
         """
-        if not self.sigint:
+        if not self._sigint:
             # Clean teardown
             self._remove_from_nameserver()
 
@@ -1850,7 +1857,7 @@ class AgentProcess(multiprocessing.Process):
             If an error occured when initializing the daemon.
         """
         super().start()
-        status = self.queue.get()
+        status = self._queue.get()
         if not status.startswith('STARTED'):
             raise RuntimeError('An error occured while creating the daemon!' +
                                '\n===============\n'.join(['', status, '']))
@@ -1861,7 +1868,7 @@ class AgentProcess(multiprocessing.Process):
         """
         Force kill the agent process.
         """
-        self.shutdown_event.set()
+        self._shutdown_event.set()
         if self._daemon:
             self._daemon.shutdown()
 
@@ -1869,7 +1876,7 @@ class AgentProcess(multiprocessing.Process):
         """
         Handle interruption signals.
         """
-        self.sigint = True
+        self._sigint = True
         self.kill()
 
 

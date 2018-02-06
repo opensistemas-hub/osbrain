@@ -13,8 +13,10 @@ from osbrain import SocketAddress
 from osbrain import run_agent
 from osbrain import run_nameserver
 from osbrain import Agent
+from osbrain import AgentProcess
 from osbrain import NameServer
 from osbrain import NSProxy
+from osbrain import Proxy
 from osbrain.helper import wait_agent_attr
 from osbrain.nameserver import NameServerProcess
 from osbrain.nameserver import random_nameserver_process
@@ -166,6 +168,22 @@ def test_nameserver_proxy_shutdown_raise_timeout():
         ns.shutdown(timeout=0.)
     assert 'not shutdown after' in str(error.value)
     ns.shutdown()
+
+
+def test_nameserver_proxy_shutdown_with_pyroerror():
+    """
+    Check that `PyroError`s raised during `async_nameserver_shutdown` are
+    handled correctly.
+    """
+    nameserver = run_nameserver()
+    ap = AgentProcess()
+    name = ap.start()
+    proxy = Proxy(name)
+    proxy.run()
+
+    ap.kill()
+    nameserver.async_shutdown_agents(nameserver.addr())
+    nameserver.shutdown()
 
 
 def test_oneway_kill_non_running_agent_on_name_server_shutdown():

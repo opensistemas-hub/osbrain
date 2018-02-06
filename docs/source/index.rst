@@ -41,6 +41,7 @@ Contents
    transport_protocol.rst
    serialization.rst
    advanced_proxy_handling.rst
+   advanced_patterns.rst
    distributed_systems.rst
    security.rst
    developers.rst

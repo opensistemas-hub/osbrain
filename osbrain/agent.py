@@ -1455,7 +1455,7 @@ class Agent():
             The topic, in case it is relevant (i.e.: for PUB sockets).
         handler : function, method or string
             Code that will be executed on input messages if relevant (i.e.:
-            for PULL sockets).
+            for asynchronous requests in channels).
         wait : float
             For channel requests, wait at most this number of seconds for a
             response from the server.

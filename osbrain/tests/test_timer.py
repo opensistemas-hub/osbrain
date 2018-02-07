@@ -61,7 +61,7 @@ def test_timer_non_blocking_bug(nsproxy):
     t0 = time.time()
     agent.each(0., long_action)
     t1 = time.time()
-    assert t1 - t0 < 0.1
+    assert t1 - t0 < 0.3
     assert agent.get_attr('count') == 0
     time.sleep(1.5)
     assert agent.get_attr('count') > 0

@@ -55,11 +55,16 @@ saying `Hello world!` but, what exactly is happening there?
 Agents and proxies
 ==================
 
-An agent, in osBrain, is an entity that runs independly from other agents
-in the system. An agent, by default, will simply poll for incoming messages
-before executing the code defined by the developer. This means a single agent,
-as in the `Hello world!` example, makes little or no sense. Agents in a
-multi-agent system start to make sense when connected to each other.
+An agent, in osBrain, is an entity that runs independly from other agents in
+the system. When running, it executes the main loop:
+
+- Poll for incoming messages.
+- Process incoming messages and execute developer-defined code.
+- Repeat.
+
+This means a single agent, as in the `Hello world!` example, makes little or no
+sense. Agents in a multi-agent system start to make sense when connected to
+each other.
 
 The easiest way to run an agent in an osBrain architecture is by calling the
 function :func:`osbrain.run_agent <osbrain.agent.run_agent>`:

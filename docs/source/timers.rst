@@ -18,9 +18,9 @@ Note that if an action takes longer to run than the time available before the
 next execution, the timer will simply fall behind.
 
 .. note:: To be able to start timers on agent initalization, the agent must be
-   already running, which means you cannot do it from ``on_init()``. Instead,
-   you can use ``configure()``, which will be executed when the agent is
-   already running, right before starting the main loop.
+   already running, which means you cannot do it from `.on_init()`. Instead,
+   you can use `.before_loop()`, which will be called inside the `.run()`
+   method and before starting the main loop.
 
 
 Delayed actions

@@ -288,7 +288,7 @@ class Agent():
         """
         pass
 
-    def configure(self):
+    def before_loop(self):
         """
         This user-defined method is to be executed right before the main loop.
         """
@@ -1640,7 +1640,7 @@ class Agent():
         Start the main loop.
         """
         self._running = True
-        self.configure()
+        self.before_loop()
         try:
             self._loop()
         except Exception as error:

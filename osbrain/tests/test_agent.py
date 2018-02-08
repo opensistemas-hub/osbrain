@@ -103,15 +103,15 @@ def test_late_runner(nsproxy):
     assert a0.ping() == 'pong'
 
 
-def test_agent_configure(nsproxy):
+def test_agent_before_loop(nsproxy):
     """
-    Tests agent's `configure()` method, which should be able to start timers.
+    Tests agent's `before_loop()` method, which should be able to start timers.
     """
     class MyAgent(Agent):
         def on_init(self):
             self.x = 0
 
-        def configure(self):
+        def before_loop(self):
             self.each(.5, 'incr')
 
         def incr(self):

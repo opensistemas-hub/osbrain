@@ -234,14 +234,14 @@ def test_socket_creation(nsproxy):
     assert a0.addr('alias2') == addr2
 
 
-def test_bind_tcp_addr_random_port(nsproxy):
+@pytest.mark.parametrize('host', ['127.0.0.1', '0.0.0.0'])
+def test_bind_tcp_addr_random_port(nsproxy, host):
     """
     When using TCP transport, the bind method allows the user to specify the
     network interface to bind to. When no port is specified, a random one will
     be used.
     """
     agent = run_agent('a0')
-    host = '127.0.0.1'
     address = agent.bind('PUB', transport='tcp', addr=host)
     assert isinstance(address.address, SocketAddress)
     assert address.address.host == host

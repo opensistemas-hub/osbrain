@@ -812,19 +812,39 @@ class Agent():
             The address where the socket binded to.
         """
         if transport == 'tcp':
-            host, port = address_to_host_port(addr)
-            if not port:
-                uri = 'tcp://%s' % self._host
-                port = socket.bind_to_random_port(uri)
-                addr = self._host + ':' + str(port)
-            else:
-                socket.bind('tcp://%s' % (addr))
+            return self._bind_socket_tcp(socket, addr=addr)
+        if not addr:
+            addr = str(unique_identifier())
+        if transport == 'ipc':
+            addr = config['IPC_DIR'] / addr
+        socket.bind('%s://%s' % (transport, addr))
+        return addr
+
+    def _bind_socket_tcp(self, socket, addr):
+        """
+        Bind a socket using the TCP transport and corresponding address.
+
+        Parameters
+        ----------
+        socket : zmq.Socket
+            Socket to bind.
+        addr : str, default is None
+            The address to bind to.
+
+        Returns
+        -------
+        addr : str
+            The address where the socket binded to.
+        """
+        host, port = address_to_host_port(addr)
+        if not host:
+            host = self._host
+        if not port:
+            uri = 'tcp://%s' % host
+            port = socket.bind_to_random_port(uri)
+            addr = host + ':' + str(port)
         else:
-            if not addr:
-                addr = str(unique_identifier())
-            if transport == 'ipc':
-                addr = config['IPC_DIR'] / addr
-            socket.bind('%s://%s' % (transport, addr))
+            socket.bind('tcp://%s' % (addr))
         return addr
 
     def connect(self, server, alias=None, handler=None):

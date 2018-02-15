@@ -1,6 +1,7 @@
 """
 Test file for functionality implemented in `osbrain/tests/common.py`.
 """
+from threading import Timer
 import time
 
 import pytest
@@ -12,10 +13,25 @@ from osbrain.helper import agent_dies
 from osbrain.helper import attribute_match_all
 from osbrain.helper import last_received_endswith
 from osbrain.helper import wait_agent_attr
+from osbrain.helper import wait_condition
 from osbrain.helper import wait_agent_condition
 
 from common import nsproxy  # pragma: no flakes
 from common import agent_logger  # pragma: no flakes
+
+
+class SugarAddict():
+    def __init__(self):
+        self.glucose = 0
+
+    def feed_candy(self):
+        self.glucose += 1
+
+    def happy(self):
+        return bool(self.glucose)
+
+    def sad(self):
+        return not bool(self.glucose)
 
 
 def test_agent_dies(nsproxy):
@@ -143,6 +159,32 @@ def test_wait_agent_attr(nsproxy):
     a0.after(1, 'set_received_method', 42)
     assert not wait_agent_attr(a0, value=42, timeout=0.)
     assert wait_agent_attr(a0, value=42, timeout=2.)
+
+
+@pytest.mark.parametrize('delay,timeout,result', [
+    (1, 0.5, False),
+    (0.5, 1, True),
+])
+def test_wait_condition(delay, timeout, result):
+    """
+    Test the `wait_agent_condition` function.
+    """
+    kid = SugarAddict()
+    Timer(delay, kid.feed_candy).start()
+    assert wait_condition(kid.happy, timeout=timeout) == result
+
+
+@pytest.mark.parametrize('delay,timeout,result', [
+    (1, 0.5, False),
+    (0.5, 1, True),
+])
+def test_wait_condition_negate(delay, timeout, result):
+    """
+    Test the negated `wait_agent_condition` function.
+    """
+    kid = SugarAddict()
+    Timer(delay, kid.feed_candy).start()
+    assert wait_condition(kid.sad, negate=True, timeout=timeout) == result
 
 
 def test_wait_agent_condition(nsproxy):

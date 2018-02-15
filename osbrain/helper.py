@@ -195,6 +195,36 @@ def wait_agent_attr(agent, name='received', length=None, data=None, value=None,
     return False
 
 
+def wait_condition(condition, *args, negate=False, timeout=3, **kwargs):
+    """
+    Wait for a condition to be true.
+
+    The condition is passed as a callable and must evaluate to a boolean
+    result.
+
+    Parameters
+    ----------
+    condition : Callable
+        A function that evaluates the desired condition.
+    timeout : float, default is 3
+        After this number of seconds the function will return `False`.
+    negate : bool, default is False
+        Negate the condition (wait for the condition to be false instead).
+
+    Returns
+    -------
+    bool
+        Whether the specified condition was True.
+    """
+    t0 = time.time()
+    while True:
+        if condition(*args, **kwargs) != negate:
+            return True
+        if time.time() - t0 > timeout:
+            return False
+        time.sleep(0.01)
+
+
 def wait_agent_condition(agent, condition, *args, timeout=3, **kwargs):
     """
     Wait for an agent's condition to be true.
@@ -216,13 +246,8 @@ def wait_agent_condition(agent, condition, *args, timeout=3, **kwargs):
     bool
         Whether the specified condition was True.
     """
-    t0 = time.time()
-    while True:
-        if agent.execute_as_method(condition, *args, **kwargs):
-            return True
-        if time.time() - t0 > timeout:
-            return False
-        time.sleep(0.01)
+    return wait_condition(agent.execute_as_method, condition, *args,
+                          timeout=timeout, **kwargs)
 
 
 def last_received_endswith(agent, tail):

@@ -6,6 +6,7 @@ import pytest
 from osbrain import run_agent
 from osbrain import run_nameserver
 from osbrain.helper import agent_dies
+from osbrain.helper import wait_condition
 
 from common import nsproxy  # pragma: no flakes
 
@@ -30,10 +31,10 @@ def test_agent_close_ipc_socket_agent_kill(nsproxy):
     """
     agent = run_agent('name')
     address = agent.bind('PUSH')
-    agent.kill()
+    agent.oneway.kill()
 
     assert agent_dies('name', nsproxy, timeout=3)
-    assert not address.address.exists()
+    assert wait_condition(lambda x: not x.exists(), address.address)
 
 
 def test_agent_close_ipc_socket_agent_blocked_nameserver_shutdown():

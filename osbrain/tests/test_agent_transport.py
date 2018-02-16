@@ -15,27 +15,37 @@ from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
 from common import append_received
+from common import skip_windows_spawn
+from common import skip_windows_ipc
 
 
-def test_agent_bind_transport_global(nsproxy):
+def test_agent_bind_transport_platform_default(nsproxy):
     """
-    Test global default transport.
+    Default transport is platform-dependent.
     """
-    # Default transport
     agent = run_agent('a0')
     address = agent.bind('PUSH')
-    assert address.transport == 'ipc'
+    if os.name == 'posix':
+        assert address.transport == 'ipc'
+    else:
+        assert address.transport == 'tcp'
 
-    # Changing default global transport
-    osbrain.config['TRANSPORT'] = 'tcp'
+
+@skip_windows_spawn
+def test_agent_bind_transport_global(nsproxy):
+    """
+    Test global default transport change.
+    """
+    # Default transport is not `inproc`
+    agent = run_agent('a0')
+    address = agent.bind('PUSH')
+    assert address.transport != 'inproc'
+
+    # Changing default global transport to `inproc`
+    osbrain.config['TRANSPORT'] = 'inproc'
     agent = run_agent('a1')
     address = agent.bind('PUSH')
-    assert address.transport == 'tcp'
-
-    osbrain.config['TRANSPORT'] = 'ipc'
-    agent = run_agent('a2')
-    address = agent.bind('PUSH')
-    assert address.transport == 'ipc'
+    assert address.transport == 'inproc'
 
 
 def test_agent_bind_transport_agent(nsproxy):
@@ -46,9 +56,9 @@ def test_agent_bind_transport_agent(nsproxy):
     address = agent.bind('PUSH')
     assert address.transport == 'tcp'
 
-    agent = run_agent('a1', transport='ipc')
+    agent = run_agent('a1', transport='inproc')
     address = agent.bind('PUSH')
-    assert address.transport == 'ipc'
+    assert address.transport == 'inproc'
 
 
 def test_agent_bind_transport_bind(nsproxy):
@@ -64,18 +74,21 @@ def test_agent_bind_transport_bind(nsproxy):
     assert address.transport == 'inproc'
 
 
-def test_agent_bind_given_address(nsproxy):
+@skip_windows_ipc
+def test_agent_bind_given_address_ipc(nsproxy):
     """
     Test agent binding to an specified address using TCP and IPC transport
     layers.
     """
     agent = run_agent('a0')
-    # IPC
     ipc_addr = str(uuid4())
     address = agent.bind('PUSH', addr=ipc_addr, transport='ipc')
     assert address.transport == 'ipc'
     assert address.address.name == ipc_addr
-    # TCP
+
+
+def test_agent_bind_given_address_tcp(nsproxy):
+    agent = run_agent('a0')
     while True:
         try:
             # Bind to random port
@@ -90,6 +103,7 @@ def test_agent_bind_given_address(nsproxy):
     assert address.address == tcp_addr
 
 
+@skip_windows_ipc
 def test_agent_ipc_from_different_folders(nsproxy):
     """
     IPC should work well even when agents are run from different folders.

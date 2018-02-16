@@ -28,6 +28,10 @@ from common import nsproxy  # pragma: no flakes
 from common import append_received
 from common import set_received
 
+from common import skip_windows_spawn
+from common import skip_windows_any_port
+from common import skip_windows_port_reuse
+
 
 def test_agent_uuid():
     """
@@ -265,6 +269,7 @@ def test_bind_tcp_addr_specific_port(nsproxy):
     assert address.address.port == port
 
 
+@skip_windows_spawn
 @pytest.mark.parametrize('linger, sleep_time, should_receive', [
     (2, 1, True),
     (0.5, 1, False),
@@ -599,6 +604,7 @@ def test_running_exception(nsproxy):
     assert not agent.is_running()
 
 
+@skip_windows_port_reuse
 def test_agent_error_address_already_in_use(nsproxy):
     """
     Running an agent should raise an error if address is already in use.
@@ -609,6 +615,7 @@ def test_agent_error_address_already_in_use(nsproxy):
     assert 'Address already in use' in str(error.value)
 
 
+@skip_windows_any_port
 def test_agent_error_permission_denied(nsproxy):
     """
     Running an agent should raise an error if it has not sufficient

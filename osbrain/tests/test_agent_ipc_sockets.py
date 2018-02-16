@@ -9,6 +9,9 @@ from osbrain.helper import agent_dies
 from osbrain.helper import wait_condition
 
 from common import nsproxy  # pragma: no flakes
+from common import skip_windows_ipc
+
+pytestmark = skip_windows_ipc
 
 
 def test_agent_close_ipc_socket_agent_shutdown(nsproxy):

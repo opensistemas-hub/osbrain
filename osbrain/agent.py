@@ -1817,6 +1817,7 @@ class AgentProcess(multiprocessing.Process):
         try:
             ns = NSProxy(self.nsaddr)
             self._daemon = Pyro4.Daemon(self._host, self.port)
+            self.base = cloudpickle.loads(self.base)
             self.agent = self.base(name=self.name, host=self._host,
                                    serializer=self._serializer,
                                    transport=self._transport,

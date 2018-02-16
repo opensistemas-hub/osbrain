@@ -22,6 +22,8 @@ from osbrain.nameserver import NameServerProcess
 from osbrain.nameserver import random_nameserver_process
 
 from common import nsproxy  # pragma: no flakes
+from common import skip_windows_any_port
+from common import skip_windows_port_reuse
 
 
 def test_nameserver_ping(nsproxy):
@@ -326,6 +328,7 @@ def test_nameserver_agent_address(nsproxy):
     assert nsproxy.addr('a1', 'bar') == addr1
 
 
+@skip_windows_any_port
 def test_random_nameserver_process():
     """
     Basic random_nameserver_process function tests: port range and exceptions.
@@ -346,6 +349,7 @@ def test_random_nameserver_process():
         random_nameserver_process(port_start=22, port_stop=22, timeout=0.5)
 
 
+@skip_windows_port_reuse
 def test_nameserver_oserror(nsproxy):
     """
     Name server start() should raise an error if address is already in use.
@@ -356,6 +360,7 @@ def test_nameserver_oserror(nsproxy):
     assert 'Address already in use' in str(error.value)
 
 
+@skip_windows_any_port
 def test_nameserver_permissionerror():
     """
     Name server start() should raise an error if it has not sufficient

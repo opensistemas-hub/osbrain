@@ -271,7 +271,7 @@ def test_agentchannel_async_rep():
                                           receiver=None)
     # Other attributes
     assert hasattr(channel, 'uuid')
-    assert channel.transport == 'ipc'
+    assert channel.transport == config['TRANSPORT']
     assert channel.serializer == 'pickle'
 
 

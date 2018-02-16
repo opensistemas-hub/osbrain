@@ -91,8 +91,7 @@ class NameServerProcess(multiprocessing.Process):
         """
         Begin execution of the name server process and start the main loop.
         """
-        # Capture SIGINT
-
+        self._base = cloudpickle.loads(self._base)
         try:
             Pyro4.naming.NameServer = self._base
             self._daemon = Pyro4.naming.NameServerDaemon(self.host, self.port)

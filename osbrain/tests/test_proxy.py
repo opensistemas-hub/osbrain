@@ -57,7 +57,7 @@ def test_wrong_nameserver_address(timeout):
     t0 = time.time()
     with pytest.raises(TimeoutError):
         locate_ns('127.0.0.1:1234', timeout=timeout)
-    assert timeout <= time.time() - t0 <= timeout + 1.
+    assert timeout <= time.time() - t0 <= timeout + 1.2
 
 
 def test_no_timeout_locate_ns_existing(nsproxy):

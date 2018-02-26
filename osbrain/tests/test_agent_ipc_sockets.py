@@ -20,8 +20,8 @@ def test_agent_close_ipc_socket_agent_shutdown(nsproxy):
     address = agent.bind('PUSH')
     agent.shutdown()
 
-    assert agent_dies('name', nsproxy, timeout=3)
-    assert not address.address.exists()
+    assert agent_dies('name', nsproxy)
+    assert wait_condition(address.address.exists, negate=True)
 
 
 def test_agent_close_ipc_socket_agent_kill(nsproxy):
@@ -33,8 +33,8 @@ def test_agent_close_ipc_socket_agent_kill(nsproxy):
     address = agent.bind('PUSH')
     agent.oneway.kill()
 
-    assert agent_dies('name', nsproxy, timeout=3)
-    assert wait_condition(lambda x: not x.exists(), address.address)
+    assert agent_dies('name', nsproxy)
+    assert wait_condition(address.address.exists, negate=True)
 
 
 def test_agent_close_ipc_socket_agent_blocked_nameserver_shutdown():
@@ -52,7 +52,7 @@ def test_agent_close_ipc_socket_agent_blocked_nameserver_shutdown():
     blocker.after(0, 'block')
     ns.shutdown(timeout=1.)
 
-    assert not addr.address.exists()
+    assert wait_condition(addr.address.exists, negate=True)
 
 
 def test_agent_close_ipc_socket_agent_crash_nameserver_shutdown():
@@ -68,7 +68,7 @@ def test_agent_close_ipc_socket_agent_crash_nameserver_shutdown():
 
     ns.shutdown()
 
-    assert not addr.address.exists()
+    assert wait_condition(addr.address.exists, negate=True)
 
 
 def test_agent_close_ipc_socket_nameserver_shutdown():
@@ -81,4 +81,4 @@ def test_agent_close_ipc_socket_nameserver_shutdown():
     addr = agent.bind('PUSH', 'main')
     ns.shutdown()
 
-    assert not addr.address.exists()
+    assert wait_condition(addr.address.exists, negate=True)

@@ -6,6 +6,7 @@ import sys
 import time
 import random
 import multiprocessing
+import cloudpickle
 
 import Pyro4
 from Pyro4.naming import BroadcastServer
@@ -78,7 +79,7 @@ class NameServerProcess(multiprocessing.Process):
     def __init__(self, addr=None, base=NameServer):
         super().__init__()
         self._daemon = None
-        self._base = base
+        self._base = cloudpickle.dumps(base)
         if isinstance(addr, int):
             addr = '127.0.0.1:%s' % addr
         self.addr = addr

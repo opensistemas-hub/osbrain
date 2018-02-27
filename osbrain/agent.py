@@ -1801,7 +1801,7 @@ class AgentProcess(multiprocessing.Process):
         self.nsaddr = nsaddr
         self._serializer = serializer
         self._transport = transport
-        self.base = base
+        self.base = cloudpickle.dumps(base)
         self._shutdown_event = multiprocessing.Event()
         self._queue = multiprocessing.Queue()
         self._sigint = False

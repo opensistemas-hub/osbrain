@@ -18,13 +18,16 @@ Security
 
 Serialization in osBrain
 ========================
-osBrain uses :py:mod:`pickle` module for serialization when passing messages
-between agents and can use :py:mod:`pickle` and :py:mod:`dill` for
-serialization when configuring and deploying the multi-agent architectures.
-It is well known that using pickle or dill for this purpose is a security risk.
-The main problem is that allowing a program to unpickle or undill arbitrary
-data can cause arbitrary code execution and this may wreck or compromise your
-system.
+osBrain can use different serializers when passing messages between agents and
+when configuring and deploying the multi-agent architectures. Among this
+serializers, some are considered unsafe (:py:mod:`pickle`,
+:py:mod:`cloudpickle`...).
+
+Using these unsafe serializers is a security risk. The main problem is that
+allowing a program to deserialize arbitrary data can cause arbitrary code
+execution and this may wreck or compromise your system. Therefore, osBrain is
+meant to be run only within trusted networks (i.e.: LANs) or with properly
+encrypted/safe communications (see `Protocol encryption`_).
 
 
 .. index::

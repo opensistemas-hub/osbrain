@@ -78,7 +78,7 @@ Note that ``set_method()`` accepts any number of parameters:
 Lambdas
 =======
 
-osBrain uses dill for serialization when communicating with remote agents
+osBrain uses :py:mod:`cloudpickle` when communicating with remote agents
 through a proxy. This means that almost anything can be serialized to an agent
 using a proxy.
 

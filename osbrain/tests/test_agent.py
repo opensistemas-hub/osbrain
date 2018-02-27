@@ -306,7 +306,7 @@ def test_linger(nsproxy, linger, sleep_time, should_receive):
     puller.bind('PULL', alias='pull', handler=append_received,
                 addr=address.address, transport='tcp')
 
-    assert should_receive == wait_agent_attr(puller, data='foo', timeout=.2)
+    assert should_receive == wait_agent_attr(puller, data='foo', timeout=1)
 
 
 def test_pushpull(nsproxy):

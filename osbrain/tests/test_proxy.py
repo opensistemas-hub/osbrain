@@ -323,4 +323,4 @@ def test_agent_proxy_oneway(nsproxy):
     assert time.time() - t0 < 0.2
     assert not wayne._next_oneway
 
-    assert wait_agent_attr(wayne, value=20*['bang!'], timeout=1.2)
+    assert wait_agent_attr(wayne, value=20*['bang!'], timeout=1.5)

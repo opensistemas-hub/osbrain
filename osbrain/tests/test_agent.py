@@ -293,16 +293,25 @@ def test_linger(nsproxy, linger, sleep_time, should_receive):
                           transport='tcp')
 
     pusher.connect(address, alias='push')
+
+    # Make sure connection is well established
+    pusher.send('push', 'ping')
+    assert wait_agent_attr(puller, data='ping', timeout=1)
+
+    # Shutdown the puller and restart it without binding
     puller.shutdown()
     assert agent_dies('puller', nsproxy)
+    puller = run_agent('puller', base=AgentTest)
 
+    # Push a new message, which should block during linger period
     pusher.send('push', 'foo')
     pusher.close_all()
+
     # After this timeout, depending on linger value, 'foo' will no longer be
     # on queue to be sent
     time.sleep(sleep_time)
 
-    puller = run_agent('puller', base=AgentTest)
+    # Bind to receive the message (if still in queue)
     puller.bind('PULL', alias='pull', handler=append_received,
                 addr=address.address, transport='tcp')
 

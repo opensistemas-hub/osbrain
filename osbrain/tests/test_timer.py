@@ -10,6 +10,7 @@ from osbrain.common import repeat
 from osbrain.helper import wait_agent_attr
 
 from common import nsproxy  # pragma: no flakes
+from common import append_received
 from common import set_received
 
 
@@ -205,24 +206,26 @@ def test_stop_all_timers(nsproxy):
     """
     Calling `stop_all_timers()` should stop all currently running timers.
     """
-    def tick(agent):
-        agent.send('push', agent.count)
-        agent.count += 1
+    def tick(agent, message):
+        agent.send('push', message)
 
     sender = run_agent('sender')
-    receiver = run_agent('receiver')
+    receiver = run_agent('receiver', attributes={'received': []})
     addr = sender.bind('PUSH', alias='push')
-    receiver.connect(addr, handler=set_received)
+    receiver.connect(addr, handler=append_received)
 
     sender.set_attr(count=0)
-    sender.each(0.1, tick, alias='timer0')
-    sender.each(0.1, tick, alias='timer1')
-    time.sleep(1)
-    assert abs(receiver.get_attr('received') - 20) <= 1
+    sender.each(0.01, tick, 'timer0')
+    sender.each(0.01, tick, 'timer1')
+    # Make sure both timers are running
+    assert wait_agent_attr(receiver, data='timer0')
+    assert wait_agent_attr(receiver, data='timer1')
+    # Stop all timers
     sender.stop_all_timers()
-    time.sleep(1)
-    assert abs(receiver.get_attr('received') - 20) <= 1
     assert len(sender.list_timers()) == 0
+    # Run a new timer (only this one should be running now)
+    sender.each(0.01, tick, 'timer3')
+    assert wait_agent_attr(receiver, endswith=['timer3'] * 10)
 
 
 def test_timer_after(nsproxy):

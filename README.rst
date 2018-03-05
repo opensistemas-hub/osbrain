@@ -1,6 +1,6 @@
 |logo|
 
-|build| |version| |documentation|
+|travis| |appveyor| |version| |documentation|
 |codeclimate| |codecov|
 |requirements|
 
@@ -79,9 +79,12 @@ fits the application well:
 
 
 .. |logo| image:: https://cdn.rawgit.com/opensistemas-hub/osbrain/master/docs/source/_static/osbrain-logo-name.svg
-.. |build| image:: https://api.travis-ci.org/opensistemas-hub/osbrain.svg?branch=master
+.. |travis| image:: https://api.travis-ci.org/opensistemas-hub/osbrain.svg?branch=master
    :target: https://travis-ci.org/opensistemas-hub/osbrain
-   :alt: Build status badge
+   :alt: Travis build status badge
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/osbrain-ci/osbrain?svg=true
+   :target: https://ci.appveyor.com/project/osbrain-ci/osbrain
+   :alt: AppVeyor build status badge
 .. |version| image:: https://img.shields.io/pypi/v/osbrain.svg
    :target: https://pypi.python.org/pypi/osbrain/
    :alt: Latest version badge

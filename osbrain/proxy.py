@@ -6,6 +6,7 @@ import sys
 import time
 
 import Pyro4
+from Pyro4.errors import ConnectionClosedError
 from Pyro4.errors import NamingError
 from Pyro4.message import FLAGS_ONEWAY
 
@@ -413,4 +414,7 @@ class NSProxy(Pyro4.core.Proxy):
             Timeout, in seconds, to wait for the agents to shutdown.
         """
         self.shutdown_agents(timeout)
-        super()._pyroInvoke('daemon_shutdown', (), {}, flags=0)
+        try:
+            super()._pyroInvoke('daemon_shutdown', (), {}, flags=0)
+        except ConnectionClosedError:
+            pass

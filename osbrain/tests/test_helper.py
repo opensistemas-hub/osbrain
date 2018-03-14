@@ -118,25 +118,44 @@ def test_logger_received_count(agent_logger):
     assert logger_received(logger, message='foo.*bar') == 2
 
 
-@pytest.mark.parametrize('attribute,length,data,value,match', [
-    ([], 1, None, None, False),
-    ([], None, 1, None, False),
-    ([], None, None, [], True),
-    ([1, 2], 2, 2, None, True),
-    ([1, 2], 2, 3, None, False),
-    ([1, 2], 3, 2, None, False),
-    ({'foo'}, 1, None, None, True),
-    ({'foo'}, None, 'foo', None, True),
-    ({'foo'}, None, None, {'foo'}, True),
-    (42, None, None, 14, False),
-    (42, None, None, 42, True),
+@pytest.mark.parametrize('data,match', [
+    (dict(attribute=[], length=1), False),
+    (dict(attribute=[], data=1), False),
+    (dict(attribute=[], value=[]), True),
+    (dict(attribute=[1, 2], length=2, data=2), True),
+    (dict(attribute=[1, 2], length=2, data=3), False),
+    (dict(attribute=[1, 2], length=3, data=2), False),
+    (dict(attribute={'foo'}, length=1), True),
+    (dict(attribute={'foo'}, data='foo'), True),
+    (dict(attribute={'foo'}, value={'foo'}), True),
+    (dict(attribute=42, value=14), False),
+    (dict(attribute=42, value=42), True),
+    (dict(attribute=[1, 2, 3], endswith=[2, 3]), True),
+    (dict(attribute=[1, 2, 3], endswith=[3, 3]), False),
+    (dict(attribute='abcde', endswith='cde'), True),
+    (dict(attribute='abcde', endswith='ade'), False),
+], ids=[
+    'List length mismatch',
+    'Data not in list',
+    'List exact value',
+    'Data in list and list length',
+    'Data not in list with length match',
+    'Data in list with length mismatch',
+    'Dictionary attribute length',
+    'Key in dictionary',
+    'Dictionary exact value',
+    'Integer value mismatch',
+    'Integer value match',
+    'List ending with',
+    'List not ending with',
+    'String ending with',
+    'String not ending with',
 ])
-def test_attribute_match_all(attribute, length, data, value, match):
+def test_attribute_match_all(data, match):
     """
     Test `attribute_match_all` function.
     """
-    result = attribute_match_all(attribute, length=length, data=data,
-                                 value=value)
+    result = attribute_match_all(**data)
     assert result == match
 
 

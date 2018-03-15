@@ -160,46 +160,50 @@ def test_timer_each_stop_uuid(nsproxy):
     """
     Test a timer executed periodically and stopped by its UUID.
     """
-    def tick(agent):
-        agent.send('push', agent.count)
-        agent.count += 1
+    def tick(agent, message):
+        agent.send('push', message)
 
     sender = run_agent('sender')
-    receiver = run_agent('receiver')
+    receiver = run_agent('receiver', attributes={'received': []})
     addr = sender.bind('PUSH', alias='push')
-    receiver.connect(addr, handler=set_received)
+    receiver.connect(addr, handler=append_received)
 
     sender.set_attr(count=0)
-    uuid = sender.each(0.1, tick)
-    time.sleep(1)
-    assert abs(receiver.get_attr('received') - 10) <= 1
+    uuid = sender.each(0.01, tick, 'timer0')
+    sender.each(0.01, tick, 'timer1')
+    # Make sure both timers are running
+    assert wait_agent_attr(receiver, data='timer0')
+    assert wait_agent_attr(receiver, data='timer1')
+    # Stop one timer
     sender.stop_timer(uuid)
-    time.sleep(1)
-    assert abs(receiver.get_attr('received') - 10) <= 1
+    assert len(sender.list_timers()) == 1
     assert uuid not in sender.list_timers()
+    assert wait_agent_attr(receiver, endswith=['timer1'] * 10)
 
 
 def test_timer_each_stop_alias(nsproxy):
     """
     Test a timer executed periodically and stopped by an alias.
     """
-    def tick(agent):
-        agent.send('push', agent.count)
-        agent.count += 1
+    def tick(agent, message):
+        agent.send('push', message)
 
     sender = run_agent('sender')
-    receiver = run_agent('receiver')
+    receiver = run_agent('receiver', attributes={'received': []})
     addr = sender.bind('PUSH', alias='push')
-    receiver.connect(addr, handler=set_received)
+    receiver.connect(addr, handler=append_received)
 
     sender.set_attr(count=0)
-    sender.each(0.1, tick, alias='aliased_timer')
-    time.sleep(1)
-    assert abs(receiver.get_attr('received') - 10) <= 1
+    sender.each(0.01, tick, 'timer0', alias='aliased_timer')
+    sender.each(0.01, tick, 'timer1')
+    # Make sure both timers are running
+    assert wait_agent_attr(receiver, data='timer0')
+    assert wait_agent_attr(receiver, data='timer1')
+    # Stop one timer
     sender.stop_timer('aliased_timer')
-    time.sleep(1)
-    assert abs(receiver.get_attr('received') - 10) <= 1
+    assert len(sender.list_timers()) == 1
     assert 'aliased_timer' not in sender.list_timers()
+    assert wait_agent_attr(receiver, endswith=['timer1'] * 10)
 
 
 def test_stop_all_timers(nsproxy):

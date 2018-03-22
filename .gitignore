@@ -1,6 +1,7 @@
 dist/
 pycache/
 .cache/
+.pytest_cache/
 .tox/
 *.egg-info/
 pyro_osbrain.log

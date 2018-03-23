@@ -16,7 +16,7 @@ from osbrain import Proxy
 from osbrain.proxy import locate_ns
 from osbrain.helper import wait_agent_attr
 
-from common import nsproxy  # pragma: no flakes
+from common import nsproxy  # noqa: F401
 from common import append_received
 
 
@@ -323,4 +323,4 @@ def test_agent_proxy_oneway(nsproxy):
     assert time.time() - t0 < 0.2
     assert not wayne._next_oneway
 
-    assert wait_agent_attr(wayne, value=20*['bang!'], timeout=1.5)
+    assert wait_agent_attr(wayne, value=20 * ['bang!'], timeout=1.5)

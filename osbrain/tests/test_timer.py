@@ -9,7 +9,7 @@ from osbrain import run_nameserver
 from osbrain.common import repeat
 from osbrain.helper import wait_agent_attr
 
-from common import nsproxy  # pragma: no flakes
+from common import nsproxy  # noqa: F401
 from common import append_received
 from common import set_received
 

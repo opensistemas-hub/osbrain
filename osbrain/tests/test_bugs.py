@@ -6,7 +6,7 @@ import sys
 from osbrain import run_agent
 from osbrain.helper import wait_agent_condition
 
-from common import nsproxy  # pragma: no flakes
+from common import nsproxy  # noqa: F401
 
 
 def test_timer_recursion(nsproxy):

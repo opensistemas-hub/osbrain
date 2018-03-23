@@ -214,7 +214,7 @@ class Proxy(Pyro4.core.Proxy):
         try:
             result = self._remote_call(
                 methodname, args, kwargs, flags, objectId)
-        except:
+        except Exception:
             sys.stdout.write(''.join(Pyro4.util.getPyroTraceback()))
             sys.stdout.flush()
             raise
@@ -400,8 +400,8 @@ class NSProxy(Pyro4.core.Proxy):
             'Chances are {} were not shutdown after {} s!'.format(
                 self.agents(),
                 timeout,
-                )
             )
+        )
 
     def shutdown(self, timeout=10.):
         """

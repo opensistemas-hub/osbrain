@@ -8,7 +8,7 @@ from osbrain import run_logger
 from osbrain.logging import pyro_log
 from osbrain.helper import logger_received
 
-from common import nsproxy  # pragma: no flakes
+from common import nsproxy  # noqa: F401
 
 
 def test_logging_level(nsproxy):

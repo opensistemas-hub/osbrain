@@ -8,7 +8,7 @@ from osbrain import run_nameserver
 from osbrain.helper import agent_dies
 from osbrain.helper import wait_condition
 
-from common import nsproxy  # pragma: no flakes
+from common import nsproxy  # noqa: F401
 from common import skip_windows_ipc
 
 pytestmark = skip_windows_ipc

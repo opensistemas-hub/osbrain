@@ -13,6 +13,7 @@ def append_received(agent, message):
     agent.log_info(message)
     agent.received.append(message)
 
+
 if __name__ == '__main__':
 
     ns = run_nameserver()

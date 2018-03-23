@@ -7,7 +7,7 @@ from osbrain import Agent
 from osbrain import run_agent
 from osbrain.helper import wait_agent_attr
 
-from common import nsproxy  # pragma: no flakes
+from common import nsproxy  # noqa: F401
 from common import append_received
 
 

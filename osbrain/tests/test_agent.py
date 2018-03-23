@@ -24,7 +24,7 @@ from osbrain.helper import logger_received
 from osbrain.helper import sync_agent_logger
 from osbrain.helper import wait_agent_attr
 
-from common import nsproxy  # pragma: no flakes
+from common import nsproxy  # noqa: F401
 from common import append_received
 from common import set_received
 
@@ -508,7 +508,7 @@ def test_list_of_handlers(nsproxy):
     sender.connect(receiver.addr('pull'), 'push')
     message = 'Hello world'
     sender.send('push', message)
-    assert wait_agent_attr(receiver, name='third', value='10'+message)
+    assert wait_agent_attr(receiver, name='third', value='10' + message)
     assert receiver.get_attr('received') == message
     assert receiver.get_attr('second') == '0' + message
     assert receiver.get_attr('third') == '10' + message

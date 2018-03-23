@@ -16,8 +16,8 @@ from osbrain.helper import wait_agent_attr
 from osbrain.helper import wait_condition
 from osbrain.helper import wait_agent_condition
 
-from common import nsproxy  # pragma: no flakes
-from common import agent_logger  # pragma: no flakes
+from common import nsproxy  # noqa: F401
+from common import agent_logger  # noqa: F401
 
 
 class SugarAddict():

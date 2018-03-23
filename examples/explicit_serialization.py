@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # serialization, which is not capable of serializing raw bytes.
     try:
         a0.send('push', message)
-    except:
+    except TypeError:
         print('Something went wrong...')
 
     ns.shutdown()

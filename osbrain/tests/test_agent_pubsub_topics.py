@@ -5,7 +5,7 @@ from osbrain.address import AgentAddressSerializer
 from osbrain.helper import wait_agent_condition
 from osbrain.helper import last_received_endswith
 
-from common import nsproxy  # pragma: no flakes
+from common import nsproxy  # noqa: F401
 from common import append_received
 
 

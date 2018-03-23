@@ -46,10 +46,12 @@ make use of the provided `requirements.txt` file:
 Running the tests
 =================
 
-Running the tests locally is very simple, using
-`Tox <https://tox.readthedocs.io/>`_ from the top level path of the project:
+Running the tests locally is very simple, first install
+`Tox <https://tox.readthedocs.io/>`_::
 
-.. code-block:: bash
+   pip install tox
+
+And run it from the top-level path of the project::
 
    tox
 
@@ -57,14 +59,12 @@ That single command will run all the tests for all the supported Python
 versions available in your system or environment.
 
 For faster results you may want to run all the tests just against a single
-Python version. This command will run all tests against Python 3.5 only:
+Python version. This command will run all tests against Python 3.6 only::
 
-.. code-block:: bash
+   tox -e py36
 
-   tox -e py35
-
-Note that those tests include style and static analysis checks. If you just
-want to run all the behavior tests (not recommended):
+When running Tox, tests are actually executed with :py:mod:`pytest`. Although
+not recommended, you might want to directly use that tool for finer control:
 
 .. code-block:: bash
 

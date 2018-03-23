@@ -48,7 +48,18 @@ setup(
         'cloudpickle>=0.4.0',
     ] + install_requires_compat,
     extras_require={
-        'test': ['tox'],
-        'docs': ['sphinx', 'numpydoc', 'sphinx_rtd_theme'],
+        'docs': [
+            'doc8',
+            'sphinx',
+            'numpydoc',
+            'sphinx_rtd_theme',
+        ],
+        'test': [
+            'pytest',
+            'pytest-cov',
+            'pytest-flake8',
+            'pytest-rerunfailures',
+            'pytest-xdist',
+        ],
     },
 )

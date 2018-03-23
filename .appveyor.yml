@@ -16,7 +16,10 @@ install:
   - cmd: set "PATH=%PYTHON%;%PATH%"
   - cmd: python -m venv virtualenv
   - cmd: virtualenv\Scripts\activate.bat
-  - cmd: pip install tox
+  - cmd: pip install tox codecov
 
 test_script:
   - cmd: tox -e py -- -n 2 --color=yes
+
+after_test:
+  - cmd: codecov

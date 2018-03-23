@@ -10,6 +10,4 @@ exclude_lines =
     def __hash__
     if .debug:
     raise NotImplementedError
-    if os.name != 'posix':
-    if sys.version_info
     if __name__ == .__main__.:

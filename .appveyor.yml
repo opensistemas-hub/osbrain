@@ -1,0 +1,22 @@
+build: false
+
+platform:
+  - x64
+
+environment:
+  matrix:
+    - PYTHON: "C:\\Python36-x64"
+    - PYTHON: "C:\\Python35-x64"
+    - PYTHON: "C:\\Python34-x64"
+
+matrix:
+  fast_finish: false
+
+install:
+  - cmd: set "PATH=%PYTHON%;%PATH%"
+  - cmd: python -m venv virtualenv
+  - cmd: virtualenv\Scripts\activate.bat
+  - cmd: pip install tox
+
+test_script:
+  - cmd: tox -e py -- -n 2 --color=yes

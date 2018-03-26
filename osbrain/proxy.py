@@ -7,6 +7,7 @@ import time
 
 import Pyro4
 from Pyro4.errors import NamingError
+from Pyro4.message import FLAGS_ONEWAY
 
 from . import config
 from .address import address_to_host_port
@@ -248,9 +249,7 @@ class Proxy(Pyro4.core.Proxy):
         Call a remote method from the proxy.
         """
         if self._next_oneway:
-            # Hardcoded Pyro4.core.MessageFactory flag (cannot be imported)
-            pyro4_FLAGS_ONEWAY = 1 << 2
-            flags |= pyro4_FLAGS_ONEWAY
+            flags |= FLAGS_ONEWAY
             result = super()._pyroInvoke(
                 methodname, args, kwargs, flags=flags, objectId=objectId)
             return result

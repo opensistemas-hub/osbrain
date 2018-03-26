@@ -323,13 +323,13 @@ def test_simple_pub_single_handler(nsproxy, server):
     server.each(0, 'publish_str')
 
     # Wait for clients to receive some data
-    N = 10
-    assert wait_agent_attr(alltopics, length=N)
+    n = 10
+    assert wait_agent_attr(alltopics, length=n)
 
     # alltopics
     received = [int(x) if x != 'bytes...' else x
                 for x in alltopics.get_attr('received')]
-    assert len(received) >= N
+    assert len(received) >= n
     for i in range(2, len(received)):
         if received[i] == 'bytes...':
             assert received[i - 1] == -received[i - 2]
@@ -372,14 +372,14 @@ def test_simple_pub_dict_handler(nsproxy, server):
     server.each(0, 'publish_str')
 
     # Wait for clients to receive some data
-    N = 10
-    assert wait_agent_attr(both, length=N)
-    assert wait_agent_attr(positive, length=N)
-    assert wait_agent_attr(bytestopic, length=N)
+    n = 10
+    assert wait_agent_attr(both, length=n)
+    assert wait_agent_attr(positive, length=n)
+    assert wait_agent_attr(bytestopic, length=n)
 
     # both
     received = [int(x) for x in both.get_attr('received')]
-    assert len(received) >= N
+    assert len(received) >= n
     for i in range(1, len(received)):
         if received[i] > 0:
             assert received[i - 1] == 1 - received[i]
@@ -388,12 +388,12 @@ def test_simple_pub_dict_handler(nsproxy, server):
 
     # positive
     received = [int(x) for x in positive.get_attr('received')]
-    assert len(received) >= N
+    assert len(received) >= n
     assert received == list(range(received[0], received[-1] + 1))
 
     # bytestopic
     received = bytestopic.get_attr('received')
-    assert len(received) >= N
+    assert len(received) >= n
     assert all(x == 'bytes...' for x in received)
 
 
@@ -427,9 +427,9 @@ def test_request(nsproxy, server):
     server.each(0, 'publish')
 
     # Wait for clients to receive some data
-    N = 10
-    assert wait_agent_attr(active, length=N)
-    assert wait_agent_attr(passive, length=N)
+    n = 10
+    assert wait_agent_attr(active, length=n)
+    assert wait_agent_attr(passive, length=n)
 
     # Send request from active client
     active.send('sub', 'request!', handler=receive_negate)
@@ -446,8 +446,8 @@ def test_request(nsproxy, server):
     assert wait_agent_attr(active, data=-response)
 
     # Wait for at least another message after the response
-    N = len(active.get_attr('received')) + 1
-    assert wait_agent_attr(active, length=N)
+    n = len(active.get_attr('received')) + 1
+    assert wait_agent_attr(active, length=n)
 
     # Check received messages are properly sorted
     received = active.get_attr('received')
@@ -485,8 +485,8 @@ def test_wait(nsproxy):
     server.each(0, 'publish')
 
     # Wait for client to receive some data
-    N = 10
-    assert wait_agent_attr(client, length=N)
+    n = 10
+    assert wait_agent_attr(client, length=n)
 
     # Response received in time
     fast = 0

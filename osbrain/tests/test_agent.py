@@ -37,9 +37,9 @@ def test_agent_uuid():
     """
     All agent identifiers should be unique strings.
     """
-    N = 100
-    bunch = set(Agent()._uuid for i in range(N))
-    assert len(bunch) == N
+    n = 100
+    bunch = set(Agent()._uuid for _ in range(n))
+    assert len(bunch) == n
     assert all(isinstance(identifier, bytes) for identifier in bunch)
 
 

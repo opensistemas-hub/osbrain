@@ -55,6 +55,8 @@ setup(
             'sphinx_rtd_theme',
         ],
         'test': [
+            'flake8-bugbear',
+            'pep8-naming',
             'pytest',
             'pytest-cov',
             'pytest-flake8',

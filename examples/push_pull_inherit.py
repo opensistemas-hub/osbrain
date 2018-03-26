@@ -28,7 +28,7 @@ if __name__ == '__main__':
     bob.connect(alice.addr('main'), handler='custom_log')
 
     # Send messages
-    for i in range(3):
+    for _ in range(3):
         alice.hello('Bob')
         time.sleep(1)
 

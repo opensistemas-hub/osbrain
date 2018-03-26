@@ -16,7 +16,7 @@ def test_unique_identifier():
     contain the `osbrain.TOPIC_SEPARATOR`, so that it is safe to use in
     PUB-SUB communication patterns.
     """
-    for i in range(1000):
+    for _ in range(1000):
         identifier = unique_identifier()
         assert isinstance(identifier, bytes)
         assert TOPIC_SEPARATOR not in identifier

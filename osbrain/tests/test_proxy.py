@@ -309,7 +309,7 @@ def test_agent_proxy_oneway(nsproxy):
 
         def shoot(self):
             self.connect(self.target, alias='gun')
-            for i in range(10):
+            for _ in range(10):
                 self.send('gun', 'bang!')
                 time.sleep(0.1)
 

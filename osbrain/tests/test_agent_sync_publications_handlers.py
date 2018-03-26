@@ -11,7 +11,7 @@ from common import nsproxy  # noqa: F401
 from common import append_received
 
 
-class Server_SYNC_PUB(Agent):
+class ServerSyncPub(Agent):
     def on_init(self):
         self.received = []
         self.bind('SYNC_PUB', alias='publish', handler='reply')
@@ -57,7 +57,7 @@ def test_sync_pub_handler_types(nsproxy, handler):
     When binding a SYNC_PUB socket, we must accept different types of
     handlers: methods, functions, lambda expressions...
     '''
-    server = run_agent('server', base=Server_SYNC_PUB)
+    server = run_agent('server', base=ServerSyncPub)
 
     assert server.bind('SYNC_PUB', alias='should_not_crash',
                        handler=handler)
@@ -76,7 +76,7 @@ def test_sync_pub_connect_handler_types(nsproxy, handler, check_function):
     We should be able to specify this in various ways: method, functions,
     lambda expressions...
     '''
-    server = run_agent('server', base=Server_SYNC_PUB)
+    server = run_agent('server', base=ServerSyncPub)
     client = run_agent('client', base=ClientWithHandler)
 
     addr = server.addr('publish')
@@ -104,7 +104,7 @@ def test_sync_pub_send_handlers(nsproxy, handler, check_function,
     The handler for the requests MUST be specified in the `send` call.
     It can be specified in different ways: method, functions...
     '''
-    server = run_agent('server', base=Server_SYNC_PUB)
+    server = run_agent('server', base=ServerSyncPub)
     client = run_agent('client', base=ClientWithHandler)
 
     addr = server.addr('publish')

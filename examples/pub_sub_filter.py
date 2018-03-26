@@ -28,7 +28,7 @@ if __name__ == '__main__':
     dave.connect(addr, handler={'b': log_b})
 
     # Send messages
-    for i in range(6):
+    for _ in range(6):
         time.sleep(1)
         topic = random.choice(['a', 'b'])
         message = 'Hello, %s!' % topic

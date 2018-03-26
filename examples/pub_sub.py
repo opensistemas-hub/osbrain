@@ -21,7 +21,7 @@ if __name__ == '__main__':
     eve.connect(addr, handler=log_message)
 
     # Send messages
-    for i in range(3):
+    for _ in range(3):
         time.sleep(1)
         alice.send('main', 'Hello, all!')
 

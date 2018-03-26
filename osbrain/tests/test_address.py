@@ -248,7 +248,7 @@ def test_agentchannel_uuid():
     """
     sender = AgentAddress('ipc', 'addr0', 'PUB', 'server', 'pickle')
     receiver = AgentAddress('ipc', 'addr0', 'PULL', 'server', 'pickle')
-    for i in range(1000):
+    for _ in range(1000):
         channel = AgentChannel('SYNC_PUB', sender=sender, receiver=receiver)
         identifier = channel.uuid
         assert isinstance(identifier, bytes)

@@ -207,7 +207,8 @@ class Proxy(Pyro4.core.Proxy):
         self._next_oneway = True
         return self
 
-    def _pyroInvoke(self, methodname, args, kwargs, flags=0, objectId=None):
+    def _pyroInvoke(self, methodname, args, kwargs,
+                    flags=0, objectId=None):  # flake8: noqa
         """
         Wrapper around `_remote_call` to safely execute methods on remote
         objects.

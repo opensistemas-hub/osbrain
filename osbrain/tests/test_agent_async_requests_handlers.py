@@ -11,7 +11,7 @@ from common import nsproxy  # noqa: F401
 from common import append_received
 
 
-class Server_ASYNC_REP(Agent):
+class ServerAsyncRep(Agent):
     def on_init(self):
         self.received = []
         self.bind('ASYNC_REP', alias='publish', handler='reply')
@@ -53,7 +53,7 @@ def test_async_rep_handler_types(nsproxy, handler):
     When binding an ASYNC_REP socket, we must accept different types of
     handlers: methods, functions, lambda expressions...
     '''
-    server = run_agent('server', base=Server_ASYNC_REP)
+    server = run_agent('server', base=ServerAsyncRep)
 
     assert server.bind('ASYNC_REP', alias='should_not_crash',
                        handler=handler)
@@ -73,7 +73,7 @@ def test_async_rep_connect_handler_types(nsproxy, handler, check_function):
     parameter in the `send` call. However, that is specifically checked in
     other test.
     '''
-    server = run_agent('server', base=Server_ASYNC_REP)
+    server = run_agent('server', base=ServerAsyncRep)
     client = run_agent('client', base=ClientWithHandler)
 
     addr = server.addr('publish')
@@ -99,7 +99,7 @@ def test_async_rep_send_handler_types(nsproxy, handler, check_function):
     We should be able to make requests even if we do not specify a handler
     on the `connect` call, as long as we specify it on the `send` call.
     '''
-    server = run_agent('server', base=Server_ASYNC_REP)
+    server = run_agent('server', base=ServerAsyncRep)
     client = run_agent('client', base=ClientWithHandler)
 
     addr = server.addr('publish')

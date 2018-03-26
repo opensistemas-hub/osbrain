@@ -87,7 +87,8 @@ new functionality), just run:
 Generating documentation
 ========================
 
-Documentation is generated with Sphinx. In order to generate the documentation locally you need to run `make` from the `docs` directory:
+Documentation is generated with Sphinx. In order to generate the documentation
+locally you need to run `make` from the `docs` directory:
 
 .. code-block:: bash
 

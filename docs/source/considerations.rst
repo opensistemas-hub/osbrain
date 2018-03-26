@@ -124,8 +124,8 @@ This, of course, can be done with osBrain:
 
 .. literalinclude:: ../../examples/push_pull_inherit.py
 
-Most of the code is similar to the one presented in the :ref:`push_pull` example,
-however you may notice some differences:
+Most of the code is similar to the one presented in the :ref:`push_pull`
+example, however you may notice some differences:
 
 #. When runing *Alice*, a new parameter ``base`` is passed to the
    :func:`osbrain.run_agent` function. This means that, instead of

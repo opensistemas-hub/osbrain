@@ -54,12 +54,14 @@ setup(
             'numpydoc',
             'sphinx_rtd_theme',
         ],
-        'test': [
+        'lint': [
+            'flake8',
             'flake8-bugbear',
             'pep8-naming',
+        ],
+        'test': [
             'pytest',
             'pytest-cov',
-            'pytest-flake8',
             'pytest-rerunfailures',
             'pytest-xdist',
         ],

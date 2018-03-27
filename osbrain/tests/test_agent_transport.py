@@ -32,7 +32,7 @@ def test_agent_bind_transport_platform_default(nsproxy):
 
 
 @skip_windows_spawn
-def test_agent_bind_transport_global(nsproxy):
+def test_agent_bind_transport_global(monkeypatch, nsproxy):
     """
     Test global default transport change.
     """
@@ -42,7 +42,7 @@ def test_agent_bind_transport_global(nsproxy):
     assert address.transport != 'inproc'
 
     # Changing default global transport to `inproc`
-    osbrain.config['TRANSPORT'] = 'inproc'
+    monkeypatch.setitem(osbrain.config, 'TRANSPORT', 'inproc')
     agent = run_agent('a1')
     address = agent.bind('PUSH')
     assert address.transport == 'inproc'

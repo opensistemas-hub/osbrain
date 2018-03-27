@@ -276,7 +276,7 @@ def test_bind_tcp_addr_specific_port(nsproxy):
     (0, 1, False),
     (-1, 1, True),
 ])
-def test_linger(nsproxy, linger, sleep_time, should_receive):
+def test_linger(monkeypatch, nsproxy, linger, sleep_time, should_receive):
     '''
     Test linger works when closing the sockets of an agent.
     '''
@@ -284,7 +284,7 @@ def test_linger(nsproxy, linger, sleep_time, should_receive):
         def on_init(self):
             self.received = []
 
-    osbrain.config['LINGER'] = linger
+    monkeypatch.setitem(osbrain.config, 'LINGER', linger)
 
     puller = run_agent('puller', base=AgentTest)
     pusher = run_agent('pusher', base=AgentTest)
@@ -684,14 +684,14 @@ def test_agent_spawn_process(nsproxy):
     assert agent.spawn_process()
 
 
-def test_agent_execute_as_function(nsproxy):
+def test_agent_execute_as_function(monkeypatch, nsproxy):
     """
     Test `execute_as_function` method, which should execute a given function
     in the remote agent.
     """
     class EnvironmentAgent(Agent):
         def set_environment(self, value):
-            os.environ['__OSBRAIN_TEST'] = value
+            monkeypatch.setitem(os.environ, '__OSBRAIN_TEST', value)
 
     def name(prefix, suffix='suffix'):
         return prefix + os.environ.get('__OSBRAIN_TEST', '') + suffix

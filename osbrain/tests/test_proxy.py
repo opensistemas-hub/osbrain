@@ -7,7 +7,6 @@ import pickle
 import pytest
 from threading import Timer
 
-
 import osbrain
 from osbrain import run_agent
 from osbrain import Agent
@@ -179,20 +178,20 @@ def test_agent_proxy_nameserver_address(nsproxy):
     assert agent.nsaddr() == nsproxy.addr()
 
 
-def test_agent_proxy_safe_and_unsafe_property(nsproxy):
+def test_agent_proxy_safe_and_unsafe_property(monkeypatch, nsproxy):
     """
     Using the safe/unsafe property from a proxy should allow us to
     override the environment global configuration.
     """
     run_agent('foo')
     # Safe environment
-    osbrain.config['SAFE'] = True
+    monkeypatch.setitem(osbrain.config, 'SAFE', True)
     proxy = Proxy('foo')
     assert proxy._safe
     assert proxy.safe._safe
     assert not proxy.unsafe._safe
     # Unsafe environment
-    osbrain.config['SAFE'] = False
+    monkeypatch.setitem(osbrain.config, 'SAFE', False)
     proxy = Proxy('foo')
     assert not proxy._safe
     assert proxy.safe._safe
@@ -210,33 +209,33 @@ def test_agent_run_agent_safe_and_unsafe(nsproxy):
     assert not unsafe._safe
 
 
-def test_agent_proxy_safe_and_unsafe_parameter(nsproxy):
+def test_agent_proxy_safe_and_unsafe_parameter(monkeypatch, nsproxy):
     """
     Using the safe/unsafe parameter when initializating a proxy should allow
     us to override the environment global configuration.
     """
     run_agent('foo')
     # Safe environment
-    osbrain.config['SAFE'] = True
+    monkeypatch.setitem(osbrain.config, 'SAFE', True)
     proxy = Proxy('foo')
     assert proxy._safe
     proxy = Proxy('foo', safe=False)
     assert not proxy._safe
     # Unsafe environment
-    osbrain.config['SAFE'] = False
+    monkeypatch.setitem(osbrain.config, 'SAFE', False)
     proxy = Proxy('foo')
     assert not proxy._safe
     proxy = Proxy('foo', safe=True)
     assert proxy._safe
 
 
-def test_agent_proxy_safe_and_unsafe_calls_property_safe(nsproxy):
+def test_agent_proxy_safe_and_unsafe_calls_property_safe(monkeypatch, nsproxy):
     """
     An agent can be accessed through a proxy in both safe and unsafe ways.
     When using the `safe` property, calls are expected to wait until the main
     thread is able to process them to avoid concurrency.
     """
-    osbrain.config['SAFE'] = False
+    monkeypatch.setitem(osbrain.config, 'SAFE', False)
     worker = setup_bussy_worker(nsproxy)
     assert not worker._safe
     t0 = time.time()
@@ -247,13 +246,14 @@ def test_agent_proxy_safe_and_unsafe_calls_property_safe(nsproxy):
     assert not worker._safe
 
 
-def test_agent_proxy_safe_and_unsafe_calls_property_unsafe(nsproxy):
+def test_agent_proxy_safe_and_unsafe_calls_property_unsafe(
+        monkeypatch, nsproxy):
     """
     An agent can be accessed through a proxy in both safe and unsafe ways.
     When using the `unsafe` property, calls are not expected to wait until
     the main thread is able to process them (concurrency is allowed).
     """
-    osbrain.config['SAFE'] = True
+    monkeypatch.setitem(osbrain.config, 'SAFE', True)
     worker = setup_bussy_worker(nsproxy)
     assert worker._safe
     t0 = time.time()
@@ -266,13 +266,13 @@ def test_agent_proxy_safe_and_unsafe_calls_property_unsafe(nsproxy):
     assert worker._safe
 
 
-def test_agent_proxy_safe_and_unsafe_calls_environ_safe(nsproxy):
+def test_agent_proxy_safe_and_unsafe_calls_environ_safe(monkeypatch, nsproxy):
     """
     An agent can be accessed through a proxy in both safe and unsafe ways.
     When using the `safe` property, calls are expected to wait until the main
     thread is able to process them to avoid concurrency.
     """
-    osbrain.config['SAFE'] = True
+    monkeypatch.setitem(osbrain.config, 'SAFE', True)
     worker = setup_bussy_worker(nsproxy)
     t0 = time.time()
     assert worker.listen() == 'OK'
@@ -280,13 +280,14 @@ def test_agent_proxy_safe_and_unsafe_calls_environ_safe(nsproxy):
     assert not worker.get_attr('bussy')
 
 
-def test_agent_proxy_safe_and_unsafe_calls_environ_unsafe(nsproxy):
+def test_agent_proxy_safe_and_unsafe_calls_environ_unsafe(
+        monkeypatch, nsproxy):
     """
     An agent can be accessed through a proxy in both safe and unsafe ways.
     When using the `unsafe` property, calls are not expected to wait until
     the main thread is able to process them (concurrency is allowed).
     """
-    osbrain.config['SAFE'] = False
+    monkeypatch.setitem(osbrain.config, 'SAFE', False)
     worker = setup_bussy_worker(nsproxy)
     t0 = time.time()
     assert worker.listen() == 'OK'

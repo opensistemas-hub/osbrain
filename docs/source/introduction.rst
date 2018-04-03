@@ -45,7 +45,7 @@ saying `Hello world!` but, what exactly is happening there?
 
 
 .. note:: The ``ns.shutdown()`` calls in the examples are there because we do
-   not want examples to run indefinetely. For more information on that method,
+   not want examples to run indefinitely. For more information on that method,
    refer to the :ref:`shutting_down` section.
 
 
@@ -55,7 +55,7 @@ saying `Hello world!` but, what exactly is happening there?
 Agents and proxies
 ==================
 
-An agent, in osBrain, is an entity that runs independly from other agents in
+An agent, in osBrain, is an entity that runs independently from other agents in
 the system. When running, it executes the main loop:
 
 - Poll for incoming messages.

@@ -13,7 +13,7 @@ def set_received(agent, message, topic=None):
 
 if __name__ == '__main__':
     # We can define the default serializer through environment variables.
-    # This will be the preferred method from now on, unless overriden.
+    # This will be the preferred method from now on, unless overridden.
     osbrain.config['SERIALIZER'] = 'pickle'
 
     ns = run_nameserver()
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     a0 = run_agent('a0')
     # Agent a1 will ignore the default serialization and use the `raw` option
     # instead. By default, all of `a1` sockets will use `raw` option, unless
-    # overriden.
+    # overridden.
     a1 = run_agent('a1', serializer='raw')
     # Bind a specific socket using json serialization, which will ignore both
     # the global configuration and the per-agent configuration.

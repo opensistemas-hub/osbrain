@@ -23,27 +23,27 @@ def since(t0, passed, tolerance):
     return abs((time.time() - t0) - passed) < tolerance
 
 
-class BussyWorker(Agent):
+class BusyWorker(Agent):
     def on_init(self):
-        self.bind('PULL', alias='pull', handler=self.stay_bussy)
-        self.bussy = False
+        self.bind('PULL', alias='pull', handler=self.stay_busy)
+        self.busy = False
 
-    def stay_bussy(self, delay):
-        self.bussy = True
+    def stay_busy(self, delay):
+        self.busy = True
         time.sleep(delay)
-        self.bussy = False
+        self.busy = False
 
     def listen(self):
         return 'OK'
 
 
-def setup_bussy_worker(nsproxy):
-    worker = run_agent('worker', base=BussyWorker)
+def setup_busy_worker(nsproxy):
+    worker = run_agent('worker', base=BusyWorker)
     boss = run_agent('boss')
     boss.connect(worker.addr('pull'), alias='push')
-    # Make worker bussy for 2 seconds
+    # Make worker busy for 2 seconds
     boss.send('push', 2)
-    assert wait_agent_attr(worker, name='bussy', value=True, timeout=.5)
+    assert wait_agent_attr(worker, name='busy', value=True, timeout=.5)
     return worker
 
 
@@ -141,7 +141,7 @@ def test_agent_proxy_wait_running(nsproxy, timeout):
     assert elapsed <= abs(timeout)
 
 
-def test_agent_proxy_wait_running_0_seconods(nsproxy):
+def test_agent_proxy_wait_running_0_seconds(nsproxy):
     """
     Using `wait_for_running` on a proxy after initialization should block until
     the agent is running or time out.
@@ -211,7 +211,7 @@ def test_agent_run_agent_safe_and_unsafe(nsproxy):
 
 def test_agent_proxy_safe_and_unsafe_parameter(monkeypatch, nsproxy):
     """
-    Using the safe/unsafe parameter when initializating a proxy should allow
+    Using the safe/unsafe parameter when initializing a proxy should allow
     us to override the environment global configuration.
     """
     run_agent('foo')
@@ -236,12 +236,12 @@ def test_agent_proxy_safe_and_unsafe_calls_property_safe(monkeypatch, nsproxy):
     thread is able to process them to avoid concurrency.
     """
     monkeypatch.setitem(osbrain.config, 'SAFE', False)
-    worker = setup_bussy_worker(nsproxy)
+    worker = setup_busy_worker(nsproxy)
     assert not worker._safe
     t0 = time.time()
     assert worker.safe.listen() == 'OK'
     assert since(t0, passed=2., tolerance=0.1)
-    assert not worker.get_attr('bussy')
+    assert not worker.get_attr('busy')
     # Calling a method with `.safe` should not change default behavior
     assert not worker._safe
 
@@ -254,12 +254,12 @@ def test_agent_proxy_safe_and_unsafe_calls_property_unsafe(
     the main thread is able to process them (concurrency is allowed).
     """
     monkeypatch.setitem(osbrain.config, 'SAFE', True)
-    worker = setup_bussy_worker(nsproxy)
+    worker = setup_busy_worker(nsproxy)
     assert worker._safe
     t0 = time.time()
     assert worker.unsafe.listen() == 'OK'
     assert since(t0, passed=0., tolerance=0.1)
-    while worker.get_attr('bussy'):
+    while worker.get_attr('busy'):
         time.sleep(0.01)
     assert since(t0, passed=2., tolerance=0.1)
     # Calling a method with `.unsafe` should not change default behavior
@@ -273,11 +273,11 @@ def test_agent_proxy_safe_and_unsafe_calls_environ_safe(monkeypatch, nsproxy):
     thread is able to process them to avoid concurrency.
     """
     monkeypatch.setitem(osbrain.config, 'SAFE', True)
-    worker = setup_bussy_worker(nsproxy)
+    worker = setup_busy_worker(nsproxy)
     t0 = time.time()
     assert worker.listen() == 'OK'
     assert since(t0, passed=2., tolerance=0.1)
-    assert not worker.get_attr('bussy')
+    assert not worker.get_attr('busy')
 
 
 def test_agent_proxy_safe_and_unsafe_calls_environ_unsafe(
@@ -288,11 +288,11 @@ def test_agent_proxy_safe_and_unsafe_calls_environ_unsafe(
     the main thread is able to process them (concurrency is allowed).
     """
     monkeypatch.setitem(osbrain.config, 'SAFE', False)
-    worker = setup_bussy_worker(nsproxy)
+    worker = setup_busy_worker(nsproxy)
     t0 = time.time()
     assert worker.listen() == 'OK'
     assert since(t0, passed=0., tolerance=0.1)
-    while worker.get_attr('bussy'):
+    while worker.get_attr('busy'):
         time.sleep(0.01)
     assert since(t0, passed=2., tolerance=0.1)
 

@@ -31,7 +31,7 @@ def logger_received(logger, message, log_name='log_history_info',
     logger : Proxy
         Proxy to the logger.
     log_name : str, default is `'log_history_info'`
-        The name of the attribue to look for in the logger.
+        The name of the attribute to look for in the logger.
     message : anything
         Message to look for in the log. Can be a partial match. Regular
         expressions are allowed.

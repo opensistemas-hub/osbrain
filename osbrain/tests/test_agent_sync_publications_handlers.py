@@ -109,7 +109,7 @@ def test_sync_pub_send_handlers(nsproxy, handler, check_function,
 
     addr = server.addr('publish')
 
-    # Use an alternative handler so as to guarantee connection is stablished
+    # Use an alternative handler so as to guarantee connection is established
     client.connect(addr, alias='sub', handler='alternative_receive')
     server.each(0.01, 'publish')
     assert wait_agent_attr(client, name='alternative_received', length=2,

@@ -189,7 +189,7 @@ class Agent():
     _host : str
         Host address where the agent is binding to.
     _uuid : bytes
-        Globally unique identifer for the agent.
+        Globally unique identifier for the agent.
     _running : bool
         Set to `True` if the agent is running (executing the main loop).
     _serializer : str
@@ -580,7 +580,7 @@ class Agent():
         Parameters
         ----------
         alias : str
-            Alias of the socket whose address is to be retreived.
+            Alias of the socket whose address is to be retrieved.
 
         Returns
         -------
@@ -1667,7 +1667,7 @@ class Agent():
             self._loop()
         except Exception as error:
             self._running = False
-            msg = 'An exception occured while running! (%s)\n' % error
+            msg = 'An exception occurred while running! (%s)\n' % error
             msg += format_exception()
             self.log_error(msg)
             raise
@@ -1877,12 +1877,12 @@ class AgentProcess(multiprocessing.Process):
         Raises
         ------
         RuntimeError
-            If an error occured when initializing the daemon.
+            If an error occurred when initializing the daemon.
         """
         super().start()
         status = self._queue.get()
         if not status.startswith('STARTED'):
-            raise RuntimeError('An error occured while creating the daemon!' +
+            raise RuntimeError('An error occurred while creating the daemon!' +
                                '\n===============\n'.join(['', status, '']))
 
         return status.partition(':')[-1]

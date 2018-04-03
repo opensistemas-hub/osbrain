@@ -133,14 +133,14 @@ class NameServerProcess(multiprocessing.Process):
         Raises
         ------
         RuntimeError
-            If an error occured when initializing the daemon.
+            If an error occurred when initializing the daemon.
         """
         os.environ['OSBRAIN_NAMESERVER_ADDRESS'] = str(self.addr)
         super().start()
         status = self._queue.get()
         if status == 'STARTED':
             return
-        raise RuntimeError('An error occured while creating the daemon!' +
+        raise RuntimeError('An error occurred while creating the daemon!' +
                            '\n===============\n'.join(['', status, '']))
 
     def agents(self):

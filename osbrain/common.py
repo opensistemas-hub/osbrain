@@ -29,13 +29,13 @@ def format_exception():
     Represent a traceback exception as a string in which all lines start
     with a `|` character.
 
-    Useful for differenciating remote from local exceptions and exceptions
+    Useful for differentiating remote from local exceptions and exceptions
     that where silenced.
 
     Returns
     -------
     str
-        A formatted string conaining an exception traceback information.
+        A formatted string containing an exception traceback information.
     """
     begin = '\n|>>>>>>>>'
     end = '\n|<<<<<<<<'

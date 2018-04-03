@@ -69,7 +69,7 @@ def test_async_rep_connect_handler_types(nsproxy, handler, check_function):
     We should be able to specify the handler in the `connect` call in
     different ways: method, functions, lambda expressions...
 
-    Note that this handler will be used if not overriden by the `handler`
+    Note that this handler will be used if not overridden by the `handler`
     parameter in the `send` call. However, that is specifically checked in
     other test.
     '''

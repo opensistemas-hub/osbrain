@@ -106,7 +106,7 @@ def test_pubsub_topics_raw(nsproxy, serializer):
 
     In the raw version of PUBSUB, we want to replicate the raw message passing
     of ZMQ, in which the topic is passed along the message and it is the
-    responsability of the handler to split them.
+    responsibility of the handler to split them.
     """
     a0 = run_agent('a0')
     a1 = run_agent('a1')

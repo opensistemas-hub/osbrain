@@ -12,7 +12,7 @@ Transport protocol
 Available transports
 ====================
 
-Althought the default transport protocol is IPC for operating systems that
+Although the default transport protocol is IPC for operating systems that
 provide UNIX domain sockets and TCP for the rest, there are other transport
 protocols that can be used in osBrain:
 

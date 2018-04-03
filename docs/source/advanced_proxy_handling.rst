@@ -71,7 +71,7 @@ Or when creating a new :class:`Proxy <osbrain.proxy.Proxy>` to the agent:
 
    agent.method_call()  # This is now by default an unsafe method_call()
 
-.. note:: It is also possible, although totally unadvisable, to change the
+.. note:: It is also possible, although totally inadvisable, to change the
    default proxy behavior globally. Setting the ``OSBRAIN_DEFAULT_SAFE``
    environment variable to ``false`` would result in all proxies making unsafe
    calls by default. Another option is to change the ``osbrain.config['SAFE']``

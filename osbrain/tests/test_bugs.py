@@ -11,7 +11,7 @@ from common import nsproxy  # noqa: F401
 
 def test_timer_recursion(nsproxy):
     """
-    This bug occured with the first implementation of the timer. After
+    This bug occurred with the first implementation of the timer. After
     some iterations the timer would throw an exception when the recursion
     limit was exceeded. Timers should never reach a recursion limit.
     """

@@ -53,7 +53,7 @@ Python was chosen for being a great language for fast prototyping and for
 having a huge data analysis ecosystem available. It was kept for its final
 performance and the beautiful source code created with it.
 
-The appearance of osBrain was a consecuence of a series of steps that were
+The appearance of osBrain was a consequence of a series of steps that were
 taken during the development process:
 
 #. **Isolation of agents**; creating separate system processes to avoid shared

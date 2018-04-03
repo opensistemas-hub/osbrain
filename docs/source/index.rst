@@ -16,7 +16,7 @@ and developed by `OpenSistemas <http://www.opensistemas.com>`_.
 Agents run independently as system processes and communicate with each other
 using message passing.
 
-osBrain uses `ØMQ <http://zeromq.org/>`_ for efficient and flexible messsage
+osBrain uses `ØMQ <http://zeromq.org/>`_ for efficient and flexible message
 passing between agents. It also uses `Pyro4 <https://pythonhosted.org/Pyro4/>`_
 to ease the configuration and deployment of complex systems.
 

@@ -58,7 +58,7 @@ def test_agent_auto_generated_name(nsproxy):
 def test_early_agent_proxy(nsproxy):
     """
     It must be possible to create a Proxy when the registration of the new
-    agent is imminent, even if it has not occured yet. A timeout will occur
+    agent is imminent, even if it has not occurred yet. A timeout will occur
     in case the agent could not be located.
     """
     agent = AgentProcess('a0')
@@ -152,7 +152,7 @@ def test_run_agent_initial_attributes(nsproxy):
 def test_run_agent_initial_attributes_exception(nsproxy):
     """
     The user can specify a set of attributes to be set in the agent when
-    creating it. If the attribute specified overrites an existing attribute,
+    creating it. If the attribute specified overwrites an existing attribute,
     an exception will be raised.
     """
     with pytest.raises(RuntimeError) as error:

@@ -1602,6 +1602,8 @@ class Agent():
         """
         if uuid not in self._pending_requests:
             return
+
+        del self._pending_requests[uuid]
         if not on_error:
             warning = 'Did not receive request {} after {} seconds'.format(
                 uuid, wait)

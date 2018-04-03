@@ -165,10 +165,17 @@ def test_wait(nsproxy, server_client_late_reply_delay):
 
     # Response not received in time
     client.send('async', 2, wait=1)
+    assert len(client.get_attr('_pending_requests')) == 1
     assert logger_received(logger,
                            log_name='log_history_warning',
                            message='not receive req',
                            timeout=1.1)
+
+    assert logger_received(logger,
+                           log_name='log_history_warning',
+                           message='Received response for an unknown request!',
+                           timeout=2)
+    assert len(client.get_attr('_pending_requests')) == 0
     assert server.get_attr('received') == [1, 2]
     assert client.get_attr('received') == ['x1']
 

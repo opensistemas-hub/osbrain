@@ -57,6 +57,7 @@ setup(
         'lint': [
             'flake8',
             'flake8-bugbear',
+            'flake8-per-file-ignores',
             'pep8-naming',
         ],
         'test': [

@@ -20,9 +20,9 @@ setup(
     name='osbrain',
     version=version,
     description='A general-purpose multi-agent-system module',
-    long_description='''A general-purpose multi-agent-system module written
+    long_description="""A general-purpose multi-agent-system module written
         in Python. It uses ZeroMQ for flexible and efficient communications
-        between agents and Pyro4 to ease configuration and deployment.''',
+        between agents and Pyro4 to ease configuration and deployment.""",
     url='https://github.com/opensistemas-hub/osbrain',
     author='Miguel Sánchez de León Peque',
     author_email='msdeleon@opensistemas.com',

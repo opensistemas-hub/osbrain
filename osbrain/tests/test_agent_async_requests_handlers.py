@@ -1,6 +1,6 @@
-'''
+"""
 Test file for asynchronous requests handlers.
-'''
+"""
 import pytest
 
 from osbrain import Agent
@@ -33,10 +33,10 @@ class ClientWithHandler(Agent):
 
 
 def test_async_rep_handler_exists(nsproxy):
-    '''
+    """
     When binding an ASYNC_REP socket without a handler, an exception must be
     thrown, letting the user know that a handler must be specified.
-    '''
+    """
     server = run_agent('server', base=Agent)
 
     with pytest.raises(ValueError) as error:
@@ -49,10 +49,10 @@ def test_async_rep_handler_exists(nsproxy):
     ['reply', append_received, lambda a, x: a.received.append(x)]
 )
 def test_async_rep_handler_types(nsproxy, handler):
-    '''
+    """
     When binding an ASYNC_REP socket, we must accept different types of
     handlers: methods, functions, lambda expressions...
-    '''
+    """
     server = run_agent('server', base=ServerAsyncRep)
 
     assert server.bind('ASYNC_REP', alias='should_not_crash',
@@ -65,14 +65,14 @@ def test_async_rep_handler_types(nsproxy, handler):
      (append_received, True),
      (lambda a, x: a.received.append(x), False)])
 def test_async_rep_connect_handler_types(nsproxy, handler, check_function):
-    '''
+    """
     We should be able to specify the handler in the `connect` call in
     different ways: method, functions, lambda expressions...
 
     Note that this handler will be used if not overridden by the `handler`
     parameter in the `send` call. However, that is specifically checked in
     other test.
-    '''
+    """
     server = run_agent('server', base=ServerAsyncRep)
     client = run_agent('client', base=ClientWithHandler)
 
@@ -95,10 +95,10 @@ def test_async_rep_connect_handler_types(nsproxy, handler, check_function):
      (append_received, True),
      (lambda a, x: a.received.append(x), False)])
 def test_async_rep_send_handler_types(nsproxy, handler, check_function):
-    '''
+    """
     We should be able to make requests even if we do not specify a handler
     on the `connect` call, as long as we specify it on the `send` call.
-    '''
+    """
     server = run_agent('server', base=ServerAsyncRep)
     client = run_agent('client', base=ClientWithHandler)
 

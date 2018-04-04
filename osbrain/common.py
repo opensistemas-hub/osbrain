@@ -72,16 +72,16 @@ def format_method_exception(error, method, args, kwargs):
 
 
 def topic_to_bytes(topic: Union[bytes, str]) -> bytes:
-    '''
+    """
     Return the passed topic as a `bytes` object.
-    '''
+    """
     if isinstance(topic, str):
         topic = topic.encode()
     return topic
 
 
 def topics_to_bytes(handlers: Dict[Union[bytes, str], Any], uuid: bytes = b''):
-    '''
+    """
     Given some pairs topic/handler, leaves them prepared for making the actual
     ZeroMQ subscription.
 
@@ -96,7 +96,7 @@ def topics_to_bytes(handlers: Dict[Union[bytes, str], Any], uuid: bytes = b''):
     Returns
     -------
     Dict[bytes, Any]
-    '''
+    """
     curated_handlers = {}
 
     for topic, value in handlers.items():
@@ -107,9 +107,9 @@ def topics_to_bytes(handlers: Dict[Union[bytes, str], Any], uuid: bytes = b''):
 
 
 def validate_handler(handler, required):
-    '''
+    """
     Raises a ValueError exception when a required is handler but not present.
-    '''
+    """
     if required and handler is None:
         raise ValueError('This socket requires a handler!')
 

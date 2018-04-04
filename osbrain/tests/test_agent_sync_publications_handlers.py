@@ -1,6 +1,6 @@
-'''
+"""
 Test file for synchronized publications handlers.
-'''
+"""
 import pytest
 
 from osbrain import Agent
@@ -37,10 +37,10 @@ class ClientWithHandler(Agent):
 
 
 def test_sync_pub_handler_exists(nsproxy):
-    '''
+    """
     When binding a SYNC_PUB socket without a handler, an exception must be
     thrown, letting the user know that a handler must be specified.
-    '''
+    """
     server = run_agent('server', base=Agent)
 
     with pytest.raises(ValueError) as error:
@@ -53,10 +53,10 @@ def test_sync_pub_handler_exists(nsproxy):
     ['reply', append_received, lambda a, x: a.received.append(x)]
 )
 def test_sync_pub_handler_types(nsproxy, handler):
-    '''
+    """
     When binding a SYNC_PUB socket, we must accept different types of
     handlers: methods, functions, lambda expressions...
-    '''
+    """
     server = run_agent('server', base=ServerSyncPub)
 
     assert server.bind('SYNC_PUB', alias='should_not_crash',
@@ -69,13 +69,13 @@ def test_sync_pub_handler_types(nsproxy, handler):
      (append_received, True),
      (lambda a, x: a.received.append(x), False)])
 def test_sync_pub_connect_handler_types(nsproxy, handler, check_function):
-    '''
+    """
     The handler for the normal PUB/SUB communication is specified in the
     `connect` call.
 
     We should be able to specify this in various ways: method, functions,
     lambda expressions...
-    '''
+    """
     server = run_agent('server', base=ServerSyncPub)
     client = run_agent('client', base=ClientWithHandler)
 
@@ -100,10 +100,10 @@ def test_sync_pub_connect_handler_types(nsproxy, handler, check_function):
      (None, False, True)])
 def test_sync_pub_send_handlers(nsproxy, handler, check_function,
                                 should_crash):
-    '''
+    """
     The handler for the requests MUST be specified in the `send` call.
     It can be specified in different ways: method, functions...
-    '''
+    """
     server = run_agent('server', base=ServerSyncPub)
     client = run_agent('client', base=ClientWithHandler)
 

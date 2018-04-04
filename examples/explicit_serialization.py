@@ -1,7 +1,7 @@
-'''
+"""
 A simple example in which the different serialization setting
 options are shown.
-'''
+"""
 import osbrain
 from osbrain import run_nameserver
 from osbrain import run_agent

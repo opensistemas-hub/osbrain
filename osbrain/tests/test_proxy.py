@@ -165,7 +165,7 @@ def test_agent_proxy_wait_running_timeout(nsproxy, timeout):
         Proxy('agent').wait_for_running(timeout=timeout)
     elapsed = time.time() - time0
 
-    assert "Timed out" in str(error.value)
+    assert 'Timed out' in str(error.value)
     assert elapsed >= timeout
     assert elapsed < timeout + .5
 

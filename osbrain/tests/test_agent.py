@@ -277,9 +277,9 @@ def test_bind_tcp_addr_specific_port(nsproxy):
     (-1, 1, True),
 ])
 def test_linger(monkeypatch, nsproxy, linger, sleep_time, should_receive):
-    '''
+    """
     Test linger works when closing the sockets of an agent.
-    '''
+    """
     class AgentTest(Agent):
         def on_init(self):
             self.received = []

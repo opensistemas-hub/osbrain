@@ -87,7 +87,7 @@ def match_tail(agent, data):
 
 @pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
 def test_unsubscribe(nsproxy, socket_type):
-    '''
+    """
     Test that unsubscribing from topics works fine.
 
     The server will be publishing the natural numbers, in ascending order,
@@ -99,7 +99,7 @@ def test_unsubscribe(nsproxy, socket_type):
 
     Two non consecutive numbers must be received consecutively at that point,
     since they both will be even.
-    '''
+    """
     def check_non_consecutive(agent):
         """
         Check whether the last two received numbers are non-consecutive.
@@ -141,7 +141,7 @@ def test_unsubscribe(nsproxy, socket_type):
 
 @pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
 def test_unsubscribe_various(nsproxy, socket_type):
-    '''
+    """
     Test that unsubscribing from various topics works fine.
 
     The server will be publishing zeroes through two topics quickly, and
@@ -150,7 +150,7 @@ def test_unsubscribe_various(nsproxy, socket_type):
     A subscriber will subscribe to all numbers, and then unsubscribe from the
     topics related to the zeroes, therefore receiving three (or more) ones in
     a row.
-    '''
+    """
     def check_sum_three(agent):
         """
         Check whether the last three received numbers sum to three.
@@ -197,9 +197,9 @@ def test_unsubscribe_various(nsproxy, socket_type):
 @pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
 @pytest.mark.parametrize('subscribe_separately', [True, False])
 def test_subscribe(nsproxy, socket_type, subscribe_separately):
-    '''
+    """
     Test subscribing to various topics/handlers works fine.
-    '''
+    """
     server = run_agent('server', base=ServerNumbers)
     client = run_agent('client')
 
@@ -228,14 +228,14 @@ def test_subscribe(nsproxy, socket_type, subscribe_separately):
 
 @pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
 def test_resubscribe(nsproxy, socket_type):
-    '''
+    """
     After subscribing to the same topic with a different handler after a
     subscription to that topic was already made, we should override the
     original handler.
 
     Note that we will only override explicitly given topics (previous
     subscriptions of other topics will remain untouched).
-    '''
+    """
     server = run_agent('server', base=ServerNumbers)
     client = run_agent('client')
 
@@ -265,9 +265,9 @@ def test_resubscribe(nsproxy, socket_type):
 
 @pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
 def test_unsubscribe_and_subscribe_again(nsproxy, socket_type):
-    '''
+    """
     Test resubscribing to topics after unsubscribing works fine.
-    '''
+    """
     server = run_agent('server', base=ServerNumbers)
     client = run_agent('client')
 

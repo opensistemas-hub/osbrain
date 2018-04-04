@@ -1076,13 +1076,13 @@ class Agent():
                               update=True)
 
     def unsubscribe(self, alias: str, topic: Union[bytes, str]) -> None:
-        '''
+        """
         Unsubscribe a SUB/SYNC_SUB socket given by its alias from a given
         specific topic, and delete its entry from the handlers dictionary.
 
         If instead of a single topic, a tuple or a list of topics is passed,
         the agent will unsubscribe from all the supplied topics.
-        '''
+        """
         if isinstance(topic, (tuple, list)):
             for t in topic:
                 self.unsubscribe(alias, t)
@@ -1105,13 +1105,13 @@ class Agent():
                                       self._address[alias])
 
     def _subscribe_to_topic(self, alias: str, topic: Union[bytes, str]):
-        '''
+        """
         Do the actual ZeroMQ subscription of a socket given by its alias to
         a specific topic. This method only makes sense to be called on
         SUB/SYNC_SUB sockets.
 
         Note that the handler is not set within this function.
-        '''
+        """
         topic = topic_to_bytes(topic)
 
         if isinstance(self._address[alias], AgentAddress):

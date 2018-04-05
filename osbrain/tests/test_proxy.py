@@ -7,10 +7,14 @@ import pickle
 import pytest
 from threading import Timer
 
+from Pyro4.errors import ConnectionClosedError
+
 import osbrain
 from osbrain import run_agent
+from osbrain import run_nameserver
 from osbrain import Agent
 from osbrain import AgentProcess
+from osbrain import NameServer
 from osbrain import Proxy
 from osbrain.proxy import locate_ns
 from osbrain.helper import wait_agent_attr
@@ -325,3 +329,17 @@ def test_agent_proxy_oneway(nsproxy):
     assert not wayne._next_oneway
 
     assert wait_agent_attr(wayne, value=20 * ['bang!'], timeout=1.5)
+
+
+def test_nameserver_proxy_shutdown_connectionclosed():
+    """
+    Check that nameserver proxies can handle a ConnectionClosedError at
+    shutdown.
+    """
+    class CustomNS(NameServer):
+        def daemon_shutdown(self):
+            super().daemon_shutdown()
+            raise ConnectionClosedError
+
+    ns = run_nameserver(base=CustomNS)
+    ns.shutdown()

@@ -129,8 +129,7 @@ def test_unknown(nsproxy):
     server.unsafe.set_attr(blocked=False)
     assert logger_received(logger,
                            log_name='log_history_warning',
-                           message='Received response for an unknown request!',
-                           timeout=2)
+                           message='Received response for an unknown request!')
     assert len(client.get_attr('received')) == 0
 
 
@@ -164,7 +163,7 @@ def test_wait_timeout(nsproxy):
     assert logger_received(logger,
                            log_name='log_history_warning',
                            message='not receive req',
-                           timeout=.6)
+                           timeout=1)
     assert len(client.get_attr('_pending_requests')) == 0
 
     server.unsafe.set_attr(blocked=False)
@@ -183,5 +182,5 @@ def test_wait_on_error(nsproxy):
 
     client.set_attr(error_count=0)
     client.send('async', 'foo', wait=.5, on_error=on_error)
-    assert wait_agent_attr(client, 'error_count', value=1, timeout=.6)
+    assert wait_agent_attr(client, 'error_count', value=1, timeout=1)
     server.unsafe.set_attr(blocked=False)

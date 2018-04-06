@@ -259,17 +259,6 @@ class Agent():
         self._context = zmq.Context()
         self._poller = zmq.Poller()
 
-        # A loopback socket where, for example, timers are processed
-        self.bind('REP', alias='loopback', addr='loopback',
-                  handler=self._handle_loopback, transport='inproc',
-                  serializer='pickle')
-
-        # This in-process socket handles safe access to
-        # memory from other threads (i.e. when using Pyro proxies).
-        self.bind('REP', alias='_loopback_safe', addr='_loopback_safe',
-                  handler=self._handle_loopback_safe, transport='inproc',
-                  serializer='pickle')
-
         self._set_attributes(attributes)
         self.on_init()
 
@@ -1661,6 +1650,17 @@ class Agent():
         """
         Start the main loop.
         """
+        # A loopback socket where, for example, timers are processed
+        self.bind('REP', alias='loopback', addr='loopback',
+                  handler=self._handle_loopback, transport='inproc',
+                  serializer='pickle')
+
+        # This in-process socket handles safe access to
+        # memory from other threads (i.e. when using Pyro proxies).
+        self.bind('REP', alias='_loopback_safe', addr='_loopback_safe',
+                  handler=self._handle_loopback_safe, transport='inproc',
+                  serializer='pickle')
+
         self._running = True
         self.before_loop()
         try:

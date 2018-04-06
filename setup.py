@@ -58,6 +58,7 @@ setup(
             'flake8',
             'flake8-bugbear',
             'flake8-per-file-ignores',
+            'flake8-print',
             'flake8-quotes',
             'pep8-naming',
         ],

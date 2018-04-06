@@ -221,8 +221,8 @@ class Agent():
     _async_req_handler : dict
         Stores the handler for every asynchronous request sockets (used in
         communication channels).
-    _kill_now : bool
-        During shutdown, this attribute is set for the agent to be killed.
+    _die_now : bool
+        During shutdown, this attribute is set for the agent to die.
     _DEBUG : bool
         Whether to print debug level messages.
     _pending_requests : dict
@@ -252,7 +252,7 @@ class Agent():
         self._timer = {}
         self._poll_timeout = 1000
         self._keep_alive = True
-        self._kill_now = False
+        self._die_now = False
         self._running = False
         self._DEBUG = False
 
@@ -322,11 +322,14 @@ class Agent():
         Response obtained from the loopback socket.
         """
         loopback = self._context.socket(zmq.REQ)
-        loopback.connect(socket)
-        loopback.send_pyobj(data_to_send)
-        response = loopback.recv_pyobj()
-        loopback.close()
-        return response
+        try:
+            loopback.connect(socket)
+            loopback.send_pyobj(data_to_send)
+            return loopback.recv_pyobj()
+        except zmq.error.ContextTerminated:
+            pass
+        finally:
+            loopback.close(linger=0.)
 
     def _loopback(self, header, data=None):
         """
@@ -1201,7 +1204,11 @@ class Agent():
         or until an error occurs.
         """
         while self._keep_alive:
-            if self._iterate():
+            try:
+                if self._iterate():
+                    break
+            except zmq.error.ContextTerminated:
+                self._die_now = True
                 break
 
     def _iterate(self):
@@ -1645,6 +1652,12 @@ class Agent():
         self.send(address, message)
         return self.recv(address)
 
+    def is_running(self):
+        """
+        Returns a boolean indicating whether the agent is running or not.
+        """
+        return self._running
+
     @Pyro4.oneway
     def run(self):
         """
@@ -1672,37 +1685,43 @@ class Agent():
             self.log_error(msg)
             raise
         self._running = False
-        if self._kill_now:
-            # Kill the agent
-            self.kill()
+        if self._die_now:
+            self._die()
 
     def shutdown(self):
         """
-        Cleanly stop and shut down the agent.
-        """
-        # Stop running timers
-        self.stop_all_timers()
-        # Close all non-internal sockets
-        self.close_all()
-        # Stop the running thread
-        if self._running:
-            self.log_info('Stopping...')
-            self._keep_alive = False
-            self._kill_now = True
+        Cleanly stop and shut down the agent assuming the agent is running.
 
-    def is_running(self):
+        Will let the main thread do the tear down.
         """
-        Returns a boolean indicating whether the agent is running or not.
-        """
-        return self._running
+        self.log_info('Stopping...')
+        self._keep_alive = False
+        self._die_now = True
 
     def kill(self):
         """
         Force shutdown of the agent.
+
+        If the agent is running the ZMQ context is terminated to allow the
+        main thread to quit and do the tear down.
         """
-        self._pyroDaemon.shutdown()
         self.stop_all_timers()
-        self.close_all()
+        if self._running:
+            self._context.term()
+        else:
+            self._die(linger=0)
+
+    def _die(self, linger=None):
+        """
+        Tear down the agent. Last action before ending existence.
+
+        - Stop timers.
+        - Close all external sockets.
+        - Shutdown the Pyro daemon.
+        """
+        self.stop_all_timers()
+        self.close_all(linger=linger)
+        self._pyroDaemon.shutdown()
 
     def _get_unique_external_zmq_sockets(self):
         """
@@ -1743,41 +1762,47 @@ class Agent():
         """
         return alias in self._socket
 
-    def close(self, alias):
+    def _delete_socket_entries(self, entries):
+        for entry in entries:
+            del self._socket[entry]
+
+    def _close_socket(self, socket, linger):
+        """
+        Close a socket using the provided linger value.
+        """
+        if linger is None:
+            linger = get_linger()
+        socket.close(linger=linger)
+
+    def close(self, alias, linger=None):
         """
         Close a socket given its alias and clear its entry from the
         `Agent.socket` dictionary.
         """
-        sock = self._socket[alias]
-
+        socket = self._socket[alias]
         # Each socket might be pointed by different keys
         entries_to_delete = []
         for k, v in self._socket.items():
-            if v == sock:
+            if v == socket:
                 entries_to_delete.append(k)
+        self._delete_socket_entries(entries_to_delete)
+        self._close_socket(socket, linger=linger)
 
-        for entry in entries_to_delete:
-            del self._socket[entry]
-
-        sock.close(linger=get_linger())
-
-    def close_all(self):
+    def close_all(self, linger=None):
         """
         Close all non-internal zmq sockets.
         """
         # Each socket might be pointed by different keys
         sockets_to_delete = []
-        for sock in self._get_unique_external_zmq_sockets():
-            sockets_to_delete.append(sock)
-            sock.close(linger=get_linger())
+        for socket in self._get_unique_external_zmq_sockets():
+            sockets_to_delete.append(socket)
+            self._close_socket(socket, linger=linger)
 
         entries_to_delete = []
         for k, v in self._socket.items():
             if v in sockets_to_delete:
                 entries_to_delete.append(k)
-
-        for entry in entries_to_delete:
-            del self._socket[entry]
+        self._delete_socket_entries(entries_to_delete)
 
     def ping(self):
         """

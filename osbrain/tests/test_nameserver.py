@@ -152,7 +152,7 @@ def test_nameserver_proxy_shutdown_lazy_agents(delay, timeout):
 
     t0 = time.time()
     if timeout:
-        ns.shutdown(timeout=delay)
+        ns.shutdown(timeout=10)
     else:
         ns.shutdown()
     assert time.time() - t0 > delay / 2.

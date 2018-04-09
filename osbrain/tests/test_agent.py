@@ -133,6 +133,7 @@ def test_agent_shutdown(nsproxy):
     agent.start()
     a0 = Proxy('a0', nsproxy.addr())
     a0.run()
+    a0.wait_for_running()
     assert 'a0' in nsproxy.list()
     a0.shutdown()
     agent.join()

@@ -360,6 +360,7 @@ def test_agent_inheritance(nsproxy):
     AgentProcess('new', nsaddr=nsproxy.addr(), base=NewAgent).start()
     new = Proxy('new', nsproxy.addr())
     new.run()
+    new.wait_for_running()
     assert new.the_answer_to_life() == 42
 
     # Test the quick `run_agent` function

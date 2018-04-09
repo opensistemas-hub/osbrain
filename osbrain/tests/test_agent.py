@@ -546,6 +546,52 @@ def test_close(nsproxy):
     assert not a0.has_socket('pub')
 
 
+@pytest.mark.parametrize('linger, sleep_time, should_receive', [
+    (2, 1, True),
+    (0.5, 1, False),
+    (0, 1, False),
+    (-1, 1, True),
+])
+def test_close_linger(nsproxy, linger, sleep_time, should_receive):
+    """
+    Test closing a socket with a linger value passed as parameter.
+    """
+    class AgentTest(Agent):
+        def on_init(self):
+            self.received = []
+
+    puller = run_agent('puller', base=AgentTest)
+    pusher = run_agent('pusher', base=AgentTest)
+
+    address = puller.bind('PULL', alias='pull', handler=append_received,
+                          transport='tcp')
+
+    pusher.connect(address, alias='push')
+
+    # Make sure connection is well established
+    pusher.send('push', 'ping')
+    assert wait_agent_attr(puller, data='ping', timeout=1)
+
+    # Shutdown the puller and restart it without binding
+    puller.shutdown()
+    assert agent_dies('puller', nsproxy)
+    puller = run_agent('puller', base=AgentTest)
+
+    # Push a new message, which should block during linger period
+    pusher.send('push', 'foo')
+    pusher.close(alias='push', linger=linger)
+
+    # After this timeout, depending on linger value, 'foo' will no longer be
+    # on queue to be sent
+    time.sleep(sleep_time)
+
+    # Bind to receive the message (if still in queue)
+    puller.bind('PULL', alias='pull', handler=append_received,
+                addr=address.address, transport='tcp')
+
+    assert should_receive == wait_agent_attr(puller, data='foo', timeout=1)
+
+
 def test_close_all(nsproxy):
     """
     Test that after a call to `close_all`, only those non-internal are

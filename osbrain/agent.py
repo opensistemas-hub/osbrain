@@ -1770,8 +1770,7 @@ class Agent():
         """
         Close a socket using the provided linger value.
         """
-        if linger is None:
-            linger = get_linger()
+        linger = get_linger(linger)
         socket.close(linger=linger)
 
     def close(self, alias, linger=None):

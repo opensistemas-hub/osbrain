@@ -208,9 +208,14 @@ def after(delay, action, *args):
     return event
 
 
-def get_linger():
+def get_linger(seconds=None):
     """
     Wrapper to get the linger option from the environment variable.
+
+    Parameters
+    ----------
+    seconds : float, default is None.
+        Linger seconds, in seconds.
 
     Returns
     -------
@@ -218,8 +223,8 @@ def get_linger():
         Number of seconds to linger.
         Note that -1 means linger forever.
     """
-    value = config['LINGER']
-
-    if value < 0:
+    if seconds is None:
+        seconds = config['LINGER']
+    if seconds < 0:
         return -1
-    return int(float(value) * 1000)
+    return int(float(seconds) * 1000)

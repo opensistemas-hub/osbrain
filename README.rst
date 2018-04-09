@@ -82,7 +82,7 @@ fits the application well:
 .. |travis| image:: https://api.travis-ci.org/opensistemas-hub/osbrain.svg?branch=master
    :target: https://travis-ci.org/opensistemas-hub/osbrain
    :alt: Travis build status badge
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/osbrain-ci/osbrain?svg=true
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/opensistemas-hub/osbrain?branch=master&svg=true
    :target: https://ci.appveyor.com/project/osbrain-ci/osbrain
    :alt: AppVeyor build status badge
 .. |version| image:: https://img.shields.io/pypi/v/osbrain.svg

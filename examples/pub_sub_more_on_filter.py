@@ -31,7 +31,7 @@ if __name__ == '__main__':
     time.sleep(2)
 
     bob.unsubscribe('listener', 'a')
-    bob.subscribe('listener', handlers={'b': log_b})
+    bob.subscribe('listener', handler={'b': log_b})
 
     time.sleep(2)
 

@@ -43,7 +43,7 @@ setup(
     packages=['osbrain'],
     install_requires=[
         'Pyro4>=4.48',
-        'pyzmq>=15.2.0,<17.0.0',
+        'pyzmq>=15.2.0',
         'dill>=0.2.0,!=0.2.7',
         'cloudpickle>=0.4.0',
     ] + install_requires_compat,

@@ -806,7 +806,7 @@ class Agent():
         if transport == 'tcp':
             return self._bind_socket_tcp(socket, addr=addr)
         if not addr:
-            addr = str(unique_identifier())
+            addr = unique_identifier().decode('ascii')
         if transport == 'ipc':
             addr = config['IPC_DIR'] / addr
         socket.bind('%s://%s' % (transport, addr))

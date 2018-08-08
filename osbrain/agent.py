@@ -1,6 +1,7 @@
 """
 Core agent classes.
 """
+import contextlib
 from datetime import datetime
 import errno
 import inspect
@@ -1766,6 +1767,20 @@ class Agent():
         for entry in entries:
             del self._socket[entry]
 
+    def _cleanup_ipc_socket_files(self, address):
+        """
+        Make sure no IPC socket files are left in the file system.
+        """
+        if isinstance(address, AgentChannel):
+            candidates = [address.receiver, address.sender]
+        else:
+            candidates = [address]
+        for candidate in candidates:
+            if candidate is None or candidate.role != 'server':
+                continue
+            with contextlib.suppress(FileNotFoundError):
+                candidate.address.unlink()
+
     def _close_socket(self, socket, linger):
         """
         Close a socket using the provided linger value.
@@ -1774,17 +1789,7 @@ class Agent():
         socket.close(linger=linger)
         address = self._address[socket]
         if address.transport == 'ipc':
-            if isinstance(address, AgentChannel):
-                path = address.receiver.address or address.sender.address
-            else:
-                path = address.address
-            # cleanup ipc sockets
-            try:
-                os.unlink(path)
-            except FileNotFoundError:
-                # someone else already removed it,
-                # e.g. libzmq < 4.2
-                pass
+            self._cleanup_ipc_socket_files(address)
 
     def close(self, alias, linger=None):
         """

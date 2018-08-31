@@ -39,7 +39,7 @@ else:
     config['IPC_DIR'].mkdir(exist_ok=True, parents=True)
 
 
-__version__ = '0.6.2'
+__version__ = '0.6.3'
 
 from .agent import Agent, AgentProcess, run_agent
 from .nameserver import NameServer, run_nameserver

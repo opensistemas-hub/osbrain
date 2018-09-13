@@ -104,7 +104,7 @@ def test_agent_bind_given_address_tcp(nsproxy):
 
 
 @skip_windows_ipc
-def test_agent_ipc_from_different_folders(nsproxy):
+def test_agent_ipc_from_different_folders(nsproxy, monkeypatch):
     """
     IPC should work well even when agents are run from different folders.
     """
@@ -117,14 +117,14 @@ def test_agent_ipc_from_different_folders(nsproxy):
     assert dira != dirb
 
     # First agent run for directory `a`
-    os.chdir(dira)
+    monkeypatch.chdir(dira)
     a = run_agent('a', base=Wdagent)
     random_addr = a.bind('PULL', transport='ipc', handler=append_received)
     set_addr = a.bind('PULL', addr='qwer', transport='ipc',
                       handler=append_received)
 
     # Second agent run for directory `b`
-    os.chdir(dirb)
+    monkeypatch.chdir(dirb)
     b = run_agent('b', base=Wdagent)
     b.connect(random_addr, alias='random')
     b.connect(set_addr, alias='set')

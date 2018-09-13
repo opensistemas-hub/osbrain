@@ -136,6 +136,7 @@ def test_agent_ipc_from_different_folders(nsproxy, monkeypatch):
     set_received = wait_agent_attr(a, data='bar', timeout=1)
 
     # Clean directories
+    monkeypatch.undo()
     rmtree(dira)
     rmtree(dirb)
 

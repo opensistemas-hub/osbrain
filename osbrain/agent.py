@@ -1896,7 +1896,7 @@ class AgentProcess(multiprocessing.Process):
                 ns = NSProxy(self.nsaddr)
                 ns.remove(self.name)
                 ns.release()
-            except PyroError as error:
+            except PyroError:
                 time.sleep(0.1)
                 continue
             break

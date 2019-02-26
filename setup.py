@@ -49,20 +49,19 @@ setup(
         'cloudpickle>=0.4.0',
     ] + install_requires_compat,
     extras_require={
-        'docs': [
+        'dev': [
+            # Documentation
             'doc8',
             'sphinx',
             'numpydoc',
             'sphinx_rtd_theme',
-        ],
-        'lint': [
+            # Lint
             'flake8',
             'flake8-bugbear',
             'flake8-print',
             'flake8-quotes',
             'pep8-naming',
-        ],
-        'test': [
+            # Test
             'pytest',
             'pytest-cov',
             'pytest-rerunfailures',

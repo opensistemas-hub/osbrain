@@ -8,7 +8,6 @@ environment:
     - PYTHON: "C:\\Python37-x64"
     - PYTHON: "C:\\Python36-x64"
     - PYTHON: "C:\\Python35-x64"
-    - PYTHON: "C:\\Python34-x64"
 
 matrix:
   fast_finish: false

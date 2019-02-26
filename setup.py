@@ -58,6 +58,7 @@ setup(
             # Lint
             'flake8',
             'flake8-bugbear',
+            'flake8-isort',
             'flake8-print',
             'flake8-quotes',
             'pep8-naming',

@@ -1,23 +1,23 @@
 """
 Test file for functionality implemented in `osbrain/tests/common.py`.
 """
-from threading import Timer
 import time
+from threading import Timer
 
 import pytest
 
-from osbrain import run_agent
 from osbrain import Agent
-from osbrain.helper import logger_received
+from osbrain import run_agent
 from osbrain.helper import agent_dies
 from osbrain.helper import attribute_match_all
 from osbrain.helper import last_received_endswith
+from osbrain.helper import logger_received
 from osbrain.helper import wait_agent_attr
-from osbrain.helper import wait_condition
 from osbrain.helper import wait_agent_condition
+from osbrain.helper import wait_condition
 
-from .common import nsproxy  # noqa: F401
 from .common import agent_logger  # noqa: F401
+from .common import nsproxy  # noqa: F401
 
 
 class SugarAddict():

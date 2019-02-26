@@ -2,17 +2,17 @@
 Core agent classes.
 """
 import contextlib
-from datetime import datetime
 import errno
 import inspect
+import json
 import multiprocessing
 import os
 import pickle
-import json
 import signal
 import sys
 import time
 import types
+from datetime import datetime
 from typing import Any
 from typing import Dict
 from typing import Union
@@ -20,30 +20,29 @@ from typing import Union
 import cloudpickle
 import dill
 import Pyro4
-from Pyro4.errors import PyroError
 import zmq
+from Pyro4.errors import PyroError
 
 from . import config
-from .common import format_exception
-from .common import format_method_exception
-from .common import topic_to_bytes
-from .common import topics_to_bytes
-from .common import unbound_method
-from .common import validate_handler
-from .common import LogLevel
-from .common import repeat
-from .common import after
-from .common import get_linger
-from .common import unique_identifier
 from .address import AgentAddress
 from .address import AgentAddressKind
 from .address import AgentAddressSerializer
 from .address import AgentChannel
 from .address import address_to_host_port
 from .address import guess_kind
-from .proxy import Proxy
+from .common import LogLevel
+from .common import after
+from .common import format_exception
+from .common import format_method_exception
+from .common import get_linger
+from .common import repeat
+from .common import topic_to_bytes
+from .common import topics_to_bytes
+from .common import unbound_method
+from .common import unique_identifier
+from .common import validate_handler
 from .proxy import NSProxy
-
+from .proxy import Proxy
 
 TOPIC_SEPARATOR = b'\x80'
 

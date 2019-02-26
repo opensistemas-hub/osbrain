@@ -1,5 +1,6 @@
-import time
 import random
+import time
+
 from osbrain import run_agent
 from osbrain import run_nameserver
 

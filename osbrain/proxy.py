@@ -11,8 +11,8 @@ from Pyro4.errors import NamingError
 from Pyro4.message import FLAGS_ONEWAY
 
 from . import config
-from .address import address_to_host_port
 from .address import SocketAddress
+from .address import address_to_host_port
 
 
 def locate_ns(nsaddr, timeout=3.):

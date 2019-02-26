@@ -3,20 +3,20 @@ Test file for address module.
 """
 from collections import namedtuple
 
-import zmq
 import pytest
+import zmq
 
-from osbrain.agent import TOPIC_SEPARATOR
-from osbrain.address import address_to_host_port
-from osbrain.address import guess_kind
-from osbrain.address import SocketAddress
 from osbrain.address import AgentAddress
 from osbrain.address import AgentAddressKind
 from osbrain.address import AgentAddressRole
-from osbrain.address import AgentAddressTransport
 from osbrain.address import AgentAddressSerializer
+from osbrain.address import AgentAddressTransport
 from osbrain.address import AgentChannel
 from osbrain.address import AgentChannelKind
+from osbrain.address import SocketAddress
+from osbrain.address import address_to_host_port
+from osbrain.address import guess_kind
+from osbrain.agent import TOPIC_SEPARATOR
 
 
 def twin_list(elements):

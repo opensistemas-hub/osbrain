@@ -8,13 +8,13 @@ import pytest
 from osbrain import Agent
 from osbrain import run_agent
 from osbrain import run_logger
-from osbrain.helper import sync_agent_logger
 from osbrain.helper import logger_received
+from osbrain.helper import sync_agent_logger
 from osbrain.helper import wait_agent_attr
 from osbrain.helper import wait_agent_condition
 
-from .common import nsproxy  # noqa: F401
 from .common import append_received
+from .common import nsproxy  # noqa: F401
 
 
 class BaseServer(Agent):

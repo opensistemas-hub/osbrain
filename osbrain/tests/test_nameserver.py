@@ -1,22 +1,22 @@
 """
 Test file for nameserver.
 """
-import os
-import time
-import random
 import multiprocessing
+import os
+import random
+import time
 from threading import Timer
 
 import pytest
 
-from osbrain import SocketAddress
-from osbrain import run_agent
-from osbrain import run_nameserver
 from osbrain import Agent
 from osbrain import AgentProcess
 from osbrain import NameServer
 from osbrain import NSProxy
 from osbrain import Proxy
+from osbrain import SocketAddress
+from osbrain import run_agent
+from osbrain import run_nameserver
 from osbrain.helper import wait_agent_attr
 from osbrain.nameserver import NameServerProcess
 from osbrain.nameserver import random_nameserver_process

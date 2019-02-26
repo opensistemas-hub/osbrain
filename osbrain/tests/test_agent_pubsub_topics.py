@@ -2,11 +2,11 @@ import pytest
 
 from osbrain import run_agent
 from osbrain.address import AgentAddressSerializer
-from osbrain.helper import wait_agent_condition
 from osbrain.helper import last_received_endswith
+from osbrain.helper import wait_agent_condition
 
-from .common import nsproxy  # noqa: F401
 from .common import append_received
+from .common import nsproxy  # noqa: F401
 
 
 @pytest.mark.parametrize(

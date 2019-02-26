@@ -2,13 +2,13 @@
 Miscellaneous utilities.
 """
 import time
+import traceback
 from threading import Event
 from threading import Thread
-import traceback
-from uuid import uuid4
 from typing import Any
 from typing import Dict
 from typing import Union
+from uuid import uuid4
 
 from . import config
 

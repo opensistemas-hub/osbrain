@@ -1,17 +1,17 @@
-import time
-import pickle
 import json
+import pickle
+import time
 
-import zmq
 import pytest
+import zmq
 
 import osbrain
 from osbrain import run_agent
-from osbrain.agent import serialize_message
-from osbrain.agent import deserialize_message
-from osbrain.agent import compose_message
-from osbrain.agent import TOPIC_SEPARATOR
 from osbrain.address import AgentAddressSerializer
+from osbrain.agent import TOPIC_SEPARATOR
+from osbrain.agent import compose_message
+from osbrain.agent import deserialize_message
+from osbrain.agent import serialize_message
 from osbrain.helper import wait_agent_attr
 
 from .common import nsproxy  # noqa: F401

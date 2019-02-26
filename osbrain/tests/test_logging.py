@@ -5,8 +5,8 @@ import os
 
 from osbrain import run_agent
 from osbrain import run_logger
-from osbrain.logging import pyro_log
 from osbrain.helper import logger_received
+from osbrain.logging import pyro_log
 
 from .common import nsproxy  # noqa: F401
 

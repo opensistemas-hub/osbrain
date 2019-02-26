@@ -4,10 +4,10 @@ Test file for common module.
 import pytest
 
 from osbrain.agent import TOPIC_SEPARATOR
-from osbrain.common import unique_identifier
 from osbrain.common import LogLevel
 from osbrain.common import topic_to_bytes
 from osbrain.common import topics_to_bytes
+from osbrain.common import unique_identifier
 
 
 def test_unique_identifier():

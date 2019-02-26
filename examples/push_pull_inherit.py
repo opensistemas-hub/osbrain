@@ -1,7 +1,8 @@
 import time
+
+from osbrain import Agent
 from osbrain import run_agent
 from osbrain import run_nameserver
-from osbrain import Agent
 
 
 class Greeter(Agent):

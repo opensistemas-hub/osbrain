@@ -1,36 +1,35 @@
 """
 Test file for agents.
 """
-import os
 import multiprocessing
+import os
 import random
 import time
-from uuid import uuid4
 from threading import Timer
+from uuid import uuid4
 
-import pytest
 import Pyro4
+import pytest
 
 import osbrain
-from osbrain import run_logger
-from osbrain import run_agent
 from osbrain import Agent
 from osbrain import AgentAddress
 from osbrain import AgentProcess
-from osbrain import SocketAddress
 from osbrain import Proxy
+from osbrain import SocketAddress
+from osbrain import run_agent
+from osbrain import run_logger
 from osbrain.helper import agent_dies
 from osbrain.helper import logger_received
 from osbrain.helper import sync_agent_logger
 from osbrain.helper import wait_agent_attr
 
-from .common import nsproxy  # noqa: F401
 from .common import append_received
+from .common import nsproxy  # noqa: F401
 from .common import set_received
-
-from .common import skip_windows_spawn
 from .common import skip_windows_any_port
 from .common import skip_windows_port_reuse
+from .common import skip_windows_spawn
 
 
 def test_agent_uuid():

@@ -3,8 +3,8 @@ A simple example in which the different serialization setting
 options are shown.
 """
 import osbrain
-from osbrain import run_nameserver
 from osbrain import run_agent
+from osbrain import run_nameserver
 
 
 def set_received(agent, message, topic=None):

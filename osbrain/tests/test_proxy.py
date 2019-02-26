@@ -1,26 +1,25 @@
 """
 Proxy module tests.
 """
-import time
-
 import pickle
-import pytest
+import time
 from threading import Timer
 
+import pytest
 from Pyro4.errors import ConnectionClosedError
 
 import osbrain
-from osbrain import run_agent
-from osbrain import run_nameserver
 from osbrain import Agent
 from osbrain import AgentProcess
 from osbrain import NameServer
 from osbrain import Proxy
-from osbrain.proxy import locate_ns
+from osbrain import run_agent
+from osbrain import run_nameserver
 from osbrain.helper import wait_agent_attr
+from osbrain.proxy import locate_ns
 
-from .common import nsproxy  # noqa: F401
 from .common import append_received
+from .common import nsproxy  # noqa: F401
 
 
 def since(t0, passed, tolerance):

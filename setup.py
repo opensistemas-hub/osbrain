@@ -4,8 +4,8 @@ Setup module.
 import re
 import sys
 from os.path import join as pjoin
-from setuptools import setup
 
+from setuptools import setup
 
 with open(pjoin('osbrain', '__init__.py')) as f:
     line = next(l for l in f if l.startswith('__version__'))

@@ -19,8 +19,8 @@ from osbrain import Proxy
 from osbrain.proxy import locate_ns
 from osbrain.helper import wait_agent_attr
 
-from common import nsproxy  # noqa: F401
-from common import append_received
+from .common import nsproxy  # noqa: F401
+from .common import append_received
 
 
 def since(t0, passed, tolerance):

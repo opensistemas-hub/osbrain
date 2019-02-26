@@ -13,8 +13,8 @@ from osbrain.helper import logger_received
 from osbrain.helper import wait_agent_attr
 from osbrain.helper import wait_agent_condition
 
-from common import nsproxy  # noqa: F401
-from common import append_received
+from .common import nsproxy  # noqa: F401
+from .common import append_received
 
 
 class BaseServer(Agent):

@@ -14,8 +14,8 @@ from osbrain.agent import TOPIC_SEPARATOR
 from osbrain.address import AgentAddressSerializer
 from osbrain.helper import wait_agent_attr
 
-from common import nsproxy  # noqa: F401
-from common import set_received
+from .common import nsproxy  # noqa: F401
+from .common import set_received
 
 
 def test_compose_message():

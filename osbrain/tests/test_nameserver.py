@@ -21,9 +21,9 @@ from osbrain.helper import wait_agent_attr
 from osbrain.nameserver import NameServerProcess
 from osbrain.nameserver import random_nameserver_process
 
-from common import nsproxy  # noqa: F401
-from common import skip_windows_any_port
-from common import skip_windows_port_reuse
+from .common import nsproxy  # noqa: F401
+from .common import skip_windows_any_port
+from .common import skip_windows_port_reuse
 
 
 def test_nameserver_ping(nsproxy):

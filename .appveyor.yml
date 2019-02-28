@@ -13,9 +13,7 @@ matrix:
   fast_finish: false
 
 install:
-  - cmd: set "PATH=%PYTHON%;%PATH%"
-  - cmd: python -m venv virtualenv
-  - cmd: virtualenv\Scripts\activate.bat
+  - cmd: set "PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%"
   - cmd: pip install tox codecov
 
 test_script:

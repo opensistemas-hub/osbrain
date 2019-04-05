@@ -36,7 +36,6 @@ Contents
    introduction.rst
    basic_patterns.rst
    considerations.rst
-   complex_patterns.rst
    timers.rst
    transport_protocol.rst
    serialization.rst

@@ -121,7 +121,7 @@ as seen in :ref:`request_reply`::
        return 'Received ' + str(message)
 
 However, using ``return`` the agent can only send a response after executing
-the handler. Instead, an agent can use `yield` to reply earlier if needed::
+the handler. Instead, an agent can use ``yield`` to reply earlier if needed::
 
    def reply(agent, message):
        yield 'Received' + str(message)  # Reply now

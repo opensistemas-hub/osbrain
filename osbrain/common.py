@@ -18,8 +18,8 @@ def unique_identifier() -> bytes:
     Returns
     -------
         A unique identifier that is safe to use in PUB-SUB communication
-        patterns (i.e.: does not contain the `osbrain.TOPIC_SEPARATOR`
-        character).
+        patterns (i.e.: does not contain the
+        :py:data:`osbrain.agent.TOPIC_SEPARATOR` character).
     """
     return uuid4().hex.encode()
 
@@ -27,7 +27,7 @@ def unique_identifier() -> bytes:
 def format_exception():
     """
     Represent a traceback exception as a string in which all lines start
-    with a `|` character.
+    with a ``|`` character.
 
     Useful for differentiating remote from local exceptions and exceptions
     that where silenced.
@@ -73,7 +73,7 @@ def format_method_exception(error, method, args, kwargs):
 
 def topic_to_bytes(topic: Union[bytes, str]) -> bytes:
     """
-    Return the passed topic as a `bytes` object.
+    Return the passed topic as a :class:`bytes` object.
     """
     if isinstance(topic, str):
         topic = topic.encode()
@@ -91,7 +91,7 @@ def topics_to_bytes(handlers: Dict[Union[bytes, str], Any], uuid: bytes = b''):
         Contains pairs "topic - handler".
     uuid
         uuid of the SYNC_PUB/SYNC_SUB channel (if applies). For normal
-        PUB/SUB communication, this should be `b''`.
+        PUB/SUB communication, this should be ``b''``.
 
     Returns
     -------

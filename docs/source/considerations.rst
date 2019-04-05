@@ -42,8 +42,8 @@ connection we want to close as a parameter.
 There is also a ``close_all()`` method, which takes no parameters and
 will close all user-defined connections of the agent.
 
-Remember that the `linger` value from the osBrain configuration will
-be used for the actual `socket.close()` calls in both methods. For more
+Remember that the ``linger`` value from the osBrain configuration will
+be used for the actual ``socket.close()`` calls in both methods. For more
 information, simply refer to the
 `ØMQ guide <http://zguide.zeromq.org/page:all>`_.
 
@@ -99,7 +99,7 @@ Shutting down
 =============
 
 If we want to end the execution of a specific agent in our system, we can do
-it by calling the `agent.shutdown` method:
+it by calling the `Agent.shutdown()` method:
 
 .. literalinclude:: ../../examples/shutdown.py
 

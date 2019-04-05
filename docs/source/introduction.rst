@@ -17,7 +17,7 @@ you do not have Python 3 available, consider using
 `Conda <http://conda.pydata.org/miniconda.html>`_ to create a virtual
 environment with Python 3.
 
-Installing osBrain is very simple with `pip`::
+Installing osBrain is very simple with ``pip``::
 
     pip install osbrain
 
@@ -41,7 +41,7 @@ are taken here:
 .. literalinclude:: ../../examples/hello_world.py
 
 Running this example from your terminal should simply show you a log message
-saying `Hello world!` but, what exactly is happening there?
+saying ``Hello world!`` but, what exactly is happening there?
 
 
 .. note:: The ``ns.shutdown()`` calls in the examples are there because we do
@@ -62,8 +62,8 @@ the system. When running, it executes the main loop:
 - Process incoming messages and execute developer-defined code.
 - Repeat.
 
-This means a single agent, as in the `Hello world!` example, makes little or no
-sense. Agents in a multi-agent system start to make sense when connected to
+This means a single agent, as in the ``Hello world!`` example, makes little or
+no sense. Agents in a multi-agent system start to make sense when connected to
 each other.
 
 The easiest way to run an agent in an osBrain architecture is by calling the
@@ -129,4 +129,4 @@ to remember.
 The code above creates (and registers) three different agents in a name server
 and then creates, through the name server proxy, a proxy to one of those agents
 simply using its alias. Then it uses the agent proxy to remotely call a
-method to log a `Hello world!` message.
+method to log a ``Hello world!`` message.

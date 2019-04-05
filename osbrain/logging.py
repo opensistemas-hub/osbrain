@@ -18,7 +18,7 @@ def pyro_log():
 
 class Logger(Agent):
     """
-    Specialized Agent for logging. Binds a `SUB` socket and starts
+    Specialized Agent for logging. Binds a ``SUB`` socket and starts
     logging incoming messages.
     """
     def on_init(self):

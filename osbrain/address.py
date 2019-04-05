@@ -97,7 +97,7 @@ class AgentAddressTransport(str):
 
 class AgentAddressRole(str):
     """
-    Agent's address role class. It can either be 'server' or 'client'.
+    Agent's address role class. It can either be ``'server'`` or ``'client'``.
     """
     def __new__(cls, value):
         if value not in ['server', 'client']:
@@ -106,8 +106,8 @@ class AgentAddressRole(str):
 
     def twin(self):
         """
-        Get the twin role of the current one. `server` would be the twin
-        of `client` and viceversa.
+        Get the twin role of the current one. ``'server'`` would be the twin
+        of ``'client'`` and viceversa.
 
         Returns
         -------
@@ -179,8 +179,8 @@ class AgentAddressKind(str):
         """
         Get the twin kind of the current one.
 
-        `REQ` would be the twin of `REP` and viceversa, `PUB` would be the
-        twin of `SUB` and viceversa, etc.
+        ``REQ`` would be the twin of ``REP`` and viceversa, ``PUB`` would be
+        the twin of ``SUB`` and viceversa, etc.
 
         Returns
         -------
@@ -196,7 +196,7 @@ class AgentAddressSerializer(str):
 
     Each communication channel will have a serializer.
 
-    Note that for `raw` message passing, everything must be on bytes, and the
+    Note that for ``raw`` message passing, everything must be on bytes, and the
     programmer is the one responsible for converting data to bytes.
 
     Parameters
@@ -366,8 +366,8 @@ class AgentChannelKind(str):
         """
         Get the twin kind of the current one.
 
-        `REQ` would be the twin of `REP` and viceversa, `PUB` would be
-        the twin of `SUB` and viceversa, etc.
+        ``REQ`` would be the twin of ``REP`` and viceversa, ``PUB`` would be
+        the twin of ``SUB`` and viceversa, etc.
 
         Returns
         -------

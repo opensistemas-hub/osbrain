@@ -63,7 +63,7 @@ class Proxy(Pyro4.core.Proxy):
         Timeout, in seconds, to wait until the agent is discovered.
     safe : bool, default is None
         Use safe calls by default. When not set, osbrain default's
-        `osbrain.config['SAFE']` is used.
+        :py:data:`osbrain.config['SAFE']` is used.
     """
     def __init__(self, name, nsaddr=None, timeout=3., safe=None):
         if not nsaddr:

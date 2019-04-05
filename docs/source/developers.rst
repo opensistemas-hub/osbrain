@@ -34,7 +34,7 @@ Installing dependencies
 =======================
 
 To install the required dependencies for developing osBrain, you can
-make use of the provided `requirements.txt` file:
+make use of the provided ``requirements.txt`` file:
 
 .. code-block:: bash
 
@@ -78,7 +78,7 @@ new functionality), just run:
    pytest -k keyword
 
 .. note:: Before submitting your changes for review, make sure all tests pass
-   with `tox`, as the continuous integration system will run all those checks
+   with ``tox``, as the continuous integration system will run all those checks
    as well.
 
 
@@ -88,7 +88,7 @@ Generating documentation
 ========================
 
 Documentation is generated with Sphinx. In order to generate the documentation
-locally you need to run `make` from the `docs` directory:
+locally you need to run ``make`` from the ``docs/`` directory:
 
 .. code-block:: bash
 

@@ -174,8 +174,8 @@ class Agent():
     name : str, default is None
         Name of the Agent.
     host : str, default is None
-        Host address where the agent will bind to. When not set, `'127.0.0.1'`
-        (localhost) is used.
+        Host address where the agent will bind to. When not set,
+        ``'127.0.0.1'`` (localhost) is used.
     transport : str, AgentAddressTransport, default is None
         Transport protocol.
     attributes : dict, default is None
@@ -191,7 +191,7 @@ class Agent():
     _uuid : bytes
         Globally unique identifier for the agent.
     _running : bool
-        Set to `True` if the agent is running (executing the main loop).
+        Set to ``True`` if the agent is running (executing the main loop).
     _serializer : str
         Default agent serialization format.
     _transport : str, AgentAddressTransport, default is None
@@ -214,7 +214,7 @@ class Agent():
         is received, the agent executes de `idle()` method before going back
         to polling.
     _keep_alive : bool
-        When set to `True`, the agent will continue executing the main loop.
+        When set to ``True``, the agent will continue executing the main loop.
     _async_req_uuid : dict
         Stores the UUIDs of the asynchronous request sockets (used in
         communication channels).
@@ -368,7 +368,7 @@ class Agent():
         Parameters
         ----------
         period : float
-            Repeat the action execution with a delay of `period` seconds
+            Repeat the action execution with a delay of ``period`` seconds
             between executions.
         method
             Method (action) to be executed by the agent.
@@ -400,7 +400,7 @@ class Agent():
         Parameters
         ----------
         delay : float
-            Execute the action after `delay` seconds.
+            Execute the action after ``delay`` seconds.
         method
             Method (action) to be executed by the agent.
         alias : str, default is None
@@ -1126,7 +1126,7 @@ class Agent():
 
         Note
         ----
-        The timeout is set by the agent's `poll_timeout` attribute.
+        The timeout is set by the agent's ``poll_timeout`` attribute.
         """
         pass
 
@@ -1476,7 +1476,7 @@ class Agent():
             For channel requests, wait at most this number of seconds for a
             response from the server.
         on_error : function, method or string
-            Code to be executed if `wait` is passed and the response is not
+            Code to be executed if ``wait`` is passed and the response is not
             received.
         """
         address = self._address[address]
@@ -1793,7 +1793,7 @@ class Agent():
     def close(self, alias, linger=None):
         """
         Close a socket given its alias and clear its entry from the
-        `Agent.socket` dictionary.
+        `Agent._socket` dictionary.
         """
         socket = self._socket[alias]
         # Each socket might be pointed by different keys

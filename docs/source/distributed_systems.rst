@@ -29,7 +29,7 @@ Working with distributed systems is easy, you just basically need to make
 sure you use TCP transport and to specify the network interface IP address
 that you want to bind to.
 
-This can be done when binding (note that we are using `127.0.0.1` but you
+This can be done when binding (note that we are using ``127.0.0.1`` but you
 may use any other IP address available in your system):
 
 .. code-block:: python

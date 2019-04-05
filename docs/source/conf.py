@@ -11,6 +11,7 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+from sphinx.domains.python import PythonDomain
 
 import osbrain
 
@@ -270,3 +271,32 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+
+class MyPythonDomain(PythonDomain):
+    def find_obj(self, env, modname, classname, name, type, searchmode=0):
+        """
+        Ensures an object always resolves to the desired module if defined
+        there.
+
+        See: https://github.com/sphinx-doc/sphinx/issues/3866
+        """
+        orig_matches = PythonDomain.find_obj(self, env, modname, classname, name, type, searchmode)
+        matches = []
+        for match in orig_matches:
+            match_name = match[0]
+            desired_name = 'osbrain' + '.' + name.strip('.')
+            if match_name == desired_name:
+                matches.append(match)
+                break
+        if matches:
+            return matches
+        else:
+            return orig_matches
+
+
+def setup(sphinx):
+    """
+    Use MyPythonDomain in place of PythonDomain.
+    """
+    sphinx.override_domain(MyPythonDomain)

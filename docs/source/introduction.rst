@@ -14,7 +14,7 @@ to start playing with this module, you only need to install it.
 osBrain requires Python 3. Most probably, Python 3 is already packaged for your
 favorite distribution (and maybe even installed by default in your system). If
 you do not have Python 3 available, consider using
-`Conda <http://conda.pydata.org/miniconda.html>`_ to create a virtual
+`Conda <https://docs.conda.io/en/latest/miniconda.html>`_ to create a virtual
 environment with Python 3.
 
 Installing osBrain is very simple with ``pip``::

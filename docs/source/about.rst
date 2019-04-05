@@ -43,7 +43,7 @@ OsBrain's history
 ^^^^^^^^^^^^^^^^^
 
 osBrain was initially developed in
-`OpenSistemas <http://www.opensistemas.com>`_ based on the need to create a
+`OpenSistemas <https://www.opensistemas.com>`_ based on the need to create a
 **real-time automated-trading platform**. This platform needed to be able to
 process real-time market data updates fast and in a parallel way. Robustness
 was very important as well in order to prevent running trading strategies
@@ -74,7 +74,7 @@ What can you use osBrain for?
 =============================
 
 osBrain has been successfully used to develop a real-time automated-trading
-platform in `OpenSistemas <http://www.opensistemas.com>`_, but being a
+platform in `OpenSistemas <https://www.opensistemas.com>`_, but being a
 general-purpose multi-agent system, it is not limited to this application.
 Other applications include:
 
@@ -109,7 +109,7 @@ always take this into account:
    `PyZMQ <https://github.com/zeromq/pyzmq>`_ Python bindings, which means
    that the system performance depends on the
    `PyZMQ <https://github.com/zeromq/pyzmq>`_ performance.
-#. osBrain uses `pickle <https://docs.python.org/library/pickle.html>`_ for
+#. osBrain uses `pickle <https://docs.python.org/3/library/pickle.html>`_ for
    serialization by default, which means that the system performance may as
    well depend on this package. Serialization is configurable, though.
 #. osBrain default transport is IPC for operating systems that provide UNIX

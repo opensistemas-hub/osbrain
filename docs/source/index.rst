@@ -12,7 +12,7 @@ osBrain - |version|
 What is osBrain?
 ----------------
 osBrain is a **general-purpose multi-agent system module** written in Python
-and developed by `OpenSistemas <http://www.opensistemas.com>`_.
+and developed by `OpenSistemas <https://www.opensistemas.com>`_.
 Agents run independently as system processes and communicate with each other
 using message passing.
 
@@ -22,7 +22,7 @@ to ease the configuration and deployment of complex systems.
 
 Please read  the :doc:`license`.
 
-* `osBrain on Pypi <https://pypi.python.org/pypi/osbrain>`_.
+* `osBrain on Pypi <https://pypi.org/project/osbrain>`_.
 * `Source code on Github <https://github.com/opensistemas-hub/osbrain>`_.
 
 

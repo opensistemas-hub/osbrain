@@ -38,7 +38,11 @@ extensions = [
     'sphinx.ext.ifconfig'
 ]
 
-autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
+autodoc_default_options = {
+    'members': None,
+    'undoc-members': None,
+    'show-inheritance': None,
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

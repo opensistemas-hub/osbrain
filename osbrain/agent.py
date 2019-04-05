@@ -143,8 +143,8 @@ def execute_code_after_yield(generator):
     cases we still want to execute the remaining code in the generator, and
     also make sure it does not yield any more.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     generator
         The handler that already yielded one result and is not expected to
         yield again.

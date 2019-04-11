@@ -464,7 +464,7 @@ class Agent():
         """
         Stop the agent. Agent will stop running.
         """
-        self.log_info('Stopping...')
+        self.log_debug('Stopping...')
         self._keep_alive = False
         return 'OK'
 
@@ -1141,7 +1141,7 @@ class Agent():
         """
         for name, value in kwargs.items():
             setattr(self, name, value)
-            self.log_info('SET self.%s = %s' % (name, value))
+            self.log_debug('SET self.%s = %s' % (name, value))
 
     def get_attr(self, name: str):
         """
@@ -1176,11 +1176,11 @@ class Agent():
             method = types.MethodType(function, self)
             name = method.__name__
             setattr(self, name, method)
-            self.log_info('SET self.%s() = %s' % (name, function))
+            self.log_debug('SET self.%s() = %s' % (name, function))
         for name, function in kwargs.items():
             method = types.MethodType(function, self)
             setattr(self, name, method)
-            self.log_info('SET self.%s() = %s' % (name, function))
+            self.log_debug('SET self.%s() = %s' % (name, function))
         return name
 
     def execute_as_function(self, function, *args, **kwargs):
@@ -1694,7 +1694,7 @@ class Agent():
 
         Will let the main thread do the tear down.
         """
-        self.log_info('Stopping...')
+        self.log_debug('Shutting down...')
         self._keep_alive = False
         self._die_now = True
 

@@ -1,18 +1,8 @@
 import os
-import sys
 from pathlib import Path
 
-# While Python 3.4 is supported...
-if sys.version_info < (3, 5):
-    def mkdir(directory, **kwargs):
-        directory = str(directory)
-        os.makedirs(directory, exist_ok=kwargs['exist_ok'])
-
-    from os.path import expanduser
-    Path.home = lambda: Path(expanduser('~'))
-    Path.mkdir = lambda directory, **kwargs: mkdir(directory, **kwargs)
-
 import Pyro4
+
 Pyro4.config.SERIALIZERS_ACCEPTED.add('pickle')
 Pyro4.config.SERIALIZERS_ACCEPTED.add('cloudpickle')
 Pyro4.config.SERIALIZERS_ACCEPTED.add('dill')

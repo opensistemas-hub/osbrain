@@ -14,7 +14,6 @@ from osbrain import run_agent
 from osbrain.helper import wait_agent_attr
 
 from .common import append_received
-from .common import nsproxy  # noqa: F401
 from .common import skip_windows_ipc
 from .common import skip_windows_spawn
 

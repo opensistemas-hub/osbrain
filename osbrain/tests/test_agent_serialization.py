@@ -14,7 +14,6 @@ from osbrain.agent import deserialize_message
 from osbrain.agent import serialize_message
 from osbrain.helper import wait_agent_attr
 
-from .common import nsproxy  # noqa: F401
 from .common import set_received
 
 

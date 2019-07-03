@@ -11,7 +11,6 @@ from osbrain.helper import sync_agent_logger
 from osbrain.helper import wait_agent_attr
 
 from .common import append_received
-from .common import nsproxy  # noqa: F401
 
 
 def on_error(agent):

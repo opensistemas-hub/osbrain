@@ -8,8 +8,6 @@ from osbrain import run_logger
 from osbrain.helper import logger_received
 from osbrain.logging import pyro_log
 
-from .common import nsproxy  # noqa: F401
-
 
 def test_logging_level(nsproxy):
     """

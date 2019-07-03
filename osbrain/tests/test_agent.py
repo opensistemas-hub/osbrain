@@ -25,7 +25,6 @@ from osbrain.helper import sync_agent_logger
 from osbrain.helper import wait_agent_attr
 
 from .common import append_received
-from .common import nsproxy  # noqa: F401
 from .common import set_received
 from .common import skip_windows_any_port
 from .common import skip_windows_port_reuse

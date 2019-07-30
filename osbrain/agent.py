@@ -1784,6 +1784,9 @@ class Agent():
         """
         Close a socket using the provided linger value.
         """
+        if any(reg[0] == socket for reg in self._poller.sockets):
+            self._poller.unregister(socket)
+
         linger = get_linger(linger)
         socket.close(linger=linger)
         address = self._address[socket]

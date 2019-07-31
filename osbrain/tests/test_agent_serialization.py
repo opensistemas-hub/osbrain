@@ -14,6 +14,7 @@ from osbrain.agent import deserialize_message
 from osbrain.agent import serialize_message
 from osbrain.helper import wait_agent_attr
 
+from .common import echo_handler
 from .common import set_received
 
 
@@ -135,13 +136,10 @@ def test_reqrep_raw_zmq_outside(nsproxy):
     """
     Simple request-reply pattern between an agent and a direct ZMQ connection.
     """
-    def rep_handler(agent, message):
-        return message
-
     # Create an osBrain agent that will receive the message
     a1 = run_agent('a1')
     a1.set_attr(received=None)
-    addr = a1.bind('REP', transport='tcp', handler=rep_handler,
+    addr = a1.bind('REP', transport='tcp', handler=echo_handler,
                    serializer='raw')
 
     # Create a raw ZeroMQ REQ socket

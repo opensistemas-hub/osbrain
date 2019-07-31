@@ -21,3 +21,7 @@ def append_received(agent, message, topic=None):
 
 def set_received(agent, message, topic=None):
     agent.received = message
+
+
+def echo_handler(agent, message):
+    return message

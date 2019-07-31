@@ -8,17 +8,16 @@ from osbrain import run_logger
 from osbrain.helper import logger_received
 from osbrain.helper import sync_agent_logger
 
+from .common import echo_handler
+
 
 def test_return(nsproxy):
     """
     REQ-REP pattern using a handler that returns a value.
     """
-    def rep_handler(agent, message):
-        return message
-
     a0 = run_agent('a0')
     a1 = run_agent('a1')
-    addr = a0.bind('REP', handler=rep_handler)
+    addr = a0.bind('REP', handler=echo_handler)
     a1.connect(addr, alias='request')
     response = a1.send_recv('request', 'Hello world')
     assert response == 'Hello world'

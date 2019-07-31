@@ -25,6 +25,7 @@ from osbrain.helper import sync_agent_logger
 from osbrain.helper import wait_agent_attr
 
 from .common import append_received
+from .common import echo_handler
 from .common import set_received
 from .common import skip_windows_any_port
 from .common import skip_windows_port_reuse
@@ -425,16 +426,13 @@ def test_agent_connect_repeat(nsproxy):
     connected to just before. When no new handler is given, the agent simply
     adds a new alias. Both aliases should work as expected.
     """
-    def rep_handler(agent, message):
-        return 'OK'
-
     server = run_agent('a0')
     client = run_agent('a1')
-    addr = server.bind('REP', 'reply', rep_handler)
+    addr = server.bind('REP', 'reply', echo_handler)
     client.connect(addr, alias='request0')
     client.connect(addr, alias='request1')
-    assert client.send_recv('request0', 'Hello world') == 'OK'
-    assert client.send_recv('request1', 'Hello world') == 'OK'
+    assert client.send_recv('request0', 'Hello world') == 'Hello world'
+    assert client.send_recv('request1', 'Hello world') == 'Hello world'
 
 
 def test_agent_connect_repeat_new_handler(nsproxy):

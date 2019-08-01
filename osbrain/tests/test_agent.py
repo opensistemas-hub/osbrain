@@ -543,6 +543,33 @@ def test_close(nsproxy):
     assert not a0.has_socket('pub')
 
 
+def test_close_socket_poller_cleanup(nsproxy):
+    """
+    Closed sockets should be cleaned-up from the poller.
+
+    When Bob connects to Alice, a new socket is registered in Bob's poller.
+    Once we close that socket, it should no longer be registered in the poller.
+    """
+    def get_registered_sockets(agent):
+        return set(str(socket) for socket in agent._poller.sockets)
+
+    alice = run_agent('alice')
+    bob = run_agent('bob')
+    bob.set_method(get_registered_sockets)
+    address = alice.bind('PUB', alias='pub')
+
+    before = bob.get_registered_sockets()
+    bob.connect(address, alias='sub', handler=echo_handler)
+    middle = bob.get_registered_sockets()
+    bob.close('sub')
+    after = bob.get_registered_sockets()
+
+    assert len(middle - before) == 1
+    new_socket = list(middle - before)[0]
+    assert new_socket not in after
+    assert after == before
+
+
 @pytest.mark.parametrize('linger, sleep_time, should_receive', [
     (2, 1, True),
     (0.5, 1, False),

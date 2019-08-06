@@ -532,15 +532,28 @@ def test_has_socket(nsproxy):
     assert a0.has_socket('pub')
 
 
-def test_close(nsproxy):
+def test_close_bound(nsproxy):
     """
-    Test that closing a socket removes it from the socket entry.
+    Test that closing a bound socket removes it from the socket entry.
     """
     a0 = run_agent('a0')
-    a0.bind('PUB', alias='pub')
+    a0.bind('PUB', alias='bound')
 
-    a0.close('pub')
-    assert not a0.has_socket('pub')
+    a0.close('bound')
+    assert not a0.has_socket('bound')
+
+
+def test_close_connected(nsproxy):
+    """
+    Test that closing a connected socket removes it from the socket entry.
+    """
+    a0 = run_agent('a0')
+    a1 = run_agent('a1')
+    pub = a0.bind('PUB', alias='pub')
+    a1.connect(pub, alias='connected', handler=echo_handler)
+
+    a1.close('connected')
+    assert not a1.has_socket('connected')
 
 
 def test_close_socket_poller_cleanup(nsproxy):

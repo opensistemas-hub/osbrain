@@ -89,6 +89,7 @@ class AgentAddressTransport(str):
     """
     Agent's address transport class. It can be 'tcp', 'ipc' or 'inproc'.
     """
+
     def __new__(cls, value):
         if value not in ['tcp', 'ipc', 'inproc']:
             raise ValueError('Invalid address transport "%s"!' % value)
@@ -99,6 +100,7 @@ class AgentAddressRole(str):
     """
     Agent's address role class. It can either be ``'server'`` or ``'client'``.
     """
+
     def __new__(cls, value):
         if value not in ['server', 'client']:
             raise ValueError('Invalid address role "%s"!' % value)
@@ -126,6 +128,7 @@ class AgentAddressKind(str):
     This kind represents the communication pattern being used by the agent
     address: REP, PULL, PUB...
     """
+
     TWIN = {
         'REQ': 'REP',
         'REP': 'REQ',
@@ -204,7 +207,8 @@ class AgentAddressSerializer(str):
     serializer_type : str
         Serializer type (i.e.: 'raw', 'pickle', 'cloudpickle', 'dill', 'json').
     """
-    SERIALIZER_SIMPLE = ('raw', )
+
+    SERIALIZER_SIMPLE = ('raw',)
     SERIALIZER_SEPARATOR = ('pickle', 'cloudpickle', 'dill', 'json')
 
     def __new__(cls, value):
@@ -234,9 +238,11 @@ class SocketAddress(object):
     port : int
         Port number.
     """
+
     def __init__(self, host, port):
-        assert isinstance(port, int), \
-            'Incorrect parameter port on SocketAddress; expecting type int.'
+        assert isinstance(
+            port, int
+        ), 'Incorrect parameter port on SocketAddress; expecting type int.'
         self.host = str(ip_address(host))
         self.port = port
 
@@ -259,7 +265,7 @@ class SocketAddress(object):
         return self.host == other.host and self.port == other.port
 
 
-class AgentAddress():
+class AgentAddress:
     """
     Agent address information consisting on the transport protocol, address,
     kind and role.
@@ -290,6 +296,7 @@ class AgentAddress():
     serializer : AgentAddressSerializer
         Agent serializer.
     """
+
     def __init__(self, transport, address, kind, role, serializer):
         if transport == 'tcp':
             address = SocketAddress(*address_to_host_port(address))
@@ -307,22 +314,33 @@ class AgentAddress():
         -------
         representation : str
         """
-        return 'AgentAddress(%s, %s, %s, %s, %s)' % \
-            (self.transport, self.address, self.kind, self.role,
-             self.serializer)
+        return 'AgentAddress(%s, %s, %s, %s, %s)' % (
+            self.transport,
+            self.address,
+            self.kind,
+            self.role,
+            self.serializer,
+        )
 
     def __hash__(self):
-        return hash(self.transport) ^ hash(self.address) ^ \
-            hash(self.kind) ^ hash(self.role) ^ hash(self.serializer)
+        return (
+            hash(self.transport)
+            ^ hash(self.address)
+            ^ hash(self.kind)
+            ^ hash(self.role)
+            ^ hash(self.serializer)
+        )
 
     def __eq__(self, other):
         if not isinstance(other, AgentAddress):
             return False
-        return self.transport == other.transport \
-            and self.address == other.address \
-            and self.kind == other.kind \
-            and self.role == other.role \
+        return (
+            self.transport == other.transport
+            and self.address == other.address
+            and self.kind == other.kind
+            and self.role == other.role
             and self.serializer == other.serializer
+        )
 
     def twin(self):
         """
@@ -339,8 +357,9 @@ class AgentAddress():
         """
         kind = self.kind.twin()
         role = self.role.twin()
-        return self.__class__(self.transport, self.address, kind, role,
-                              self.serializer)
+        return self.__class__(
+            self.transport, self.address, kind, role, self.serializer
+        )
 
 
 class AgentChannelKind(str):
@@ -350,6 +369,7 @@ class AgentChannelKind(str):
     This kind represents the communication pattern being used by the agent
     channel: ASYNC_REP, STREAM...
     """
+
     TWIN = {
         'ASYNC_REP': 'ASYNC_REQ',
         'ASYNC_REQ': 'ASYNC_REP',
@@ -376,7 +396,7 @@ class AgentChannelKind(str):
         return self.__class__(self.TWIN[self])
 
 
-class AgentChannel():
+class AgentChannel:
     """
     Agent channel information.
 
@@ -401,14 +421,15 @@ class AgentChannel():
     receiver : str
         Second AgentAddress.
     """
+
     def __init__(self, kind, receiver, sender, twin_uuid=None):
         self.kind = AgentChannelKind(kind)
         self.receiver = receiver
         self.sender = sender
-        self.transport = \
-            receiver.transport if receiver else sender.transport
-        self.serializer = \
+        self.transport = receiver.transport if receiver else sender.transport
+        self.serializer = (
             receiver.serializer if receiver else sender.serializer
+        )
         self.uuid = unique_identifier()
         self.twin_uuid = twin_uuid
         # Set up pairs
@@ -425,8 +446,11 @@ class AgentChannel():
         -------
         representation : str
         """
-        return 'AgentChannel(kind=%s, receiver=%s, sender=%s)' % \
-            (self.kind, self.receiver, self.sender)
+        return 'AgentChannel(kind=%s, receiver=%s, sender=%s)' % (
+            self.kind,
+            self.receiver,
+            self.sender,
+        )
 
     def __hash__(self):
         return hash(self.kind) ^ hash(self.receiver) ^ hash(self.sender)
@@ -434,9 +458,11 @@ class AgentChannel():
     def __eq__(self, other):
         if not isinstance(other, AgentChannel):
             return False
-        return self.kind == other.kind \
-            and self.receiver == other.receiver \
+        return (
+            self.kind == other.kind
+            and self.receiver == other.receiver
             and self.sender == other.sender
+        )
 
     def twin(self):
         """
@@ -450,5 +476,6 @@ class AgentChannel():
         kind = self.kind.twin()
         sender = self.receiver.twin() if self.receiver is not None else None
         receiver = self.sender.twin() if self.sender is not None else None
-        return self.__class__(kind=kind, receiver=receiver, sender=sender,
-                              twin_uuid=self.uuid)
+        return self.__class__(
+            kind=kind, receiver=receiver, sender=sender, twin_uuid=self.uuid
+        )

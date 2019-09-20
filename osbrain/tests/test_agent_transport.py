@@ -107,6 +107,7 @@ def test_agent_ipc_from_different_folders(nsproxy, monkeypatch):
     """
     IPC should work well even when agents are run from different folders.
     """
+
     class Wdagent(Agent):
         def on_init(self):
             self.received = []
@@ -119,8 +120,9 @@ def test_agent_ipc_from_different_folders(nsproxy, monkeypatch):
     monkeypatch.chdir(dira)
     a = run_agent('a', base=Wdagent)
     random_addr = a.bind('PULL', transport='ipc', handler=append_received)
-    set_addr = a.bind('PULL', addr='qwer', transport='ipc',
-                      handler=append_received)
+    set_addr = a.bind(
+        'PULL', addr='qwer', transport='ipc', handler=append_received
+    )
 
     # Second agent run for directory `b`
     monkeypatch.chdir(dirb)

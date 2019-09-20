@@ -9,8 +9,7 @@ from .common import append_received
 
 
 @pytest.mark.parametrize(
-    'serializer',
-    AgentAddressSerializer.SERIALIZER_SEPARATOR
+    'serializer', AgentAddressSerializer.SERIALIZER_SEPARATOR
 )
 def test_pubsub_topics_separator(nsproxy, serializer):
     """
@@ -34,8 +33,7 @@ def test_pubsub_topics_separator(nsproxy, serializer):
 
     a1.connect(addr, handler=append_received)
     a2.connect(addr, handler={'foo': append_received})
-    a3.connect(addr, handler={'bar': append_received,
-                              'foo': append_received})
+    a3.connect(addr, handler={'bar': append_received, 'foo': append_received})
     a4.connect(addr, handler={'bar': append_received})
     a5.connect(addr, handler={'fo': append_received})
 
@@ -93,8 +91,7 @@ def test_pubsub_topics_separator(nsproxy, serializer):
 
 
 @pytest.mark.parametrize(
-    'serializer',
-    AgentAddressSerializer.SERIALIZER_SIMPLE
+    'serializer', AgentAddressSerializer.SERIALIZER_SIMPLE
 )
 def test_pubsub_topics_raw(nsproxy, serializer):
     """
@@ -121,8 +118,7 @@ def test_pubsub_topics_raw(nsproxy, serializer):
 
     a1.connect(addr, handler=append_received)
     a2.connect(addr, handler={'foo': append_received})
-    a3.connect(addr, handler={'bar': append_received,
-                              'foo': append_received})
+    a3.connect(addr, handler={'bar': append_received, 'foo': append_received})
     a4.connect(addr, handler={'bar': append_received})
     a5.connect(addr, handler={'fo': append_received})
 

@@ -65,8 +65,8 @@ def test_early_agent_proxy(nsproxy):
     Timer(2, agent.start).start()
     # Locate agent now
     with pytest.raises(Pyro4.errors.NamingError):
-        a0 = Proxy('a0', timeout=1.)
-    a0 = Proxy('a0', timeout=10.)
+        a0 = Proxy('a0', timeout=1.0)
+    a0 = Proxy('a0', timeout=10.0)
     # Just check agent is ready
     assert a0.unsafe.ping() == 'pong'
 
@@ -76,9 +76,13 @@ def test_agent_loopback(nsproxy):
     An agent should always have a _loopback_safe inproc socket.
     """
     a0 = run_agent('a0')
-    assert a0.addr('_loopback_safe') == \
-        AgentAddress(transport='inproc', address='_loopback_safe',
-                     kind='REP', role='server', serializer='pickle')
+    assert a0.addr('_loopback_safe') == AgentAddress(
+        transport='inproc',
+        address='_loopback_safe',
+        kind='REP',
+        role='server',
+        serializer='pickle',
+    )
 
 
 def test_ping(nsproxy):
@@ -94,6 +98,7 @@ def test_late_runner(nsproxy):
     The `run_agent` function should always make sure the agent is actually
     running before returning its proxy.
     """
+
     class LateRunner(Agent):
         @Pyro4.oneway
         def run(self):
@@ -110,12 +115,13 @@ def test_agent_before_loop(nsproxy):
     """
     Tests agent's `before_loop()` method, which should be able to start timers.
     """
+
     class MyAgent(Agent):
         def on_init(self):
             self.x = 0
 
         def before_loop(self):
-            self.each(.5, 'incr')
+            self.each(0.5, 'incr')
 
         def incr(self):
             self.x += 1
@@ -165,6 +171,7 @@ def test_set_method(nsproxy):
     """
     Set new methods for the agent.
     """
+
     def square(agent, x):
         return x ** 2
 
@@ -204,6 +211,7 @@ def test_set_and_get_attributes(nsproxy):
     """
     Set and get attributes through the proxy.
     """
+
     def increment(agent):
         agent.zero += 10
         agent.one += 10
@@ -270,16 +278,15 @@ def test_bind_tcp_addr_specific_port(nsproxy):
 
 
 @skip_windows_spawn
-@pytest.mark.parametrize('linger, sleep_time, should_receive', [
-    (2, 1, True),
-    (0.5, 1, False),
-    (0, 1, False),
-    (-1, 1, True),
-])
+@pytest.mark.parametrize(
+    'linger, sleep_time, should_receive',
+    [(2, 1, True), (0.5, 1, False), (0, 1, False), (-1, 1, True)],
+)
 def test_linger(monkeypatch, nsproxy, linger, sleep_time, should_receive):
     """
     Test linger works when closing the sockets of an agent.
     """
+
     class AgentTest(Agent):
         def on_init(self):
             self.received = []
@@ -289,8 +296,9 @@ def test_linger(monkeypatch, nsproxy, linger, sleep_time, should_receive):
     puller = run_agent('puller', base=AgentTest)
     pusher = run_agent('pusher', base=AgentTest)
 
-    address = puller.bind('PULL', alias='pull', handler=append_received,
-                          transport='tcp')
+    address = puller.bind(
+        'PULL', alias='pull', handler=append_received, transport='tcp'
+    )
 
     pusher.connect(address, alias='push')
 
@@ -312,8 +320,13 @@ def test_linger(monkeypatch, nsproxy, linger, sleep_time, should_receive):
     time.sleep(sleep_time)
 
     # Bind to receive the message (if still in queue)
-    puller.bind('PULL', alias='pull', handler=append_received,
-                addr=address.address, transport='tcp')
+    puller.bind(
+        'PULL',
+        alias='pull',
+        handler=append_received,
+        addr=address.address,
+        transport='tcp',
+    )
 
     assert should_receive == wait_agent_attr(puller, data='foo', timeout=1)
 
@@ -352,6 +365,7 @@ def test_agent_inheritance(nsproxy):
     """
     Test agent inheritance; agents can be based on a custom class.
     """
+
     class NewAgent(Agent):
         def the_answer_to_life(self):
             return 42
@@ -373,6 +387,7 @@ def test_agent_multiproxy(nsproxy):
     Test agent multiproxy access; all proxies should access the same agent
     object.
     """
+
     class NewAgent(Agent):
         def on_init(self):
             self.count = 0
@@ -453,6 +468,7 @@ def test_method_handlers(nsproxy):
     """
     Test handlers which are methods of a custom class.
     """
+
     class NewAgent(Agent):
         def on_init(self):
             self.received = {}
@@ -486,14 +502,16 @@ def test_list_of_handlers(nsproxy):
     An agent should accept a list of handlers. These handlers should be
     executed in strict order.
     """
+
     class NewAgent(Agent):
         def on_init(self):
             self.received = None
             self.second = None
             self.third = None
             # Set handlers using a function, a method type and a string type
-            self.bind('PULL', 'pull', handler=[set_received, self.pull0,
-                                               'pull1'])
+            self.bind(
+                'PULL', 'pull', handler=[set_received, self.pull0, 'pull1']
+            )
 
         def pull0(self, message):
             self.second = '0' + str(self.received)
@@ -563,6 +581,7 @@ def test_close_socket_poller_cleanup(nsproxy):
     When Bob connects to Alice, a new socket is registered in Bob's poller.
     Once we close that socket, it should no longer be registered in the poller.
     """
+
     def get_registered_sockets(agent):
         return set(str(socket) for socket in agent._poller.sockets)
 
@@ -583,16 +602,15 @@ def test_close_socket_poller_cleanup(nsproxy):
     assert after == before
 
 
-@pytest.mark.parametrize('linger, sleep_time, should_receive', [
-    (2, 1, True),
-    (0.5, 1, False),
-    (0, 1, False),
-    (-1, 1, True),
-])
+@pytest.mark.parametrize(
+    'linger, sleep_time, should_receive',
+    [(2, 1, True), (0.5, 1, False), (0, 1, False), (-1, 1, True)],
+)
 def test_close_linger(nsproxy, linger, sleep_time, should_receive):
     """
     Test closing a socket with a linger value passed as parameter.
     """
+
     class AgentTest(Agent):
         def on_init(self):
             self.received = []
@@ -600,8 +618,9 @@ def test_close_linger(nsproxy, linger, sleep_time, should_receive):
     puller = run_agent('puller', base=AgentTest)
     pusher = run_agent('pusher', base=AgentTest)
 
-    address = puller.bind('PULL', alias='pull', handler=append_received,
-                          transport='tcp')
+    address = puller.bind(
+        'PULL', alias='pull', handler=append_received, transport='tcp'
+    )
 
     pusher.connect(address, alias='push')
 
@@ -623,8 +642,13 @@ def test_close_linger(nsproxy, linger, sleep_time, should_receive):
     time.sleep(sleep_time)
 
     # Bind to receive the message (if still in queue)
-    puller.bind('PULL', alias='pull', handler=append_received,
-                addr=address.address, transport='tcp')
+    puller.bind(
+        'PULL',
+        alias='pull',
+        handler=append_received,
+        addr=address.address,
+        transport='tcp',
+    )
 
     assert should_receive == wait_agent_attr(puller, data='foo', timeout=1)
 
@@ -724,6 +748,7 @@ def test_agent_loopback_header_unknown(nsproxy):
     """
     Test an unknown header on loopback handler.
     """
+
     class Unknown(Agent):
         def unknown(self):
             self._loopback('UNKNOWN_HEADER', 1)
@@ -758,6 +783,7 @@ def test_agent_spawn_process(nsproxy):
     It is a way to make sure agents are run as non-daemonic processes, which
     are not allowed to have children.
     """
+
     class Spawner(Agent):
         def spawn_process(self):
             p = multiprocessing.Process()
@@ -773,6 +799,7 @@ def test_agent_execute_as_function(monkeypatch, nsproxy):
     Test `execute_as_function` method, which should execute a given function
     in the remote agent.
     """
+
     class EnvironmentAgent(Agent):
         def set_environment(self, value):
             monkeypatch.setitem(os.environ, '__OSBRAIN_TEST', value)
@@ -797,6 +824,7 @@ def test_agent_execute_as_method(nsproxy):
     in the remote agent as a method (i.e.: passing the agent as first
     parameter of the function).
     """
+
     def name(agent, prefix, suffix='suffix'):
         return prefix + agent.name + suffix
 

@@ -45,7 +45,7 @@ def setup_busy_worker(nsproxy):
     boss.connect(worker.addr('pull'), alias='push')
     # Make worker busy for 2 seconds
     boss.send('push', 2)
-    assert wait_agent_attr(worker, name='busy', value=True, timeout=.5)
+    assert wait_agent_attr(worker, name='busy', value=True, timeout=0.5)
     return worker
 
 
@@ -65,7 +65,7 @@ def test_no_timeout_locate_ns_existing(nsproxy):
     """
     Locating a NS that exists with no timeout should be OK.
     """
-    locate_ns(nsproxy.addr(), timeout=0.)
+    locate_ns(nsproxy.addr(), timeout=0.0)
 
 
 def test_proxy_without_nsaddr(nsproxy):
@@ -74,9 +74,9 @@ def test_proxy_without_nsaddr(nsproxy):
     result in the OSBRAIN_NAMESERVER_ADDRESS being used.
     """
     agent0 = run_agent('foo')
-    agent0.set_attr(x=1.)
+    agent0.set_attr(x=1.0)
     agent1 = Proxy('foo')
-    assert agent1.get_attr('x') == 1.
+    assert agent1.get_attr('x') == 1.0
 
 
 def test_proxy_pickle_serialization(nsproxy):
@@ -84,13 +84,13 @@ def test_proxy_pickle_serialization(nsproxy):
     Make sure proxies can be (de)serialized using pickle.
     """
     agent0 = run_agent('foo')
-    agent0.set_attr(x=1.)
+    agent0.set_attr(x=1.0)
     proxy = Proxy('foo')
     serialized = pickle.dumps(proxy)
     assert serialized
     deserialized = pickle.loads(serialized)
     assert deserialized
-    assert deserialized.get_attr('x') == 1.
+    assert deserialized.get_attr('x') == 1.0
 
 
 def test_agent_proxy_remote_exceptions(nsproxy):
@@ -113,6 +113,7 @@ def test_agent_proxy_initialization_timeout(nsproxy):
     An agent proxy should raise a TimeoutError at initialization if the agent
     is not ready after a number of seconds.
     """
+
     class InitTimeoutProxy(Proxy):
         def ping(self):
             time.sleep(0.1)
@@ -120,7 +121,7 @@ def test_agent_proxy_initialization_timeout(nsproxy):
 
     run_agent('foo')
     with pytest.raises(TimeoutError):
-        InitTimeoutProxy('foo', timeout=1.)
+        InitTimeoutProxy('foo', timeout=1.0)
 
 
 @pytest.mark.parametrize('timeout', [-1, 1])
@@ -169,7 +170,7 @@ def test_agent_proxy_wait_running_timeout(nsproxy, timeout):
 
     assert 'Timed out' in str(error.value)
     assert elapsed >= timeout
-    assert elapsed < timeout + .5
+    assert elapsed < timeout + 0.5
 
 
 def test_agent_proxy_nameserver_address(nsproxy):
@@ -242,14 +243,15 @@ def test_agent_proxy_safe_and_unsafe_calls_property_safe(monkeypatch, nsproxy):
     assert not worker._safe
     t0 = time.time()
     assert worker.safe.listen() == 'OK'
-    assert since(t0, passed=2., tolerance=0.1)
+    assert since(t0, passed=2.0, tolerance=0.1)
     assert not worker.get_attr('busy')
     # Calling a method with `.safe` should not change default behavior
     assert not worker._safe
 
 
 def test_agent_proxy_safe_and_unsafe_calls_property_unsafe(
-        monkeypatch, nsproxy):
+    monkeypatch, nsproxy
+):
     """
     An agent can be accessed through a proxy in both safe and unsafe ways.
     When using the `unsafe` property, calls are not expected to wait until
@@ -260,10 +262,10 @@ def test_agent_proxy_safe_and_unsafe_calls_property_unsafe(
     assert worker._safe
     t0 = time.time()
     assert worker.unsafe.listen() == 'OK'
-    assert since(t0, passed=0., tolerance=0.1)
+    assert since(t0, passed=0.0, tolerance=0.1)
     while worker.get_attr('busy'):
         time.sleep(0.01)
-    assert since(t0, passed=2., tolerance=0.1)
+    assert since(t0, passed=2.0, tolerance=0.1)
     # Calling a method with `.unsafe` should not change default behavior
     assert worker._safe
 
@@ -278,12 +280,13 @@ def test_agent_proxy_safe_and_unsafe_calls_environ_safe(monkeypatch, nsproxy):
     worker = setup_busy_worker(nsproxy)
     t0 = time.time()
     assert worker.listen() == 'OK'
-    assert since(t0, passed=2., tolerance=0.1)
+    assert since(t0, passed=2.0, tolerance=0.1)
     assert not worker.get_attr('busy')
 
 
 def test_agent_proxy_safe_and_unsafe_calls_environ_unsafe(
-        monkeypatch, nsproxy):
+    monkeypatch, nsproxy
+):
     """
     An agent can be accessed through a proxy in both safe and unsafe ways.
     When using the `unsafe` property, calls are not expected to wait until
@@ -293,20 +296,25 @@ def test_agent_proxy_safe_and_unsafe_calls_environ_unsafe(
     worker = setup_busy_worker(nsproxy)
     t0 = time.time()
     assert worker.listen() == 'OK'
-    assert since(t0, passed=0., tolerance=0.1)
+    assert since(t0, passed=0.0, tolerance=0.1)
     while worker.get_attr('busy'):
         time.sleep(0.01)
-    assert since(t0, passed=2., tolerance=0.1)
+    assert since(t0, passed=2.0, tolerance=0.1)
 
 
 def test_agent_proxy_oneway(nsproxy):
     """
     User can force a one-way from the proxy.
     """
+
     class OneWayne(Agent):
         def on_init(self):
-            target = self.bind('PULL', alias='target', handler=append_received,
-                               transport='inproc')
+            target = self.bind(
+                'PULL',
+                alias='target',
+                handler=append_received,
+                transport='inproc',
+            )
             self.target = target
             self.received = []
 
@@ -334,6 +342,7 @@ def test_nameserver_proxy_shutdown_connectionclosed():
     Check that nameserver proxies can handle a ConnectionClosedError at
     shutdown.
     """
+
     class CustomNS(NameServer):
         def daemon_shutdown(self):
             super().daemon_shutdown()

@@ -44,6 +44,7 @@ def test_agent_close_ipc_socket_agent_blocked_nameserver_shutdown():
     Check that the socket is closed and the socket file removed when the name
     server is shut down having a blocked agent.
     """
+
     def block(agent):
         agent.send('out', 'blocking...')
 
@@ -52,7 +53,7 @@ def test_agent_close_ipc_socket_agent_blocked_nameserver_shutdown():
     blocker.set_method(block)
     addr = blocker.bind('PUSH', alias='out')
     blocker.after(0, 'block')
-    ns.shutdown(timeout=1.)
+    ns.shutdown(timeout=1.0)
 
     assert wait_condition(addr.address.exists, negate=True)
 

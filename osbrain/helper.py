@@ -21,8 +21,9 @@ def regex_count_in_list(regex, strings):
     return matches
 
 
-def logger_received(logger, message, log_name='log_history_info',
-                    position=None, timeout=1.):
+def logger_received(
+    logger, message, log_name='log_history_info', position=None, timeout=1.0
+):
     """
     Check if a logger receives a message.
 
@@ -76,15 +77,17 @@ def sync_agent_logger(agent, logger):
     """
     message = str(uuid4())
     delay = 0.01
-    while not len(logger.get_attr('log_history_info')) or \
-            message not in logger.get_attr('log_history_info')[-1]:
+    while (
+        not len(logger.get_attr('log_history_info'))
+        or message not in logger.get_attr('log_history_info')[-1]
+    ):
         message = str(uuid4())
         agent.log_info(message)
         time.sleep(delay)
         delay *= 2
 
 
-def agent_dies(agent, nsproxy, timeout=1.):
+def agent_dies(agent, nsproxy, timeout=1.0):
     """
     Check if an agent dies within a given period.
 
@@ -115,7 +118,8 @@ def agent_dies(agent, nsproxy, timeout=1.):
 
 
 def attribute_match_all(
-        attribute, length=None, data=None, value=None, endswith=None):
+    attribute, length=None, data=None, value=None, endswith=None
+):
     """
     Check if an attribute matches all of the following specified conditions:
 
@@ -143,16 +147,19 @@ def attribute_match_all(
     bool
         Whether the attribute matches any condition.
     """
-    assert length is not None or data is not None or value is not None \
-        or endswith is not None, \
-        'No condition passed! Will return True always...'
+    assert (
+        length is not None
+        or data is not None
+        or value is not None
+        or endswith is not None
+    ), 'No condition passed! Will return True always...'
     if length is not None and len(attribute) < length:
         return False
     if data is not None and data not in attribute:
         return False
     if value is not None and attribute != value:
         return False
-    if endswith is not None and attribute[-len(endswith):] != endswith:
+    if endswith is not None and attribute[-len(endswith) :] != endswith:
         return False
     return True
 
@@ -246,8 +253,9 @@ def wait_agent_condition(agent, condition, *args, timeout=3, **kwargs):
     bool
         Whether the specified condition was True.
     """
-    return wait_condition(agent.execute_as_method, condition, *args,
-                          timeout=timeout, **kwargs)
+    return wait_condition(
+        agent.execute_as_method, condition, *args, timeout=timeout, **kwargs
+    )
 
 
 def last_received_endswith(agent, tail):
@@ -274,6 +282,6 @@ def last_received_endswith(agent, tail):
         return False
     if not agent.received:
         return False
-    if not agent.received[-1][-len(tail):] == tail:
+    if not agent.received[-1][-len(tail) :] == tail:
         return False
     return True

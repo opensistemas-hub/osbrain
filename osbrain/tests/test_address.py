@@ -35,15 +35,25 @@ def test_invalid_address_to_host_port():
         address_to_host_port(1.234)
 
 
-@pytest.mark.parametrize(('address', 'host', 'port'), [
-    (None, None, None),
-    (AgentAddress('tcp', '127.0.0.1:123', 'PUSH', 'server', 'pickle'),
-     '127.0.0.1', 123),
-    (SocketAddress('127.0.0.1', 123), '127.0.0.1', 123),
-    ('127.0.0.1:123', '127.0.0.1', 123),
-    ('127.0.0.1', '127.0.0.1', None),
-    (namedtuple('Foo', ['host', 'port'])('127.0.0.1', 123), '127.0.0.1', 123),
-])
+@pytest.mark.parametrize(
+    ('address', 'host', 'port'),
+    [
+        (None, None, None),
+        (
+            AgentAddress('tcp', '127.0.0.1:123', 'PUSH', 'server', 'pickle'),
+            '127.0.0.1',
+            123,
+        ),
+        (SocketAddress('127.0.0.1', 123), '127.0.0.1', 123),
+        ('127.0.0.1:123', '127.0.0.1', 123),
+        ('127.0.0.1', '127.0.0.1', None),
+        (
+            namedtuple('Foo', ['host', 'port'])('127.0.0.1', 123),
+            '127.0.0.1',
+            123,
+        ),
+    ],
+)
 def test_valid_address_to_host_port(address, host, port):
     """
     Test conversion of an address to its corresponding host+port tuple.
@@ -51,13 +61,16 @@ def test_valid_address_to_host_port(address, host, port):
     assert address_to_host_port(address) == (host, port)
 
 
-@pytest.mark.parametrize('kind,cls', [
-    ('PUB', AgentAddressKind),
-    ('REQ', AgentAddressKind),
-    ('PUSH', AgentAddressKind),
-    ('ASYNC_REP', AgentChannelKind),
-    ('SYNC_PUB', AgentChannelKind),
-])
+@pytest.mark.parametrize(
+    'kind,cls',
+    [
+        ('PUB', AgentAddressKind),
+        ('REQ', AgentAddressKind),
+        ('PUSH', AgentAddressKind),
+        ('ASYNC_REP', AgentChannelKind),
+        ('SYNC_PUB', AgentChannelKind),
+    ],
+)
 def test_guess_kind(kind, cls):
     """
     Test guessing address/channel kind.
@@ -79,14 +92,17 @@ def test_transport():
         AgentAddressTransport('foo')
 
 
-@pytest.mark.parametrize('string,strtwin,zmqint,zmqtwin,handler', [
-    ('REQ', 'REP', zmq.REQ, zmq.REP, False),
-    ('REP', 'REQ', zmq.REP, zmq.REQ, True),
-    ('PUSH', 'PULL', zmq.PUSH, zmq.PULL, False),
-    ('PULL', 'PUSH', zmq.PULL, zmq.PUSH, True),
-    ('PUB', 'SUB', zmq.PUB, zmq.SUB, False),
-    ('SUB', 'PUB', zmq.SUB, zmq.PUB, True),
-])
+@pytest.mark.parametrize(
+    'string,strtwin,zmqint,zmqtwin,handler',
+    [
+        ('REQ', 'REP', zmq.REQ, zmq.REP, False),
+        ('REP', 'REQ', zmq.REP, zmq.REQ, True),
+        ('PUSH', 'PULL', zmq.PUSH, zmq.PULL, False),
+        ('PULL', 'PUSH', zmq.PULL, zmq.PUSH, True),
+        ('PUB', 'SUB', zmq.PUB, zmq.SUB, False),
+        ('SUB', 'PUB', zmq.SUB, zmq.PUB, True),
+    ],
+)
 def test_kind(string, strtwin, zmqint, zmqtwin, handler):
     """
     This test aims to cover basic AgentAddressKind operations: initialization,
@@ -181,8 +197,9 @@ def test_agent_address():
     assert not address == 'foo'
     assert address != 'foo'
     # Basic methods
-    assert address.twin() == AgentAddress('ipc', 'addr', 'PULL', 'client',
-                                          'pickle')
+    assert address.twin() == AgentAddress(
+        'ipc', 'addr', 'PULL', 'client', 'pickle'
+    )
 
 
 def test_agent_address_explicit_serializer():
@@ -196,10 +213,12 @@ def test_agent_address_explicit_serializer():
     assert not address == 'foo'
     assert address != 'foo'
     # Basic methods
-    assert address.twin() == AgentAddress('ipc', 'addr', 'PULL', 'client',
-                                          'raw')
-    assert address.twin() != AgentAddress('ipc', 'addr', 'PULL', 'client',
-                                          'pickle')
+    assert address.twin() == AgentAddress(
+        'ipc', 'addr', 'PULL', 'client', 'raw'
+    )
+    assert address.twin() != AgentAddress(
+        'ipc', 'addr', 'PULL', 'client', 'pickle'
+    )
 
 
 def test_agent_address_to_host_port():
@@ -210,12 +229,15 @@ def test_agent_address_to_host_port():
     assert address_to_host_port(address) == ('127.0.0.1', 1234)
 
 
-@pytest.mark.parametrize('string,string_twin', [
-    ('ASYNC_REQ', 'ASYNC_REP'),
-    ('ASYNC_REP', 'ASYNC_REQ'),
-    ('SYNC_PUB', 'SYNC_SUB'),
-    ('SYNC_SUB', 'SYNC_PUB'),
-])
+@pytest.mark.parametrize(
+    'string,string_twin',
+    [
+        ('ASYNC_REQ', 'ASYNC_REP'),
+        ('ASYNC_REP', 'ASYNC_REQ'),
+        ('SYNC_PUB', 'SYNC_SUB'),
+        ('SYNC_SUB', 'SYNC_PUB'),
+    ],
+)
 def test_agentchannelkind(string, string_twin):
     """
     This test aims to cover basic AgentChannelKind operations: initialization,
@@ -267,8 +289,9 @@ def test_agentchannel_async_rep():
     assert not channel == 'foo'
     assert channel != 'foo'
     # Basic methods
-    assert channel.twin() == AgentChannel('ASYNC_REQ', sender=receiver.twin(),
-                                          receiver=None)
+    assert channel.twin() == AgentChannel(
+        'ASYNC_REQ', sender=receiver.twin(), receiver=None
+    )
     # Other attributes
     assert hasattr(channel, 'uuid')
     assert channel.transport == 'ipc'
@@ -284,13 +307,15 @@ def test_agentchannel_sync_pub():
     receiver = AgentAddress('ipc', 'addr0', 'PULL', 'server', 'pickle')
     channel = AgentChannel('SYNC_PUB', sender=sender, receiver=receiver)
     # Equivalence
-    assert channel == AgentChannel('SYNC_PUB', sender=sender,
-                                   receiver=receiver)
+    assert channel == AgentChannel(
+        'SYNC_PUB', sender=sender, receiver=receiver
+    )
     assert not channel == 'foo'
     assert channel != 'foo'
     # Basic methods
-    assert channel.twin() == AgentChannel('SYNC_SUB', sender=receiver.twin(),
-                                          receiver=sender.twin())
+    assert channel.twin() == AgentChannel(
+        'SYNC_SUB', sender=receiver.twin(), receiver=sender.twin()
+    )
     # Other attributes
     assert hasattr(channel, 'uuid')
     assert channel.transport == 'ipc'

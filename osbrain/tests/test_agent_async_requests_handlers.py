@@ -44,8 +44,7 @@ def test_async_rep_handler_exists(nsproxy):
 
 
 @pytest.mark.parametrize(
-    'handler',
-    ['reply', append_received, lambda a, x: a.received.append(x)]
+    'handler', ['reply', append_received, lambda a, x: a.received.append(x)]
 )
 def test_async_rep_handler_types(nsproxy, handler):
     """
@@ -54,15 +53,17 @@ def test_async_rep_handler_types(nsproxy, handler):
     """
     server = run_agent('server', base=ServerAsyncRep)
 
-    assert server.bind('ASYNC_REP', alias='should_not_crash',
-                       handler=handler)
+    assert server.bind('ASYNC_REP', alias='should_not_crash', handler=handler)
 
 
 @pytest.mark.parametrize(
     'handler, check_function',
-    [('receive_method', False),
-     (append_received, True),
-     (lambda a, x: a.received.append(x), False)])
+    [
+        ('receive_method', False),
+        (append_received, True),
+        (lambda a, x: a.received.append(x), False),
+    ],
+)
 def test_async_rep_connect_handler_types(nsproxy, handler, check_function):
     """
     We should be able to specify the handler in the `connect` call in
@@ -90,9 +91,12 @@ def test_async_rep_connect_handler_types(nsproxy, handler, check_function):
 
 @pytest.mark.parametrize(
     'handler, check_function',
-    [('receive_method', False),
-     (append_received, True),
-     (lambda a, x: a.received.append(x), False)])
+    [
+        ('receive_method', False),
+        (append_received, True),
+        (lambda a, x: a.received.append(x), False),
+    ],
+)
 def test_async_rep_send_handler_types(nsproxy, handler, check_function):
     """
     We should be able to make requests even if we do not specify a handler

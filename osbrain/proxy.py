@@ -15,7 +15,7 @@ from .address import SocketAddress
 from .address import address_to_host_port
 
 
-def locate_ns(nsaddr, timeout=3.):
+def locate_ns(nsaddr, timeout=3.0):
     """
     Locate a name server to ensure it actually exists.
 
@@ -65,7 +65,8 @@ class Proxy(Pyro4.core.Proxy):
         Use safe calls by default. When not set, osbrain default's
         :py:data:`osbrain.config['SAFE']` is used.
     """
-    def __init__(self, name, nsaddr=None, timeout=3., safe=None):
+
+    def __init__(self, name, nsaddr=None, timeout=3.0, safe=None):
         if not nsaddr:
             nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
         nshost, nsport = address_to_host_port(nsaddr)
@@ -103,7 +104,7 @@ class Proxy(Pyro4.core.Proxy):
             raise
         return True
 
-    def wait_for_running(self, timeout=3.):
+    def wait_for_running(self, timeout=3.0):
         """
         Wait until the agent is running.
 
@@ -128,13 +129,16 @@ class Proxy(Pyro4.core.Proxy):
             if timeout >= 0 and time.time() - time0 > timeout:
                 msg = 'Timed out while waiting for the agent to be running'
                 raise TimeoutError(msg)
-            time.sleep(.01)
+            time.sleep(0.01)
 
         return self
 
     def __getstate__(self):
-        return super().__getstate__() + \
-            (self._next_oneway, self._default_safe, self._safe)
+        return super().__getstate__() + (
+            self._next_oneway,
+            self._default_safe,
+            self._safe,
+        )
 
     def __setstate__(self, state):
         super().__setstate__(state[:-3])
@@ -208,15 +212,17 @@ class Proxy(Pyro4.core.Proxy):
         self._next_oneway = True
         return self
 
-    def _pyroInvoke(self, methodname, args, kwargs,  # noqa: N802
-                    flags=0, objectId=None):  # noqa: N803
+    def _pyroInvoke(  # noqa: N802
+        self, methodname, args, kwargs, flags=0, objectId=None  # noqa: N803
+    ):
         """
         Wrapper around `_remote_call` to safely execute methods on remote
         objects.
         """
         try:
             result = self._remote_call(
-                methodname, args, kwargs, flags, objectId)
+                methodname, args, kwargs, flags, objectId
+            )
         except Exception:
             sys.stdout.write(''.join(Pyro4.util.getPyroTraceback()))
             sys.stdout.flush()
@@ -241,31 +247,43 @@ class Proxy(Pyro4.core.Proxy):
         bool
             Whether the method can be safely called.
         """
-        return (methodname in self._pyroMethods and
-                not methodname.startswith('_') and
-                methodname not in ('run', 'get_attr', 'kill', 'safe_call',
-                                   'concurrent', 'is_running'))
+        return (
+            methodname in self._pyroMethods
+            and not methodname.startswith('_')
+            and methodname
+            not in (
+                'run',
+                'get_attr',
+                'kill',
+                'safe_call',
+                'concurrent',
+                'is_running',
+            )
+        )
 
-    def _remote_call(self, methodname, args, kwargs, flags,
-                     objectId):  # noqa: N803
+    def _remote_call(
+        self, methodname, args, kwargs, flags, objectId  # noqa: N803
+    ):
         """
         Call a remote method from the proxy.
         """
         if self._next_oneway:
             flags |= FLAGS_ONEWAY
             result = super()._pyroInvoke(
-                methodname, args, kwargs, flags=flags, objectId=objectId)
+                methodname, args, kwargs, flags=flags, objectId=objectId
+            )
             return result
         if self._safe and self._is_safe_method(methodname):
             safe_args = [methodname] + list(args)
             result = super()._pyroInvoke(
-                'safe_call', safe_args, kwargs,
-                flags=flags, objectId=objectId)
+                'safe_call', safe_args, kwargs, flags=flags, objectId=objectId
+            )
             if isinstance(result, Exception):
                 raise result
         else:
             result = super()._pyroInvoke(
-                methodname, args, kwargs, flags=flags, objectId=objectId)
+                methodname, args, kwargs, flags=flags, objectId=objectId
+            )
         return result
 
     def _post_invoke(self, methodname, args, kwargs):
@@ -321,6 +339,7 @@ class NSProxy(Pyro4.core.Proxy):
     timeout : float
         Timeout, in seconds, to wait until the name server is discovered.
     """
+
     def __init__(self, nsaddr=None, timeout=3):
         if not nsaddr:
             nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
@@ -336,7 +355,7 @@ class NSProxy(Pyro4.core.Proxy):
         """
         self._pyroRelease()
 
-    def proxy(self, name, timeout=3.):
+    def proxy(self, name, timeout=3.0):
         """
         Get a proxy to access an agent registered in the name server.
 
@@ -377,7 +396,7 @@ class NSProxy(Pyro4.core.Proxy):
         agent.release()
         return addr
 
-    def shutdown_agents(self, timeout=10.):
+    def shutdown_agents(self, timeout=10.0):
         """
         Shutdown all agents registered in the name server.
 
@@ -388,24 +407,23 @@ class NSProxy(Pyro4.core.Proxy):
         """
         # Wait for all agents to be shutdown (unregistered)
         time0 = time.time()
-        super()._pyroInvoke('async_shutdown_agents', (self.addr(), ), {})
-        while time.time() - time0 <= timeout / 2.:
+        super()._pyroInvoke('async_shutdown_agents', (self.addr(),), {})
+        while time.time() - time0 <= timeout / 2.0:
             if not len(self.agents()):
                 return
             time.sleep(0.1)
-        super()._pyroInvoke('async_kill_agents', (self.addr(), ), {})
+        super()._pyroInvoke('async_kill_agents', (self.addr(),), {})
         while time.time() - time0 <= timeout:
             if not len(self.agents()):
                 return
             time.sleep(0.1)
         raise TimeoutError(
             'Chances are {} were not shutdown after {} s!'.format(
-                self.agents(),
-                timeout,
+                self.agents(), timeout
             )
         )
 
-    def shutdown(self, timeout=10.):
+    def shutdown(self, timeout=10.0):
         """
         Shutdown the name server. All agents will be shutdown as well.
 

@@ -76,6 +76,7 @@ class NameServerProcess(multiprocessing.Process):
     Name server class. Instances of a name server are system processes which
     can be run independently.
     """
+
     def __init__(self, addr=None, base=NameServer):
         super().__init__()
         self._daemon = None
@@ -110,11 +111,13 @@ class NameServerProcess(multiprocessing.Process):
         # Start broadcast responder
         bcserver = BroadcastServer(internal_uri)
         sys.stdout.write(
-            'Broadcast server running on %s\n' % bcserver.locationStr)
+            'Broadcast server running on %s\n' % bcserver.locationStr
+        )
         sys.stdout.flush()
         bcserver.runInThread()
         sys.stdout.write(
-            'NS running on %s (%s)\n' % (self._daemon.locationStr, hostip))
+            'NS running on %s (%s)\n' % (self._daemon.locationStr, hostip)
+        )
         sys.stdout.write('URI = %s\n' % self._uri)
         sys.stdout.flush()
         try:
@@ -140,8 +143,10 @@ class NameServerProcess(multiprocessing.Process):
         status = self._queue.get()
         if status == 'STARTED':
             return
-        raise RuntimeError('An error occurred while creating the daemon!' +
-                           '\n===============\n'.join(['', status, '']))
+        raise RuntimeError(
+            'An error occurred while creating the daemon!'
+            + '\n===============\n'.join(['', status, ''])
+        )
 
     def agents(self):
         """
@@ -174,8 +179,13 @@ class NameServerProcess(multiprocessing.Process):
         self.join()
 
 
-def random_nameserver_process(host='127.0.0.1', port_start=10000,
-                              port_stop=20000, timeout=3., base=NameServer):
+def random_nameserver_process(
+    host='127.0.0.1',
+    port_start=10000,
+    port_stop=20000,
+    timeout=3.0,
+    base=NameServer,
+):
     """
     Start a random NameServerProcess.
 

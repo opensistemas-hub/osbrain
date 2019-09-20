@@ -40,6 +40,7 @@ def test_yield(nsproxy):
     REQ-REP pattern using a handler that yields a value. This is useful in
     order to generate an early reply.
     """
+
     def reply_early(agent, message):
         yield message
         time.sleep(agent.delay)
@@ -55,7 +56,7 @@ def test_yield(nsproxy):
 
     t0 = time.time()
     response = a1.send_recv('request', 'Working!')
-    assert time.time() - t0 < delay / 2.
+    assert time.time() - t0 < delay / 2.0
     assert response == 'Working!'
     assert a0.get_attr('delay') == delay
     # Sleep so that the replier has had time to update
@@ -67,6 +68,7 @@ def test_multiple_yield(nsproxy):
     """
     A replier must only make use of yield once.
     """
+
     def yield_twice(agent, message):
         yield message
         yield 'Derp'
@@ -84,5 +86,6 @@ def test_multiple_yield(nsproxy):
     # Response is received successfully
     assert response == 'Hello world!'
     # Replier should crash
-    assert logger_received(logger, log_name='log_history_error',
-                           message='yielded more than once')
+    assert logger_received(
+        logger, log_name='log_history_error', message='yielded more than once'
+    )

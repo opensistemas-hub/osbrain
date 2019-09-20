@@ -81,7 +81,7 @@ def on_error(agent):
 
 
 def match_tail(agent, data):
-    return agent.received[-len(data):] == data
+    return agent.received[-len(data) :] == data
 
 
 @pytest.mark.parametrize('socket_type', ['PUB', 'SYNC_PUB'])
@@ -99,6 +99,7 @@ def test_unsubscribe(nsproxy, socket_type):
     Two non consecutive numbers must be received consecutively at that point,
     since they both will be even.
     """
+
     def check_non_consecutive(agent):
         """
         Check whether the last two received numbers are non-consecutive.
@@ -117,8 +118,11 @@ def test_unsubscribe(nsproxy, socket_type):
 
     server.set_attr(count=1)
     addr = server.bind(socket_type, alias='pub', handler=append_received)
-    client.connect(addr, alias='sub', handler={'odd': append_received,
-                                               'even': append_received})
+    client.connect(
+        addr,
+        alias='sub',
+        handler={'odd': append_received, 'even': append_received},
+    )
 
     # Make sure the connection is established
     server.each(0.1, 'send', 'pub', 'connecting...', topic='odd', alias='tmp')
@@ -150,6 +154,7 @@ def test_unsubscribe_various(nsproxy, socket_type):
     topics related to the zeroes, therefore receiving three (or more) ones in
     a row.
     """
+
     def check_sum_three(agent):
         """
         Check whether the last three received numbers sum to three.
@@ -171,9 +176,15 @@ def test_unsubscribe_various(nsproxy, socket_type):
     client = run_agent('client', base=Client)
 
     addr = server.bind(socket_type, alias='pub', handler=append_received)
-    client.connect(addr, alias='sub', handler={'zero': append_received,
-                                               'other_zero': append_received,
-                                               'one': append_received})
+    client.connect(
+        addr,
+        alias='sub',
+        handler={
+            'zero': append_received,
+            'other_zero': append_received,
+            'one': append_received,
+        },
+    )
 
     # Make sure the connection is established
     server.each(0.1, 'send', 'pub', 'connecting...', topic='zero', alias='tmp')
@@ -217,8 +228,10 @@ def test_subscribe(nsproxy, socket_type, subscribe_separately):
         client.subscribe('sub', handler={'negate': receive_negate})
         client.subscribe('sub', handler={'normal': append_received})
     else:
-        client.subscribe('sub', handler={'negate': receive_negate,
-                                         'normal': append_received})
+        client.subscribe(
+            'sub',
+            handler={'negate': receive_negate, 'normal': append_received},
+        )
 
     server.each(0.1, 'publish')
 
@@ -249,8 +262,9 @@ def test_resubscribe(nsproxy, socket_type):
 
     # Subscribe to two topics
     client.unsubscribe('sub', '')
-    client.subscribe('sub', handler={'negate': receive_negate,
-                                     'normal': append_received})
+    client.subscribe(
+        'sub', handler={'negate': receive_negate, 'normal': append_received}
+    )
 
     server.each(0.1, 'publish')
 
@@ -281,8 +295,9 @@ def test_unsubscribe_and_subscribe_again(nsproxy, socket_type):
 
     # Subscribe to two topics
     client.unsubscribe('sub', '')
-    client.subscribe('sub', handler={'negate': receive_negate,
-                                     'normal': append_received})
+    client.subscribe(
+        'sub', handler={'negate': receive_negate, 'normal': append_received}
+    )
 
     # Make server to start publishing messages
     server.each(0.1, 'publish')
@@ -326,8 +341,10 @@ def test_simple_pub_single_handler(nsproxy, server):
     assert wait_agent_attr(alltopics, length=n)
 
     # alltopics
-    received = [int(x) if x != 'bytes...' else x
-                for x in alltopics.get_attr('received')]
+    received = [
+        int(x) if x != 'bytes...' else x
+        for x in alltopics.get_attr('received')
+    ]
     assert len(received) >= n
     for i in range(2, len(received)):
         if received[i] == 'bytes...':
@@ -357,12 +374,16 @@ def test_simple_pub_dict_handler(nsproxy, server):
 
     # Connect clients
     addr = server.addr('publish')
-    addr_both = both.connect(addr, handler={'positive': append_received,
-                                            'negative': append_received})
-    addr_positive = positive.connect(addr,
-                                     handler={'positive': append_received})
-    addr_bytestopic = bytestopic.connect(addr,
-                                         handler={b'\xeb': append_received})
+    addr_both = both.connect(
+        addr,
+        handler={'positive': append_received, 'negative': append_received},
+    )
+    addr_positive = positive.connect(
+        addr, handler={'positive': append_received}
+    )
+    addr_bytestopic = bytestopic.connect(
+        addr, handler={b'\xeb': append_received}
+    )
     assert addr_both == addr.twin()
     assert addr_positive == addr.twin()
     assert addr_bytestopic == addr.twin()
@@ -415,10 +436,12 @@ def test_request(nsproxy, server):
 
     # Connect clients
     server_addr = server.addr('publish')
-    active_addr = active.connect(server_addr, alias='sub',
-                                 handler=append_received)
-    passive_addr = passive.connect(server_addr, alias='sub',
-                                   handler=append_received)
+    active_addr = active.connect(
+        server_addr, alias='sub', handler=append_received
+    )
+    passive_addr = passive.connect(
+        server_addr, alias='sub', handler=append_received
+    )
     assert active_addr == server_addr.twin()
     assert passive_addr == server_addr.twin()
 
@@ -497,17 +520,20 @@ def test_wait(nsproxy):
     # Response not received in time
     slow = 1
     client.send('sub', slow, handler=append_received, wait=0.1)
-    assert logger_received(logger,
-                           log_name='log_history_warning',
-                           message='not receive req',
-                           timeout=0.5)
+    assert logger_received(
+        logger,
+        log_name='log_history_warning',
+        message='not receive req',
+        timeout=0.5,
+    )
     assert server.get_attr('received') == [fast, slow]
     assert 'x' + str(slow) not in client.get_attr('received')
 
     # Response not received in time with error handler
     slow = 1
-    client.send('sub', slow, handler=append_received, wait=0.1,
-                on_error=on_error)
+    client.send(
+        'sub', slow, handler=append_received, wait=0.1, on_error=on_error
+    )
     assert wait_agent_attr(client, name='error_log', length=1, timeout=0.5)
     assert server.get_attr('received') == [fast, slow]
     assert 'x' + str(slow) not in client.get_attr('received')

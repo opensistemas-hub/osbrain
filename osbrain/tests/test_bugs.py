@@ -13,6 +13,7 @@ def test_timer_recursion(nsproxy):
     some iterations the timer would throw an exception when the recursion
     limit was exceeded. Timers should never reach a recursion limit.
     """
+
     def inc(agent):
         agent.count += 1
 
@@ -21,5 +22,6 @@ def test_timer_recursion(nsproxy):
     agent.each(0.0, inc)
 
     limit = sys.getrecursionlimit()
-    assert wait_agent_condition(agent, lambda agent: agent.count > limit,
-                                timeout=10)
+    assert wait_agent_condition(
+        agent, lambda agent: agent.count > limit, timeout=10
+    )

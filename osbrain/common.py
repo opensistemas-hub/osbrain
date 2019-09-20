@@ -65,8 +65,11 @@ def format_method_exception(error, method, args, kwargs):
         The formatted string with the method call and traceback information.
     """
     message = 'Error executing `%s`! (%s)\n' % (method, error)
-    message += '\n> method: %s\n> args: %s\n> kwargs: %s\n' % \
-        (str(method), str(args), str(kwargs))
+    message += '\n> method: %s\n> args: %s\n> kwargs: %s\n' % (
+        str(method),
+        str(args),
+        str(kwargs),
+    )
     message += format_exception()
     return type(error)(message)
 
@@ -118,6 +121,7 @@ class LogLevel(str):
     """
     Identifies the log level: ERROR, WARNING, INFO, DEBUG.
     """
+
     def __new__(cls, value):
         if value not in ['ERROR', 'WARNING', 'INFO', 'DEBUG']:
             raise ValueError('Incorrect value "%s"!' % value)

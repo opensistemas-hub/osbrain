@@ -32,7 +32,7 @@ def blocked_reply(agent, request):
     agent.blocked = True
     agent.received.append(request)
     while agent.blocked:
-        time.sleep(.01)
+        time.sleep(0.01)
 
     return 'x' + request
 
@@ -66,28 +66,29 @@ def test_return(nsproxy):
     client.send('async', 'bar')
     client.send('async2', 'qux')
 
-    assert wait_agent_attr(server1, value=['foo'], timeout=.1)
-    assert wait_agent_attr(server2, value=['qux'], timeout=.1)
-    assert not wait_agent_attr(client, length=1, timeout=.1)
+    assert wait_agent_attr(server1, value=['foo'], timeout=0.1)
+    assert wait_agent_attr(server2, value=['qux'], timeout=0.1)
+    assert not wait_agent_attr(client, length=1, timeout=0.1)
 
     server2.unsafe.set_attr(blocked=False)
-    assert wait_agent_attr(client, value=['xqux'], timeout=.1)
+    assert wait_agent_attr(client, value=['xqux'], timeout=0.1)
 
     server1.unsafe.set_attr(blocked=False)
-    assert wait_agent_attr(client, value=['xqux', 'xfoo'], timeout=.1)
+    assert wait_agent_attr(client, value=['xqux', 'xfoo'], timeout=0.1)
     server1.unsafe.set_attr(blocked=False)
-    assert wait_agent_attr(client, value=['xqux', 'xfoo', 'xbar'], timeout=.1)
+    assert wait_agent_attr(client, value=['xqux', 'xfoo', 'xbar'], timeout=0.1)
 
 
 def test_yield(nsproxy):
     """
     Asynchronous request-reply pattern with a reply handler that yields.
     """
+
     def blocked_reply_yield(agent, request):
         agent.received.append(request)
         agent.blocked = True
         while agent.blocked:
-            time.sleep(.01)
+            time.sleep(0.01)
 
         yield 'x' + request
         agent.received.append('y' + request)
@@ -96,17 +97,17 @@ def test_yield(nsproxy):
     client.send('async', 'foo')
     client.send('async2', 'bar')
 
-    assert wait_agent_attr(server1, value=['foo'], timeout=.1)
-    assert wait_agent_attr(server2, value=['bar'], timeout=.1)
-    assert not wait_agent_attr(client, length=1, timeout=.1)
+    assert wait_agent_attr(server1, value=['foo'], timeout=0.1)
+    assert wait_agent_attr(server2, value=['bar'], timeout=0.1)
+    assert not wait_agent_attr(client, length=1, timeout=0.1)
 
     server2.unsafe.set_attr(blocked=False)
-    assert wait_agent_attr(client, value=['xbar'], timeout=.1)
-    assert wait_agent_attr(server2, value=['bar', 'ybar'], timeout=.1)
+    assert wait_agent_attr(client, value=['xbar'], timeout=0.1)
+    assert wait_agent_attr(server2, value=['bar', 'ybar'], timeout=0.1)
 
     server1.unsafe.set_attr(blocked=False)
-    assert wait_agent_attr(client, value=['xbar', 'xfoo'], timeout=.1)
-    assert wait_agent_attr(server1, value=['foo', 'yfoo'], timeout=.1)
+    assert wait_agent_attr(client, value=['xbar', 'xfoo'], timeout=0.1)
+    assert wait_agent_attr(server1, value=['foo', 'yfoo'], timeout=0.1)
 
 
 def test_unknown(nsproxy):
@@ -121,14 +122,16 @@ def test_unknown(nsproxy):
     sync_agent_logger(client, logger)
 
     client.send('async', 'foo')
-    assert wait_agent_attr(server, value=['foo'], timeout=.1)
+    assert wait_agent_attr(server, value=['foo'], timeout=0.1)
 
     # Manually remove the pending request before it is received
     client.set_attr(_pending_requests={})
     server.unsafe.set_attr(blocked=False)
-    assert logger_received(logger,
-                           log_name='log_history_warning',
-                           message='Received response for an unknown request!')
+    assert logger_received(
+        logger,
+        log_name='log_history_warning',
+        message='Received response for an unknown request!',
+    )
     assert len(client.get_attr('received')) == 0
 
 
@@ -157,18 +160,22 @@ def test_wait_timeout(nsproxy):
     client.set_logger(logger)
     sync_agent_logger(client, logger)
 
-    client.send('async', 'foo', wait=.5)
+    client.send('async', 'foo', wait=0.5)
     assert len(client.get_attr('_pending_requests')) == 1
-    assert logger_received(logger,
-                           log_name='log_history_warning',
-                           message='not receive req',
-                           timeout=1)
+    assert logger_received(
+        logger,
+        log_name='log_history_warning',
+        message='not receive req',
+        timeout=1,
+    )
     assert len(client.get_attr('_pending_requests')) == 0
 
     server.unsafe.set_attr(blocked=False)
-    assert logger_received(logger,
-                           log_name='log_history_warning',
-                           message='Received response for an unknown request!')
+    assert logger_received(
+        logger,
+        log_name='log_history_warning',
+        message='Received response for an unknown request!',
+    )
     assert server.get_attr('received') == ['foo']
     assert client.get_attr('received') == []
 
@@ -180,6 +187,6 @@ def test_wait_on_error(nsproxy):
     client, server = async_client_server()
 
     client.set_attr(error_count=0)
-    client.send('async', 'foo', wait=.5, on_error=on_error)
+    client.send('async', 'foo', wait=0.5, on_error=on_error)
     assert wait_agent_attr(client, 'error_count', value=1, timeout=1)
     server.unsafe.set_attr(blocked=False)

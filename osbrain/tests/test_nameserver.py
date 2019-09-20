@@ -104,6 +104,7 @@ def test_nameserver_proxy_shutdown_with_many_agents():
     The shutdown process is given a long timeout to avoid raising exceptions.
     """
     import Pyro4
+
     Pyro4.config.THREADPOOL_SIZE = 4
     ns = run_nameserver()
     for i in range(20):
@@ -121,12 +122,13 @@ def test_nameserver_proxy_shutdown_with_many_agents_timeout():
     is raised.
     """
     import Pyro4
+
     Pyro4.config.THREADPOOL_SIZE = 4
     ns = run_nameserver()
     for i in range(20):
         run_agent('Agent%s' % i)
     with pytest.raises(TimeoutError):
-        ns.shutdown(timeout=.0)
+        ns.shutdown(timeout=0.0)
     ns.shutdown()
 
 
@@ -140,6 +142,7 @@ def test_nameserver_proxy_shutdown_lazy_agents(delay, timeout):
     The name server shutdown should always succeed. If the agents do not
     shutdown cleanly soon they should be hard-killed.
     """
+
     class Lazy(Agent):
         def shutdown(self):
             time.sleep(delay)
@@ -154,7 +157,7 @@ def test_nameserver_proxy_shutdown_lazy_agents(delay, timeout):
         ns.shutdown(timeout=10)
     else:
         ns.shutdown()
-    assert time.time() - t0 > delay / 2.
+    assert time.time() - t0 > delay / 2.0
     assert time.time() - t0 < delay + 2
 
 
@@ -166,7 +169,7 @@ def test_nameserver_proxy_shutdown_raise_timeout():
     ns = run_nameserver()
     run_agent('a0')
     with pytest.raises(TimeoutError) as error:
-        ns.shutdown(timeout=0.)
+        ns.shutdown(timeout=0.0)
     assert 'not shutdown after' in str(error.value)
     ns.shutdown()
 
@@ -199,6 +202,7 @@ def test_oneway_kill_non_running_agent_on_name_server_shutdown():
     one-way, as otherwise the Pyro daemon will shut down before returning
     from the method, resulting in a `ConnectionClosedError`.
     """
+
     class WilliamWallace(Agent):
         def kill(self):
             super().kill()
@@ -233,6 +237,7 @@ def test_nameserverprocess_shutdown_lazy_agents():
     Shutdown a name server process with agents that wait some time before
     shutting down.
     """
+
     class Lazy(Agent):
         def shutdown(self):
             time.sleep(1)
@@ -262,7 +267,7 @@ def test_nameserver_proxy_timeout():
             # Start name server later
             Timer(1, nameserver.start).start()
             # Locate name server now
-            pyro_address = NSProxy(addr, timeout=3.).addr()
+            pyro_address = NSProxy(addr, timeout=3.0).addr()
         except PermissionError:
             continue
         break
@@ -335,8 +340,9 @@ def test_random_nameserver_process():
     # Port range
     port_start = 11000
     port_stop = port_start + 100
-    nsprocess = random_nameserver_process(port_start=port_start,
-                                          port_stop=port_stop)
+    nsprocess = random_nameserver_process(
+        port_start=port_start, port_stop=port_stop
+    )
     address = nsprocess.addr
     assert port_start <= address.port <= port_stop
     ns = NSProxy(address)
@@ -376,6 +382,7 @@ def test_run_nameserver_base():
     The `run_nameserver` function should accept a `base` parameter to specify
     the base NameServer class.
     """
+
     class BobMarley(NameServer):
         def get_up(self):
             return 'stand up!'
@@ -392,6 +399,7 @@ def test_nameserver_spawn_process(nsproxy):
     It is a way to make sure name servers are run as non-daemonic processes,
     which are not allowed to have children.
     """
+
     class Spawner(NameServer):
         def spawn_process(self):
             p = multiprocessing.Process()

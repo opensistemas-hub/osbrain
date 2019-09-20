@@ -46,7 +46,8 @@ setup(
         'pyzmq>=15.2.0',
         'dill>=0.2.0,!=0.2.7',
         'cloudpickle>=0.4.0',
-    ] + install_requires_compat,
+    ]
+    + install_requires_compat,
     extras_require={
         'dev': [
             # Documentation
@@ -55,6 +56,7 @@ setup(
             'numpydoc',
             'sphinx_rtd_theme',
             # Lint
+            'black;python_version>"3.5"',
             'flake8',
             'flake8-bugbear',
             'flake8-isort',
@@ -66,6 +68,6 @@ setup(
             'pytest-cov',
             'pytest-rerunfailures',
             'pytest-xdist',
-        ],
+        ]
     },
 )

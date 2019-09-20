@@ -21,6 +21,7 @@ class Logger(Agent):
     Specialized Agent for logging. Binds a ``SUB`` socket and starts
     logging incoming messages.
     """
+
     def on_init(self):
         """
         Initialize attributes.
@@ -34,7 +35,7 @@ class Logger(Agent):
             'INFO': self.log_handler,
             'WARNING': self.log_handler,
             'ERROR': self.log_handler,
-            'DEBUG': self.log_handler
+            'DEBUG': self.log_handler,
         }
         self.bind('SUB', 'sub', handlers)
 

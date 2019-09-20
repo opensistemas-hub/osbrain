@@ -28,26 +28,30 @@ def test_compose_message():
     # Basic composing
     for serializer in AgentAddressSerializer.SERIALIZER_SIMPLE:
         serializer = AgentAddressSerializer(serializer)
-        assert compose_message(message, topic, serializer) \
-            == topic + message
+        assert compose_message(message, topic, serializer) == topic + message
     for serializer in AgentAddressSerializer.SERIALIZER_SEPARATOR:
         serializer = AgentAddressSerializer(serializer)
-        assert compose_message(message, topic, serializer) \
+        assert (
+            compose_message(message, topic, serializer)
             == topic + TOPIC_SEPARATOR + message
+        )
 
     # Raise with wrong serializer
     with pytest.raises(Exception):
         compose_message(message, topic, 'foo')
 
 
-@pytest.mark.parametrize('agent_serial,socket_serial,result', [
-    (None, None, osbrain.config['SERIALIZER']),
-    ('raw', None, 'raw'),
-    ('pickle', None, 'pickle'),
-    (None, 'raw', 'raw'),
-    (None, 'json', 'json'),
-    ('pickle', 'json', 'json'),
-])
+@pytest.mark.parametrize(
+    'agent_serial,socket_serial,result',
+    [
+        (None, None, osbrain.config['SERIALIZER']),
+        ('raw', None, 'raw'),
+        ('pickle', None, 'pickle'),
+        (None, 'raw', 'raw'),
+        (None, 'json', 'json'),
+        ('pickle', 'json', 'json'),
+    ],
+)
 def test_correct_serialization(nsproxy, agent_serial, socket_serial, result):
     """
     Test that the right serializer is being used when using the different
@@ -99,29 +103,34 @@ def test_deserialize_message():
 
     # Pickle deserialization
     test = [0, 1]
-    assert test == deserialize_message(message=pickle.dumps(test, -1),
-                                       serializer='pickle')
+    assert test == deserialize_message(
+        message=pickle.dumps(test, -1), serializer='pickle'
+    )
 
     # Json deserialization
-    assert test == \
-        deserialize_message(message=json.dumps(test).encode('ascii'),
-                            serializer='json')
+    assert test == deserialize_message(
+        message=json.dumps(test).encode('ascii'), serializer='json'
+    )
 
     # Incorrect serializer
     with pytest.raises(ValueError):
         deserialize_message(message=b'x', serializer='foo')
 
 
-@pytest.mark.parametrize('serializer, message, response', [
-    ('raw', b'Hello world', b'OK'),
-    ('pickle', 'Hello world', 'OK'),
-    ('json', 'Hello world', 'OK'),
-])
+@pytest.mark.parametrize(
+    'serializer, message, response',
+    [
+        ('raw', b'Hello world', b'OK'),
+        ('pickle', 'Hello world', 'OK'),
+        ('json', 'Hello world', 'OK'),
+    ],
+)
 def test_reqrep(nsproxy, serializer, message, response):
     """
     Simple request-reply pattern between two agents with different
     serializations.
     """
+
     def rep_handler(agent, message):
         return response
 
@@ -139,8 +148,9 @@ def test_reqrep_raw_zmq_outside(nsproxy):
     # Create an osBrain agent that will receive the message
     a1 = run_agent('a1')
     a1.set_attr(received=None)
-    addr = a1.bind('REP', transport='tcp', handler=echo_handler,
-                   serializer='raw')
+    addr = a1.bind(
+        'REP', transport='tcp', handler=echo_handler, serializer='raw'
+    )
 
     # Create a raw ZeroMQ REQ socket
     context = zmq.Context()
@@ -156,11 +166,14 @@ def test_reqrep_raw_zmq_outside(nsproxy):
     context.destroy()
 
 
-@pytest.mark.parametrize('serializer, message', [
-    ('raw', b'Hello world'),
-    ('pickle', 'Hello world'),
-    ('json', 'Hello world'),
-])
+@pytest.mark.parametrize(
+    'serializer, message',
+    [
+        ('raw', b'Hello world'),
+        ('pickle', 'Hello world'),
+        ('json', 'Hello world'),
+    ],
+)
 def test_pushpull(nsproxy, serializer, message):
     """
     Simple push-pull pattern test, using different serializations.
@@ -183,8 +196,9 @@ def test_pushpull_raw_zmq_outside(nsproxy):
     # Create an osBrain agent that will receive the message
     a1 = run_agent('a1')
     a1.set_attr(received=None)
-    addr = a1.bind('PULL', transport='tcp', handler=set_received,
-                   serializer='raw')
+    addr = a1.bind(
+        'PULL', transport='tcp', handler=set_received, serializer='raw'
+    )
 
     # Create a raw ZeroMQ PUSH socket
     context = zmq.Context()
@@ -200,11 +214,14 @@ def test_pushpull_raw_zmq_outside(nsproxy):
     context.destroy()
 
 
-@pytest.mark.parametrize('serializer, message', [
-    ('raw', b'Hello world'),
-    ('pickle', 'Hello world'),
-    ('json', 'Hello world'),
-])
+@pytest.mark.parametrize(
+    'serializer, message',
+    [
+        ('raw', b'Hello world'),
+        ('pickle', 'Hello world'),
+        ('json', 'Hello world'),
+    ],
+)
 def test_pubsub(nsproxy, serializer, message):
     """
     Simple publisher-subscriber pattern test with different serializations.
@@ -229,8 +246,9 @@ def test_pubsub_raw_zmq_outside(nsproxy):
     # Create an osBrain agent that will receive the message
     a1 = run_agent('a1')
     a1.set_attr(received=None)
-    addr = a1.bind('SUB', transport='tcp', handler=set_received,
-                   serializer='raw')
+    addr = a1.bind(
+        'SUB', transport='tcp', handler=set_received, serializer='raw'
+    )
 
     # Create a raw ZeroMQ PUB socket
     context = zmq.Context()

@@ -10,7 +10,7 @@ Pyro4.config.SERIALIZER = 'cloudpickle'
 Pyro4.config.THREADPOOL_SIZE = 16
 Pyro4.config.SERVERTYPE = 'thread'
 Pyro4.config.REQUIRE_EXPOSE = False
-Pyro4.config.COMMTIMEOUT = 0.
+Pyro4.config.COMMTIMEOUT = 0.0
 Pyro4.config.DETAILED_TRACEBACK = True
 
 config = {}
@@ -24,8 +24,9 @@ if os.name != 'posix':
 else:
     config['TRANSPORT'] = os.environ.get('OSBRAIN_DEFAULT_TRANSPORT', 'ipc')
     # Set storage folder for IPC socket files
-    config['IPC_DIR'] = \
+    config['IPC_DIR'] = (
         Path(os.environ.get('XDG_RUNTIME_DIR', Path.home())) / '.osbrain_ipc'
+    )
     config['IPC_DIR'].mkdir(exist_ok=True, parents=True)
 
 

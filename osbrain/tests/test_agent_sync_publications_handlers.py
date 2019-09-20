@@ -48,8 +48,7 @@ def test_sync_pub_handler_exists(nsproxy):
 
 
 @pytest.mark.parametrize(
-    'handler',
-    ['reply', append_received, lambda a, x: a.received.append(x)]
+    'handler', ['reply', append_received, lambda a, x: a.received.append(x)]
 )
 def test_sync_pub_handler_types(nsproxy, handler):
     """
@@ -58,15 +57,17 @@ def test_sync_pub_handler_types(nsproxy, handler):
     """
     server = run_agent('server', base=ServerSyncPub)
 
-    assert server.bind('SYNC_PUB', alias='should_not_crash',
-                       handler=handler)
+    assert server.bind('SYNC_PUB', alias='should_not_crash', handler=handler)
 
 
 @pytest.mark.parametrize(
     'handler, check_function',
-    [('receive_method', False),
-     (append_received, True),
-     (lambda a, x: a.received.append(x), False)])
+    [
+        ('receive_method', False),
+        (append_received, True),
+        (lambda a, x: a.received.append(x), False),
+    ],
+)
 def test_sync_pub_connect_handler_types(nsproxy, handler, check_function):
     """
     The handler for the normal PUB/SUB communication is specified in the
@@ -93,12 +94,16 @@ def test_sync_pub_connect_handler_types(nsproxy, handler, check_function):
 
 @pytest.mark.parametrize(
     'handler, check_function, should_crash',
-    [('receive_method', False, False),
-     (append_received, True, False),
-     (lambda a, x: a.received.append(x), False, False),
-     (None, False, True)])
-def test_sync_pub_send_handlers(nsproxy, handler, check_function,
-                                should_crash):
+    [
+        ('receive_method', False, False),
+        (append_received, True, False),
+        (lambda a, x: a.received.append(x), False, False),
+        (None, False, True),
+    ],
+)
+def test_sync_pub_send_handlers(
+    nsproxy, handler, check_function, should_crash
+):
     """
     The handler for the requests MUST be specified in the `send` call.
     It can be specified in different ways: method, functions...
@@ -111,8 +116,9 @@ def test_sync_pub_send_handlers(nsproxy, handler, check_function,
     # Use an alternative handler so as to guarantee connection is established
     client.connect(addr, alias='sub', handler='alternative_receive')
     server.each(0.01, 'publish')
-    assert wait_agent_attr(client, name='alternative_received', length=2,
-                           data='publication!')
+    assert wait_agent_attr(
+        client, name='alternative_received', length=2, data='publication!'
+    )
 
     if should_crash:
         with pytest.raises(ValueError):

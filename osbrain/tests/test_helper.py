@@ -17,7 +17,7 @@ from osbrain.helper import wait_agent_condition
 from osbrain.helper import wait_condition
 
 
-class SugarAddict():
+class SugarAddict:
     def __init__(self):
         self.glucose = 0
 
@@ -115,39 +115,43 @@ def test_logger_received_count(agent_logger):
     assert logger_received(logger, message='foo.*bar') == 2
 
 
-@pytest.mark.parametrize('data,match', [
-    (dict(attribute=[], length=1), False),
-    (dict(attribute=[], data=1), False),
-    (dict(attribute=[], value=[]), True),
-    (dict(attribute=[1, 2], length=2, data=2), True),
-    (dict(attribute=[1, 2], length=2, data=3), False),
-    (dict(attribute=[1, 2], length=3, data=2), False),
-    (dict(attribute={'foo'}, length=1), True),
-    (dict(attribute={'foo'}, data='foo'), True),
-    (dict(attribute={'foo'}, value={'foo'}), True),
-    (dict(attribute=42, value=14), False),
-    (dict(attribute=42, value=42), True),
-    (dict(attribute=[1, 2, 3], endswith=[2, 3]), True),
-    (dict(attribute=[1, 2, 3], endswith=[3, 3]), False),
-    (dict(attribute='abcde', endswith='cde'), True),
-    (dict(attribute='abcde', endswith='ade'), False),
-], ids=[
-    'List length mismatch',
-    'Data not in list',
-    'List exact value',
-    'Data in list and list length',
-    'Data not in list with length match',
-    'Data in list with length mismatch',
-    'Dictionary attribute length',
-    'Key in dictionary',
-    'Dictionary exact value',
-    'Integer value mismatch',
-    'Integer value match',
-    'List ending with',
-    'List not ending with',
-    'String ending with',
-    'String not ending with',
-])
+@pytest.mark.parametrize(
+    'data,match',
+    [
+        (dict(attribute=[], length=1), False),
+        (dict(attribute=[], data=1), False),
+        (dict(attribute=[], value=[]), True),
+        (dict(attribute=[1, 2], length=2, data=2), True),
+        (dict(attribute=[1, 2], length=2, data=3), False),
+        (dict(attribute=[1, 2], length=3, data=2), False),
+        (dict(attribute={'foo'}, length=1), True),
+        (dict(attribute={'foo'}, data='foo'), True),
+        (dict(attribute={'foo'}, value={'foo'}), True),
+        (dict(attribute=42, value=14), False),
+        (dict(attribute=42, value=42), True),
+        (dict(attribute=[1, 2, 3], endswith=[2, 3]), True),
+        (dict(attribute=[1, 2, 3], endswith=[3, 3]), False),
+        (dict(attribute='abcde', endswith='cde'), True),
+        (dict(attribute='abcde', endswith='ade'), False),
+    ],
+    ids=[
+        'List length mismatch',
+        'Data not in list',
+        'List exact value',
+        'Data in list and list length',
+        'Data not in list with length match',
+        'Data in list with length mismatch',
+        'Dictionary attribute length',
+        'Key in dictionary',
+        'Dictionary exact value',
+        'Integer value mismatch',
+        'Integer value match',
+        'List ending with',
+        'List not ending with',
+        'String ending with',
+        'String not ending with',
+    ],
+)
 def test_attribute_match_all(data, match):
     """
     Test `attribute_match_all` function.
@@ -160,6 +164,7 @@ def test_wait_agent_attr(nsproxy):
     """
     Test `wait_agent_attr` function.
     """
+
     class Client(Agent):
         def set_received_method(self, value):
             self.received = value
@@ -168,19 +173,18 @@ def test_wait_agent_attr(nsproxy):
 
     # Named attribute, zero timeout
     a0.set_attr(x=[])
-    assert not wait_agent_attr(a0, 'x', length=1, timeout=0.)
+    assert not wait_agent_attr(a0, 'x', length=1, timeout=0.0)
 
     # Default attribute, timeout
     a0.set_attr(received=0)
     a0.after(1, 'set_received_method', 42)
-    assert not wait_agent_attr(a0, value=42, timeout=0.)
-    assert wait_agent_attr(a0, value=42, timeout=2.)
+    assert not wait_agent_attr(a0, value=42, timeout=0.0)
+    assert wait_agent_attr(a0, value=42, timeout=2.0)
 
 
-@pytest.mark.parametrize('delay,timeout,result', [
-    (1, 0.5, False),
-    (0.5, 1, True),
-])
+@pytest.mark.parametrize(
+    'delay,timeout,result', [(1, 0.5, False), (0.5, 1, True)]
+)
 def test_wait_condition(delay, timeout, result):
     """
     Test the `wait_agent_condition` function.
@@ -190,10 +194,9 @@ def test_wait_condition(delay, timeout, result):
     assert wait_condition(kid.happy, timeout=timeout) == result
 
 
-@pytest.mark.parametrize('delay,timeout,result', [
-    (1, 0.5, False),
-    (0.5, 1, True),
-])
+@pytest.mark.parametrize(
+    'delay,timeout,result', [(1, 0.5, False), (0.5, 1, True)]
+)
 def test_wait_condition_negate(delay, timeout, result):
     """
     Test the negated `wait_agent_condition` function.
@@ -207,6 +210,7 @@ def test_wait_agent_condition(nsproxy):
     """
     Test `wait_agent_condition` function.
     """
+
     class Counter(Agent):
         def on_init(self):
             self.count = 0
@@ -221,11 +225,11 @@ def test_wait_agent_condition(nsproxy):
         return len(agent.log) > size
 
     a0 = run_agent('a0', base=Counter)
-    a0.each(0., 'increment')
+    a0.each(0.0, 'increment')
 
     assert not wait_agent_condition(a0, log_length, size=4, timeout=0.2)
-    assert wait_agent_condition(a0, log_length, size=10, timeout=1.)
-    assert wait_agent_condition(a0, lambda agent: agent.count > 8, timeout=0.)
+    assert wait_agent_condition(a0, log_length, size=10, timeout=1.0)
+    assert wait_agent_condition(a0, lambda agent: agent.count > 8, timeout=0.0)
 
 
 def test_last_received_endswith(nsproxy):

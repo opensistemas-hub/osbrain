@@ -111,8 +111,9 @@ def deserialize_message(message, serializer):
         raise ValueError('"%s" not supported for deserialization' % serializer)
 
 
-def compose_message(message: bytes, topic: bytes,
-                    serializer: AgentAddressSerializer) -> bytes:
+def compose_message(
+    message: bytes, topic: bytes, serializer: AgentAddressSerializer
+) -> bytes:
     """
     Compose a message and leave it ready to be sent through a socket.
 
@@ -162,7 +163,7 @@ def execute_code_after_yield(generator):
         raise ValueError('Reply handler yielded more than once!')
 
 
-class Agent():
+class Agent:
     """
     A base agent class which is to be served by an AgentProcess.
 
@@ -231,8 +232,15 @@ class Agent():
     _timer : dict
         Stores all the current active timers, using their aliases as keys.
     """
-    def __init__(self, name='', host=None, serializer=None, transport=None,
-                 attributes=None):
+
+    def __init__(
+        self,
+        name='',
+        host=None,
+        serializer=None,
+        transport=None,
+        attributes=None,
+    ):
         self._uuid = unique_identifier()
         self.name = name
         if not self.name:
@@ -329,7 +337,7 @@ class Agent():
         except zmq.error.ContextTerminated:
             pass
         finally:
-            loopback.close(linger=0.)
+            loopback.close(linger=0.0)
 
     def _loopback(self, header, data=None):
         """
@@ -357,7 +365,8 @@ class Agent():
         """
         if not self._running:
             raise RuntimeError(
-                'Agent must be running to safely execute methods!')
+                'Agent must be running to safely execute methods!'
+            )
         data = cloudpickle.dumps((method, args, kwargs))
         return self._loopback_reqrep('inproc://_loopback_safe', data)
 
@@ -386,8 +395,9 @@ class Agent():
         """
         if not isinstance(method, str):
             method = self.set_method(method)
-        timer = repeat(period, self._loopback,
-                       'EXECUTE_METHOD', (method, args, kwargs))
+        timer = repeat(
+            period, self._loopback, 'EXECUTE_METHOD', (method, args, kwargs)
+        )
         if not alias:
             alias = unique_identifier()
         self._timer[alias] = timer
@@ -417,8 +427,9 @@ class Agent():
         """
         if not isinstance(method, str):
             method = self.set_method(method)
-        timer = after(delay, self._loopback,
-                      'EXECUTE_METHOD', (method, args, kwargs))
+        timer = after(
+            delay, self._loopback, 'EXECUTE_METHOD', (method, args, kwargs)
+        )
         if not alias:
             alias = unique_identifier()
         self._timer[alias] = timer
@@ -495,8 +506,9 @@ class Agent():
         message = '[%s] (%s): %s' % (datetime.utcnow(), self.name, message)
         if self._registered(logger):
             logger_kind = AgentAddressKind(self._address[logger].kind)
-            assert logger_kind == 'PUB', \
-                'Logger must use publisher-subscriber pattern!'
+            assert (
+                logger_kind == 'PUB'
+            ), 'Logger must use publisher-subscriber pattern!'
             self.send(logger, message, topic=level)
         elif level in ('INFO', 'DEBUG'):
             sys.stdout.write('%s %s\n' % (level, message))
@@ -597,8 +609,7 @@ class Agent():
             Optional handler(s) for the socket. This can be a list or a
             dictionary too.
         """
-        assert not self._registered(address), \
-            'Socket is already registered!'
+        assert not self._registered(address), 'Socket is already registered!'
         if not alias:
             alias = address
         self._socket[alias] = socket
@@ -657,8 +668,15 @@ class Agent():
         """
         return address in self._socket
 
-    def bind(self, kind, alias=None, handler=None, addr=None, transport=None,
-             serializer=None):
+    def bind(
+        self,
+        kind,
+        alias=None,
+        handler=None,
+        addr=None,
+        transport=None,
+        serializer=None,
+    ):
         """
         Bind to an agent address.
 
@@ -682,21 +700,26 @@ class Agent():
             The address where the agent binded to.
         """
         kind = guess_kind(kind)
-        transport = transport \
-            or self._transport \
-            or config['TRANSPORT']
-        serializer = serializer \
-            or self._serializer \
-            or config['SERIALIZER']
+        transport = transport or self._transport or config['TRANSPORT']
+        serializer = serializer or self._serializer or config['SERIALIZER']
         if isinstance(kind, AgentAddressKind):
-            return self._bind_address(kind, alias, handler, addr, transport,
-                                      serializer)
+            return self._bind_address(
+                kind, alias, handler, addr, transport, serializer
+            )
         else:
-            return self._bind_channel(kind, alias, handler, addr, transport,
-                                      serializer)
+            return self._bind_channel(
+                kind, alias, handler, addr, transport, serializer
+            )
 
-    def _bind_address(self, kind, alias=None, handler=None, addr=None,
-                      transport=None, serializer=None):
+    def _bind_address(
+        self,
+        kind,
+        alias=None,
+        handler=None,
+        addr=None,
+        transport=None,
+        serializer=None,
+    ):
         """
         Bind to an agent address.
 
@@ -722,16 +745,24 @@ class Agent():
         validate_handler(handler, required=kind.requires_handler())
         socket = self._context.socket(kind.zmq())
         addr = self._bind_socket(socket, addr=addr, transport=transport)
-        server_address = AgentAddress(transport, addr, kind, 'server',
-                                      serializer)
+        server_address = AgentAddress(
+            transport, addr, kind, 'server', serializer
+        )
         self._register(socket, server_address, alias, handler)
         # SUB sockets are a special case
         if kind == 'SUB':
             self.subscribe(server_address, handler)
         return server_address
 
-    def _bind_channel(self, kind, alias=None, handler=None, addr=None,
-                      transport=None, serializer=None):
+    def _bind_channel(
+        self,
+        kind,
+        alias=None,
+        handler=None,
+        addr=None,
+        transport=None,
+        serializer=None,
+    ):
         """
         Bind process for channels.
 
@@ -758,8 +789,9 @@ class Agent():
             validate_handler(handler, required=True)
             socket = self._context.socket(zmq.PULL)
             addr = self._bind_socket(socket, addr=addr, transport=transport)
-            server_address = AgentAddress(transport, addr, 'PULL', 'server',
-                                          serializer)
+            server_address = AgentAddress(
+                transport, addr, 'PULL', 'server', serializer
+            )
             channel = AgentChannel(kind, receiver=server_address, sender=None)
             self._register(socket, channel, alias, handler)
             return channel
@@ -768,18 +800,23 @@ class Agent():
                 raise NotImplementedError()
             if not addr:
                 addr = (None, None)
-            pull_address = self.bind('PULL_SYNC_PUB',
-                                     addr=addr[0],
-                                     handler=handler,
-                                     transport=transport,
-                                     serializer=serializer)
+            pull_address = self.bind(
+                'PULL_SYNC_PUB',
+                addr=addr[0],
+                handler=handler,
+                transport=transport,
+                serializer=serializer,
+            )
             pub_socket = self._context.socket(zmq.PUB)
-            aux = self._bind_socket(pub_socket, addr=addr[1],
-                                    transport=transport)
-            pub_address = AgentAddress(transport, aux, 'PUB', 'server',
-                                       serializer)
-            channel = AgentChannel(kind, receiver=pull_address,
-                                   sender=pub_address)
+            aux = self._bind_socket(
+                pub_socket, addr=addr[1], transport=transport
+            )
+            pub_address = AgentAddress(
+                transport, aux, 'PUB', 'server', serializer
+            )
+            channel = AgentChannel(
+                kind, receiver=pull_address, sender=pub_address
+            )
             self._register(pub_socket, channel, alias=alias)
             return channel
         else:
@@ -872,11 +909,13 @@ class Agent():
             If the new socket receives input messages, the handler/s is/are to
             be set with this parameter.
         """
-        assert server_address.role == 'server', \
-            'Incorrect address! A server address must be provided!'
+        assert (
+            server_address.role == 'server'
+        ), 'Incorrect address! A server address must be provided!'
         client_address = server_address.twin()
-        validate_handler(handler,
-                         required=client_address.kind.requires_handler())
+        validate_handler(
+            handler, required=client_address.kind.requires_handler()
+        )
         if self._registered(client_address):
             self._connect_old(client_address, alias, handler)
         else:
@@ -903,13 +942,13 @@ class Agent():
         """
         kind = channel.kind
         if kind == 'ASYNC_REP':
-            return self._connect_channel_async_rep(channel,
-                                                   handler=handler,
-                                                   alias=alias)
+            return self._connect_channel_async_rep(
+                channel, handler=handler, alias=alias
+            )
         if kind == 'SYNC_PUB':
-            return self._connect_channel_sync_pub(channel,
-                                                  handler=handler,
-                                                  alias=alias)
+            return self._connect_channel_sync_pub(
+                channel, handler=handler, alias=alias
+            )
         raise NotImplementedError('Unsupported channel kind %s!' % kind)
 
     def _connect_channel_async_rep(self, channel, handler, alias=None):
@@ -931,12 +970,14 @@ class Agent():
         self._connect_address(pull_address, alias=alias, handler=None)
         if self._registered(channel):
             raise NotImplementedError('Tried to (re)connect a channel')
-        self._connect_and_register(pull_address.twin(), alias=alias,
-                                   register_as=channel)
+        self._connect_and_register(
+            pull_address.twin(), alias=alias, register_as=channel
+        )
         # Create socket for receiving responses
         uuid = unique_identifier()
-        addr = self.bind('PULL', alias=uuid,
-                         handler=self._handle_async_requests)
+        addr = self.bind(
+            'PULL', alias=uuid, handler=self._handle_async_requests
+        )
         self._async_req_uuid[pull_address] = uuid
         self._async_req_uuid[pull_address.twin()] = uuid
         self._async_req_uuid[addr] = uuid
@@ -961,8 +1002,9 @@ class Agent():
         self._connect_address(channel.receiver, alias=alias, handler=None)
         if self._registered(channel):
             raise NotImplementedError('Tried to (re)connect a channel')
-        self._connect_and_register(client_channel.sender, alias=alias,
-                                   register_as=client_channel)
+        self._connect_and_register(
+            client_channel.sender, alias=alias, register_as=client_channel
+        )
         # Create socket for receiving responses
         pub_address = channel.sender
         assert pub_address.kind == 'PUB'
@@ -973,8 +1015,7 @@ class Agent():
         else:
             topic_handlers[channel.uuid] = handler
         topic_handlers[uuid] = self._handle_async_requests
-        addr = self.connect(pub_address, alias=uuid,
-                            handler=topic_handlers)
+        addr = self.connect(pub_address, alias=uuid, handler=topic_handlers)
         assert addr.kind == 'SUB'
         self._async_req_uuid[channel.receiver] = uuid
         self._async_req_uuid[client_channel.sender] = uuid
@@ -989,8 +1030,9 @@ class Agent():
         self._address[alias] = client_address
         return client_address
 
-    def _connect_and_register(self, client_address, alias=None, handler=None,
-                              register_as=None):
+    def _connect_and_register(
+        self, client_address, alias=None, handler=None, register_as=None
+    ):
         """
         Establish and register a new connection.
 
@@ -1008,8 +1050,9 @@ class Agent():
         if not register_as:
             register_as = client_address
         socket = self._context.socket(client_address.kind.zmq())
-        socket.connect('%s://%s' % (client_address.transport,
-                                    client_address.address))
+        socket.connect(
+            '%s://%s' % (client_address.transport, client_address.address)
+        )
         self._register(socket, register_as, alias, handler)
         return client_address
 
@@ -1030,8 +1073,9 @@ class Agent():
         else:
             handler(self, response)
 
-    def subscribe(self, alias: str,
-                  handler: Dict[Union[bytes, str], Any]) -> None:
+    def subscribe(
+        self, alias: str, handler: Dict[Union[bytes, str], Any]
+    ) -> None:
         """
         Subscribe a SUB/SYNC_SUB socket given by its alias to the given
         topics, and leave the handlers prepared internally.
@@ -1061,11 +1105,13 @@ class Agent():
             sub_address = channel.receiver
             uuid = channel.twin_uuid
             curated_handlers = topics_to_bytes(handler, uuid=uuid)
-            self._set_handler(self._socket[sub_address], curated_handlers,
-                              update=True)
+            self._set_handler(
+                self._socket[sub_address], curated_handlers, update=True
+            )
         else:
-            self._set_handler(self._socket[alias], curated_handlers,
-                              update=True)
+            self._set_handler(
+                self._socket[alias], curated_handlers, update=True
+            )
 
     def unsubscribe(self, alias: str, topic: Union[bytes, str]) -> None:
         """
@@ -1089,12 +1135,14 @@ class Agent():
             channel = self._address[alias]
             sub_address = channel.receiver
             treated_topic = channel.twin_uuid + topic
-            self._socket[sub_address].setsockopt(zmq.UNSUBSCRIBE,
-                                                 treated_topic)
+            self._socket[sub_address].setsockopt(
+                zmq.UNSUBSCRIBE, treated_topic
+            )
             del self._handler[self._socket[sub_address]][treated_topic]
         else:
-            raise NotImplementedError('Unsupported address type %s!' %
-                                      self._address[alias])
+            raise NotImplementedError(
+                'Unsupported address type %s!' % self._address[alias]
+            )
 
     def _subscribe_to_topic(self, alias: str, topic: Union[bytes, str]):
         """
@@ -1114,8 +1162,9 @@ class Agent():
             treated_topic = channel.uuid + topic
             self._socket[sub_address].setsockopt(zmq.SUBSCRIBE, treated_topic)
         else:
-            raise NotImplementedError('Unsupported address type %s!' %
-                                      self._address[alias])
+            raise NotImplementedError(
+                'Unsupported address type %s!' % self._address[alias]
+            )
 
     def idle(self):
         """
@@ -1357,8 +1406,9 @@ class Agent():
         data : bytes
             Data received on the socket.
         """
-        message = deserialize_message(message=data,
-                                      serializer=channel.serializer)
+        message = deserialize_message(
+            message=data, serializer=channel.serializer
+        )
         address_uuid, request_uuid, data, address = message
         client_address = address.twin()
         if not self._registered(client_address):
@@ -1387,8 +1437,9 @@ class Agent():
         data : bytes
             Data received on the socket.
         """
-        message = deserialize_message(message=data,
-                                      serializer=channel.serializer)
+        message = deserialize_message(
+            message=data, serializer=channel.serializer
+        )
         address_uuid, request_uuid, data = message
         handler = self._handler[socket]
         is_generator = inspect.isgeneratorfunction(handler)
@@ -1398,10 +1449,9 @@ class Agent():
         else:
             reply = handler(self, data)
         message = (address_uuid, request_uuid, reply)
-        self._send_channel_sync_pub(channel=channel,
-                                    message=message,
-                                    topic=address_uuid,
-                                    general=False)
+        self._send_channel_sync_pub(
+            channel=channel, message=message, topic=address_uuid, general=False
+        )
         if is_generator:
             execute_code_after_yield(generator)
 
@@ -1453,8 +1503,15 @@ class Agent():
             elif nparams == 3:
                 handler(self, message, topic)
 
-    def send(self, address, message, topic=None, handler=None, wait=None,
-             on_error=None):
+    def send(
+        self,
+        address,
+        message,
+        topic=None,
+        handler=None,
+        wait=None,
+        on_error=None,
+    ):
         """
         Send a message through the specified address.
 
@@ -1481,31 +1538,34 @@ class Agent():
         """
         address = self._address[address]
         if isinstance(address, AgentChannel):
-            return self._send_channel(channel=address,
-                                      message=message,
-                                      topic=topic,
-                                      handler=handler,
-                                      wait=wait,
-                                      on_error=on_error)
+            return self._send_channel(
+                channel=address,
+                message=message,
+                topic=topic,
+                handler=handler,
+                wait=wait,
+                on_error=on_error,
+            )
         if isinstance(address, AgentAddress):
-            return self._send_address(address=address,
-                                      message=message,
-                                      topic=topic)
+            return self._send_address(
+                address=address, message=message, topic=topic
+            )
         raise NotImplementedError('Unsupported address type %s!' % address)
 
     def _send_address(self, address, message, topic=None):
         """
         Send a message through a specific address.
         """
-        message = serialize_message(message=message,
-                                    serializer=address.serializer)
+        message = serialize_message(
+            message=message, serializer=address.serializer
+        )
         if address.kind == 'PUB':
             if topic is None:
                 topic = ''
             topic = topic_to_bytes(topic)
-            message = compose_message(message=message,
-                                      topic=topic,
-                                      serializer=address.serializer)
+            message = compose_message(
+                message=message, topic=topic, serializer=address.serializer
+            )
         self._socket[address].send(message)
 
     def _send_channel(self, channel, message, topic, handler, wait, on_error):
@@ -1514,23 +1574,27 @@ class Agent():
         """
         kind = channel.kind
         if kind == 'ASYNC_REP':
-            return self._send_channel_async_rep(channel=channel,
-                                                message=message,
-                                                wait=wait,
-                                                on_error=on_error,
-                                                handler=handler)
+            return self._send_channel_async_rep(
+                channel=channel,
+                message=message,
+                wait=wait,
+                on_error=on_error,
+                handler=handler,
+            )
         if kind == 'SYNC_PUB':
-            return self._send_channel_sync_pub(channel=channel,
-                                               message=message,
-                                               topic=topic)
+            return self._send_channel_sync_pub(
+                channel=channel, message=message, topic=topic
+            )
         if kind == 'SYNC_SUB':
-            return self._send_channel_sync_sub(channel, message, topic,
-                                               handler, wait, on_error)
+            return self._send_channel_sync_sub(
+                channel, message, topic, handler, wait, on_error
+            )
 
         raise NotImplementedError('Unsupported channel kind %s!' % kind)
 
-    def _send_channel_async_rep(self, channel, message, wait, on_error,
-                                handler=None):
+    def _send_channel_async_rep(
+        self, channel, message, wait, on_error, handler=None
+    ):
         """
         Send a message through an ASYNC_REP channel.
         """
@@ -1540,34 +1604,39 @@ class Agent():
         if handler is not None:
             self._pending_requests[request_uuid] = handler
         else:
-            self._pending_requests[request_uuid] = \
-                self._async_req_handler[address_uuid]
+            self._pending_requests[request_uuid] = self._async_req_handler[
+                address_uuid
+            ]
         receiver_address = self._address[address_uuid]
         message = (address_uuid, request_uuid, message, receiver_address)
-        message = serialize_message(message=message,
-                                    serializer=channel.serializer)
+        message = serialize_message(
+            message=message, serializer=channel.serializer
+        )
         self._socket[channel].send(message)
         self._wait_received(wait, uuid=request_uuid, on_error=on_error)
 
-    def _send_channel_sync_pub(self, channel, message, topic=None,
-                               general=True):
+    def _send_channel_sync_pub(
+        self, channel, message, topic=None, general=True
+    ):
         """
         Send a message through a SYNC_PUB channel.
         """
-        message = serialize_message(message=message,
-                                    serializer=channel.serializer)
+        message = serialize_message(
+            message=message, serializer=channel.serializer
+        )
         if topic is None:
             topic = ''
         topic = topic_to_bytes(topic)
         if general:
             topic = channel.uuid + topic
-        message = compose_message(message=message,
-                                  topic=topic,
-                                  serializer=channel.serializer)
+        message = compose_message(
+            message=message, topic=topic, serializer=channel.serializer
+        )
         self._socket[channel].send(message)
 
-    def _send_channel_sync_sub(self, channel, message, topic, handler, wait,
-                               on_error):
+    def _send_channel_sync_sub(
+        self, channel, message, topic, handler, wait, on_error
+    ):
         """
         Send a message through a SYNC_SUB channel.
         """
@@ -1602,7 +1671,8 @@ class Agent():
         del self._pending_requests[uuid]
         if not on_error:
             warning = 'Did not receive request {} after {} seconds'.format(
-                uuid, wait)
+                uuid, wait
+            )
             self.log_warning(warning)
             return
         on_error(self)
@@ -1664,15 +1734,25 @@ class Agent():
         Start the main loop.
         """
         # A loopback socket where, for example, timers are processed
-        self.bind('REP', alias='loopback', addr='loopback',
-                  handler=self._handle_loopback, transport='inproc',
-                  serializer='pickle')
+        self.bind(
+            'REP',
+            alias='loopback',
+            addr='loopback',
+            handler=self._handle_loopback,
+            transport='inproc',
+            serializer='pickle',
+        )
 
         # This in-process socket handles safe access to
         # memory from other threads (i.e. when using Pyro proxies).
-        self.bind('REP', alias='_loopback_safe', addr='_loopback_safe',
-                  handler=self._handle_loopback_safe, transport='inproc',
-                  serializer='pickle')
+        self.bind(
+            'REP',
+            alias='_loopback_safe',
+            addr='_loopback_safe',
+            handler=self._handle_loopback_safe,
+            transport='inproc',
+            serializer='pickle',
+        )
 
         self._running = True
         self.before_loop()
@@ -1740,8 +1820,12 @@ class Agent():
         we need a way to simply get all non-internal zmq.socket objects, and
         this is precisely what this function does.
         """
-        reserved = ('loopback', '_loopback_safe', 'inproc://loopback',
-                    'inproc://_loopback_safe')
+        reserved = (
+            'loopback',
+            '_loopback_safe',
+            'inproc://loopback',
+            'inproc://_loopback_safe',
+        )
         external_sockets = []
 
         for k, v in self._socket.items():
@@ -1836,8 +1920,17 @@ class AgentProcess(multiprocessing.Process):
     Agent class. Instances of an Agent are system processes which
     can be run independently.
     """
-    def __init__(self, name='', nsaddr=None, addr=None, serializer=None,
-                 transport=None, base=Agent, attributes=None):
+
+    def __init__(
+        self,
+        name='',
+        nsaddr=None,
+        addr=None,
+        serializer=None,
+        transport=None,
+        base=Agent,
+        attributes=None,
+    ):
         super().__init__()
         self.name = name
         self._daemon = None
@@ -1864,10 +1957,13 @@ class AgentProcess(multiprocessing.Process):
             ns = NSProxy(self.nsaddr)
             self._daemon = Pyro4.Daemon(self._host, self.port)
             self.base = cloudpickle.loads(self.base)
-            self.agent = self.base(name=self.name, host=self._host,
-                                   serializer=self._serializer,
-                                   transport=self._transport,
-                                   attributes=self.attributes)
+            self.agent = self.base(
+                name=self.name,
+                host=self._host,
+                serializer=self._serializer,
+                transport=self._transport,
+                attributes=self.attributes,
+            )
         except Exception:
             self._queue.put(format_exception())
             return
@@ -1926,8 +2022,10 @@ class AgentProcess(multiprocessing.Process):
         super().start()
         status = self._queue.get()
         if not status.startswith('STARTED'):
-            raise RuntimeError('An error occurred while creating the daemon!' +
-                               '\n===============\n'.join(['', status, '']))
+            raise RuntimeError(
+                'An error occurred while creating the daemon!'
+                + '\n===============\n'.join(['', status, ''])
+            )
 
         return status.partition(':')[-1]
 
@@ -1947,8 +2045,16 @@ class AgentProcess(multiprocessing.Process):
         self.kill()
 
 
-def run_agent(name='', nsaddr=None, addr=None, base=Agent, serializer=None,
-              transport=None, safe=None, attributes=None):
+def run_agent(
+    name='',
+    nsaddr=None,
+    addr=None,
+    base=Agent,
+    serializer=None,
+    transport=None,
+    safe=None,
+    attributes=None,
+):
     """
     Ease the agent creation process.
 
@@ -1977,9 +2083,15 @@ def run_agent(name='', nsaddr=None, addr=None, base=Agent, serializer=None,
     """
     if not nsaddr:
         nsaddr = os.environ.get('OSBRAIN_NAMESERVER_ADDRESS')
-    agent = AgentProcess(name=name, nsaddr=nsaddr, addr=addr, base=base,
-                         serializer=serializer, transport=transport,
-                         attributes=attributes)
+    agent = AgentProcess(
+        name=name,
+        nsaddr=nsaddr,
+        addr=addr,
+        base=base,
+        serializer=serializer,
+        transport=transport,
+        attributes=attributes,
+    )
     agent_name = agent.start()
 
     proxy = Proxy(agent_name, nsaddr, safe=safe)

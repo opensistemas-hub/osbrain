@@ -32,8 +32,14 @@ else:
 
 __version__ = '0.6.5'
 
-from .agent import Agent, AgentProcess, run_agent
-from .nameserver import NameServer, run_nameserver
-from .proxy import Proxy, NSProxy
-from .address import SocketAddress, AgentAddress
-from .logging import Logger, run_logger
+from .address import AgentAddress  # isort:skip
+from .address import SocketAddress  # isort:skip
+from .agent import Agent  # isort:skip
+from .agent import AgentProcess  # isort:skip
+from .agent import run_agent  # isort:skip
+from .logging import Logger  # isort:skip
+from .logging import run_logger  # isort:skip
+from .nameserver import NameServer  # isort:skip
+from .nameserver import run_nameserver  # isort:skip
+from .proxy import NSProxy  # isort:skip
+from .proxy import Proxy  # isort:skip

@@ -16,9 +16,9 @@ osBrain is a **general-purpose multi-agent system module** written in Python.
 
 - Agents run **independently** as system processes and communicate with each
   other using **message passing**.
-- Message passing is implemented using `ØMQ <http://zeromq.org/>`_, and in
+- Message passing is implemented using `ØMQ <https://zeromq.org/>`_, and in
   particular, the `PyZMQ <https://github.com/zeromq/pyzmq>`_ Python bindings.
-- `ØMQ <http://zeromq.org/>`_ allows for **efficient**, **asynchronous**
+- `ØMQ <https://zeromq.org/>`_ allows for **efficient**, **asynchronous**
   communication using different commonly used communication **patterns** such
   as request-reply, push-pull and publish-subscribe.
 - osBrain integrates `Pyro4 <https://pythonhosted.org/Pyro4/>`_ to ease the
@@ -59,7 +59,7 @@ taken during the development process:
 #. **Isolation of agents**; creating separate system processes to avoid shared
    memory and any problems derived from multi-threading development.
 #. **Implementation of message passing**; making use of the modern, efficient
-   and flexible `ØMQ <http://zeromq.org/>`_ library.
+   and flexible `ØMQ <https://zeromq.org/>`_ library.
 #. **Ease of configuration/deployment**; making use of the very convenient,
    well implemented and documented `Pyro4 <https://pythonhosted.org/Pyro4/>`_
    package.
@@ -105,7 +105,7 @@ always take this into account:
 #. Pyro4 is used only for configuration, deployment, updating and debugging,
    which means that the actual performance of the system should not depend
    on this package.
-#. `ØMQ <http://zeromq.org/>`_ is used with the
+#. `ØMQ <https://zeromq.org/>`_ is used with the
    `PyZMQ <https://github.com/zeromq/pyzmq>`_ Python bindings, which means
    that the system performance depends on the
    `PyZMQ <https://github.com/zeromq/pyzmq>`_ performance.

@@ -22,7 +22,7 @@ As mentioned before, a multi-agent system only makes sense if agents are
 connected with each other and share some information using message passing.
 
 In this first example, we will create two agents: *Alice* and *Bob*, and we
-will make alice send messages to *Bob* using a simple push-pull communication
+will make *Alice* send messages to *Bob* using a simple push-pull communication
 pattern.
 
 .. literalinclude:: ../../examples/push_pull.py
@@ -32,7 +32,9 @@ So, in this case, we are doing some more stuff. After we spawn *Alice* and
 
 First, we make *Alice* bind:
 
-addr = alice.bind('PUSH', alias='main')
+.. code-block:: python
+
+   addr = alice.bind('PUSH', alias='main')
 
 There are three things to remark in that line:
 
@@ -49,7 +51,9 @@ There are three things to remark in that line:
 The next interesting line of code is the one in which *Bob* connects to
 *Alice*:
 
-bob.connect(addr, handler=log_message)
+.. code-block:: python
+
+   bob.connect(addr, handler=log_message)
 
 There are two things to remark in here:
 
